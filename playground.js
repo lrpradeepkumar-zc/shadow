@@ -13,6 +13,9 @@
     let currentFile = 'poc';
     let savedPOCs = JSON.parse(localStorage.getItem('shadowPOCs') || '{}');
 
+    // Base URL for scripts
+    const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+
     // ===== INIT =====
     async function init() {
         await ShadowDB.init();
@@ -44,9 +47,11 @@
                 document.getElementById('apiPanel').classList.toggle('active', tabName === 'api');
                 document.getElementById('dataPanel').classList.toggle('active', tabName === 'data');
                 if (tabName === 'data') refreshDataExplorer();
-                if (tabName === 'features') document.getElementById('rightPanel').style.width = '100%';
-                else if (tabName === 'data') document.getElementById('rightPanel').style.width = '100%';
-                else document.getElementById('rightPanel').style.width = '480px';
+                if (tabName === 'features' || tabName === 'data') {
+                    document.getElementById('rightPanel').style.width = '100%';
+                } else {
+                    document.getElementById('rightPanel').style.width = '480px';
+                }
             });
         });
         // File tabs
@@ -71,8 +76,14 @@
                 editor.value = editor.value.substring(0, start) + '  ' + editor.value.substring(editor.selectionEnd);
                 editor.selectionStart = editor.selectionEnd = start + 2;
             }
-            if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); runCode(); }
-            if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); savePOC(); }
+            if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                e.preventDefault();
+                runCode();
+            }
+            if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+                e.preventDefault();
+                savePOC();
+            }
         });
         editor.addEventListener('input', () => {
             document.getElementById('editorStatus').textContent = 'Modified';
@@ -92,23 +103,54 @@
         const css = (files.style || '').replace(/\\n/g, '\n');
         const js = (files.poc || '').replace(/\\n/g, '\n');
 
-        const doc = '<!DOCTYPE html><html><head><style>' + css + '</style>' +
-            '<script src="backend.js"><\/script></head><body style="background:#0d1117;margin:0;">' +
-            html + '<script>(' + function(parentLog) {
-                const origConsole = window.console;
-                window.console = {
-                    log: function() { var a = Array.from(arguments).map(function(v) { return typeof v === 'object' ? JSON.stringify(v, null, 2) : String(v); }).join(' '); origConsole.log.apply(origConsole, arguments); parentLog('log', a); },
-                    error: function() { var a = Array.from(arguments).map(String).join(' '); origConsole.error.apply(origConsole, arguments); parentLog('error', a); },
-                    warn: function() { var a = Array.from(arguments).map(String).join(' '); origConsole.warn.apply(origConsole, arguments); parentLog('warn', a); },
-                    info: function() { var a = Array.from(arguments).map(String).join(' '); origConsole.info.apply(origConsole, arguments); parentLog('info', a); }
-                };
-                window.onerror = function(msg) { parentLog('error', msg); };
-                ShadowDB.init().then(function() {' + js + '});
-            }.toString() + ')(function(type, msg) { window.parent.postMessage({ type: "console", level: type, message: msg }, "*"); });<\/script></body></html>';
+        const doc = `<!DOCTYPE html><html><head>
+<style>${css}</style>
+<script src="${baseUrl}backend.js"><\/script>
+</head><body style="background:#0d1117;margin:0;">
+${html}
+<script>
+(function(parentLog) {
+    var origConsole = window.console;
+    window.console = {
+        log: function() {
+            var a = Array.from(arguments).map(function(v) {
+                return typeof v === 'object' ? JSON.stringify(v, null, 2) : String(v);
+            }).join(' ');
+            origConsole.log.apply(origConsole, arguments);
+            parentLog('log', a);
+        },
+        error: function() {
+            var a = Array.from(arguments).map(String).join(' ');
+            origConsole.error.apply(origConsole, arguments);
+            parentLog('error', a);
+        },
+        warn: function() {
+            var a = Array.from(arguments).map(String).join(' ');
+            origConsole.warn.apply(origConsole, arguments);
+            parentLog('warn', a);
+        },
+        info: function() {
+            var a = Array.from(arguments).map(String).join(' ');
+            origConsole.info.apply(origConsole, arguments);
+            parentLog('info', a);
+        }
+    };
+    window.onerror = function(msg) { parentLog('error', msg); };
+    ShadowDB.init().then(function() {
+        ${js}
+    }).catch(function(err) {
+        parentLog('error', 'ShadowDB init failed: ' + err.message);
+    });
+})(function(type, msg) {
+    window.parent.postMessage({ type: 'console', level: type, message: msg }, '*');
+});
+<\/script></body></html>`;
 
         iframe.srcdoc = doc;
         document.getElementById('editorStatus').textContent = 'Running...';
-        setTimeout(() => { document.getElementById('editorStatus').textContent = 'Executed'; }, 500);
+        setTimeout(() => {
+            document.getElementById('editorStatus').textContent = 'Executed';
+        }, 500);
     }
 
     // Listen for console messages from iframe
@@ -152,37 +194,34 @@
         output.scrollTop = output.scrollHeight;
     }
 
-    function escapeHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function escapeHtml(s) {
+        return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
 
     // ===== FEATURES / POC LAB =====
     function setupFeatures() {
         const panel = document.getElementById('featuresPanel');
         panel.innerHTML = '<h2 style="margin-bottom:20px;font-size:18px;"><i class="fa-solid fa-flask" style="color:var(--accent);margin-right:8px;"></i>POC Lab - Feature Prototyping</h2>' +
-
-        '<div class="pg-feature-section"><h3><i class="fa-solid fa-list-check"></i> Task Management POCs</h3>' +
-        featureCard('Kanban Board', 'Drag-and-drop Kanban board with columns for each status. Tests real-time status updates via ShadowDB.', 'kanban') +
-        featureCard('Task Timeline', 'Gantt-style timeline view showing task durations and dependencies.', 'timeline') +
-        featureCard('Batch Operations', 'Multi-select tasks and apply bulk actions (status change, assign, tag).', 'batch') +
-        featureCard('Smart Filters', 'Advanced filter builder with AND/OR conditions across all task fields.', 'smartfilter') +
-        '</div>' +
-
-        '<div class="pg-feature-section"><h3><i class="fa-solid fa-chart-bar"></i> Analytics POCs</h3>' +
-        featureCard('Dashboard Charts', 'Task completion charts, priority distribution, and team workload analysis.', 'charts') +
-        featureCard('Burndown Chart', 'Sprint-style burndown chart tracking task completion over time.', 'burndown') +
-        '</div>' +
-
-        '<div class="pg-feature-section"><h3><i class="fa-solid fa-gear"></i> Automation POCs</h3>' +
-        featureCard('Auto-assign Rules', 'Automatically assign tasks based on category or tag rules.', 'autoassign') +
-        featureCard('Due Date Alerts', 'Notification system for approaching and overdue task deadlines.', 'alerts') +
-        featureCard('Recurring Tasks', 'Automatically create recurring tasks on schedule (daily, weekly, monthly).', 'recurring') +
-        '</div>' +
-
-        '<div class="pg-feature-section"><h3><i class="fa-solid fa-puzzle-piece"></i> UI Component POCs</h3>' +
-        featureCard('Custom Status Workflow', 'Configurable status workflow with transitions and validations.', 'workflow') +
-        featureCard('Rich Text Notes', 'Markdown-powered notes editor with live preview.', 'richtext') +
-        featureCard('Tag Manager', 'Advanced tag management with color picker and hierarchy.', 'tagmgr') +
-        '</div>';
-
+            '<div class="pg-feature-section"><h3><i class="fa-solid fa-list-check"></i> Task Management POCs</h3>' +
+            featureCard('Kanban Board', 'Drag-and-drop Kanban board with columns for each status. Tests real-time status updates via ShadowDB.', 'kanban') +
+            featureCard('Task Timeline', 'Gantt-style timeline view showing task durations and dependencies.', 'timeline') +
+            featureCard('Batch Operations', 'Multi-select tasks and apply bulk actions (status change, assign, tag).', 'batch') +
+            featureCard('Smart Filters', 'Advanced filter builder with AND/OR conditions across all task fields.', 'smartfilter') +
+            '</div>' +
+            '<div class="pg-feature-section"><h3><i class="fa-solid fa-chart-bar"></i> Analytics POCs</h3>' +
+            featureCard('Dashboard Charts', 'Task completion charts, priority distribution, and team workload analysis.', 'charts') +
+            featureCard('Burndown Chart', 'Sprint-style burndown chart tracking task completion over time.', 'burndown') +
+            '</div>' +
+            '<div class="pg-feature-section"><h3><i class="fa-solid fa-gear"></i> Automation POCs</h3>' +
+            featureCard('Auto-assign Rules', 'Automatically assign tasks based on category or tag rules.', 'autoassign') +
+            featureCard('Due Date Alerts', 'Notification system for approaching and overdue task deadlines.', 'alerts') +
+            featureCard('Recurring Tasks', 'Automatically create recurring tasks on schedule (daily, weekly, monthly).', 'recurring') +
+            '</div>' +
+            '<div class="pg-feature-section"><h3><i class="fa-solid fa-puzzle-piece"></i> UI Component POCs</h3>' +
+            featureCard('Custom Status Workflow', 'Configurable status workflow with transitions and validations.', 'workflow') +
+            featureCard('Rich Text Notes', 'Markdown-powered notes editor with live preview.', 'richtext') +
+            featureCard('Tag Manager', 'Advanced tag management with color picker and hierarchy.', 'tagmgr') +
+            '</div>';
         panel.querySelectorAll('.pg-btn[data-poc]').forEach(btn => {
             btn.addEventListener('click', () => loadPOCTemplate(btn.dataset.poc));
         });
@@ -194,7 +233,7 @@
             '<div class="pg-feature-card-desc">' + desc + '</div>' +
             '<div class="pg-feature-card-actions">' +
             '<button class="pg-btn primary" data-poc="' + pocId + '"><i class="fa-solid fa-play"></i> Load POC</button>' +
-            '<button class="pg-btn" onclick="logConsole(\'POC: ' + title + ' template loaded\', \'info\')"><i class="fa-solid fa-code"></i> View Code</button>' +
+            '<button class="pg-btn" onclick=""><i class="fa-solid fa-code"></i> View Code</button>' +
             '</div></div>';
     }
 
@@ -202,7 +241,7 @@
     function loadPOCTemplate(pocId) {
         const templates = {
             kanban: {
-                poc: "async function runPOC() {\n  const tasks = await ShadowDB.Tasks.getAll();\n  const statuses = ['Open', 'In Progress', 'In Review', 'Completed'];\n  const container = document.getElementById('poc-output');\n  container.innerHTML = '<h2>Kanban Board</h2><div class=\"kanban-board\">' +\n    statuses.map(s => {\n      const sTasks = tasks.filter(t => t.status === s);\n      return '<div class=\"kanban-col\">' +\n        '<div class=\"kanban-header\">' + s + ' <span class=\"count\">' + sTasks.length + '</span></div>' +\n        sTasks.map(t => '<div class=\"kanban-card\" draggable=\"true\" data-id=\"' + t.id + '\">' +\n          '<div class=\"card-title\">' + t.title + '</div>' +\n          '<div class=\"card-meta\"><span class=\"priority-dot ' + t.priority.toLowerCase() + '\"></span>' + t.assignee + '</div>' +\n        '</div>').join('') +\n      '</div>';\n    }).join('') + '</div>';\n}\nrunPOC();",
+                poc: "async function runPOC() {\n  const tasks = await ShadowDB.Tasks.getAll();\n  const statuses = ['Open', 'In Progress', 'In Review', 'Completed'];\n  const container = document.getElementById('poc-output');\n  container.innerHTML = '<h2>Kanban Board</h2><div class=\"kanban-board\">' +\n    statuses.map(s => {\n      const sTasks = tasks.filter(t => t.status === s);\n      return '<div class=\"kanban-col\">' +\n        '<div class=\"kanban-header\">' + s + ' <span class=\"count\">' + sTasks.length + '</span></div>' +\n        sTasks.map(t => '<div class=\"kanban-card\" draggable=\"true\" data-id=\"' + t.id + '\">' +\n          '<div class=\"card-title\">' + t.title + '</div>' +\n          '<div class=\"card-meta\"><span class=\"priority-dot ' + t.priority.toLowerCase() + '\"></span>' + t.assignee + '</div>' +\n          '</div>').join('') +\n        '</div>';\n    }).join('') + '</div>';\n}\nrunPOC();",
                 style: ".kanban-board{display:flex;gap:12px;margin-top:16px;overflow-x:auto;padding-bottom:12px}.kanban-col{min-width:220px;flex:1;background:#161b22;border-radius:8px;padding:12px}.kanban-header{font-size:13px;font-weight:600;padding:8px;margin-bottom:8px;border-bottom:1px solid #30363d;display:flex;justify-content:space-between}.count{background:#30363d;padding:1px 8px;border-radius:10px;font-size:11px}.kanban-card{background:#21262d;border:1px solid #30363d;border-radius:6px;padding:10px;margin-bottom:8px;cursor:grab;transition:border-color .15s}.kanban-card:hover{border-color:#58a6ff}.card-title{font-size:13px;margin-bottom:6px}.card-meta{font-size:11px;color:#8b949e;display:flex;align-items:center;gap:6px}.priority-dot{width:8px;height:8px;border-radius:50%}.priority-dot.high{background:#f85149}.priority-dot.medium{background:#d29922}.priority-dot.low{background:#3fb950}",
                 template: '<div id="poc-output" style="padding:16px;font-family:Inter,sans-serif;color:#e6edf3;"></div>'
             },
@@ -218,7 +257,6 @@
             }
         };
 
-        // Default template for unimplemented POCs
         const defaultPoc = {
             poc: "async function runPOC() {\n  const container = document.getElementById('poc-output');\n  container.innerHTML = '<h2>Feature POC: " + pocId + "</h2><p>This POC template is ready for your implementation.</p><p>Use ShadowDB API to build your feature prototype.</p>';\n  const tasks = await ShadowDB.Tasks.getAll();\n  console.log('Loaded', tasks.length, 'tasks for POC');\n}\nrunPOC();",
             style: files.style,
@@ -230,7 +268,6 @@
         files.style = tmpl.style;
         files.template = tmpl.template;
         currentFile = 'poc';
-
         document.querySelectorAll('.pg-file-tab').forEach(t => t.classList.remove('active'));
         document.querySelector('.pg-file-tab[data-file="poc"]').classList.add('active');
         document.querySelectorAll('.pg-nav-tab').forEach(t => t.classList.remove('active'));
@@ -240,7 +277,6 @@
         document.getElementById('consoleSection').style.display = 'flex';
         document.getElementById('featuresPanel').classList.remove('active');
         document.getElementById('rightPanel').style.width = '480px';
-
         loadEditor('poc');
         runCode();
         logConsole('POC template "' + pocId + '" loaded and executed.', 'success');
@@ -250,45 +286,43 @@
     function setupAPI() {
         const panel = document.getElementById('apiPanel');
         panel.innerHTML = '<h2 style="margin-bottom:20px;font-size:18px;"><i class="fa-solid fa-book" style="color:var(--purple);margin-right:8px;"></i>ShadowDB API Reference</h2>' +
-
-        apiGroup('Tasks', [
-            { method: 'GET', path: 'ShadowDB.Tasks.getAll()', desc: 'Get all tasks' },
-            { method: 'GET', path: 'ShadowDB.Tasks.get(id)', desc: 'Get task by ID' },
-            { method: 'POST', path: 'ShadowDB.Tasks.create({title, status, priority, ...})', desc: 'Create a new task' },
-            { method: 'PUT', path: 'ShadowDB.Tasks.update(task)', desc: 'Update a task' },
-            { method: 'DELETE', path: 'ShadowDB.Tasks.delete(id)', desc: 'Delete a task' },
-            { method: 'PUT', path: 'ShadowDB.Tasks.complete(id)', desc: 'Mark task as completed' },
-            { method: 'GET', path: 'ShadowDB.Tasks.search(query)', desc: 'Search tasks by title/description' },
-            { method: 'GET', path: 'ShadowDB.Tasks.getStats()', desc: 'Get task statistics' },
-            { method: 'GET', path: 'ShadowDB.Tasks.getByGroup(groupId)', desc: 'Get tasks by group' },
-            { method: 'PUT', path: 'ShadowDB.Tasks.addSubtask(taskId, {title})', desc: 'Add subtask to a task' },
-        ]) +
-        apiGroup('Groups', [
-            { method: 'GET', path: 'ShadowDB.Groups.getAll()', desc: 'Get all groups' },
-            { method: 'POST', path: 'ShadowDB.Groups.create({name, color, type})', desc: 'Create a group' },
-            { method: 'PUT', path: 'ShadowDB.Groups.update(group)', desc: 'Update a group' },
-            { method: 'DELETE', path: 'ShadowDB.Groups.delete(id)', desc: 'Delete a group' },
-        ]) +
-        apiGroup('Tags', [
-            { method: 'GET', path: 'ShadowDB.Tags.getAll()', desc: 'Get all tags' },
-            { method: 'POST', path: 'ShadowDB.Tags.create({name, color})', desc: 'Create a tag' },
-        ]) +
-        apiGroup('Members', [
-            { method: 'GET', path: 'ShadowDB.Members.getAll()', desc: 'Get all members' },
-            { method: 'GET', path: 'ShadowDB.Members.getByGroup(groupId)', desc: 'Get members by group' },
-            { method: 'POST', path: 'ShadowDB.Members.create({name, email, role, group})', desc: 'Add a member' },
-        ]) +
-        apiGroup('Activity & Settings', [
-            { method: 'GET', path: 'ShadowDB.Activity.getRecent(50)', desc: 'Get recent activity log' },
-            { method: 'GET', path: 'ShadowDB.Settings.get(key)', desc: 'Get a setting value' },
-            { method: 'PUT', path: 'ShadowDB.Settings.set(key, value)', desc: 'Set a setting value' },
-        ]) +
-        apiGroup('Utilities', [
-            { method: 'POST', path: 'ShadowDB.resetAll()', desc: 'Reset database to seed data' },
-            { method: 'GET', path: 'ShadowDB.exportAll()', desc: 'Export all data as JSON' },
-            { method: 'POST', path: 'ShadowDB.importAll(data)', desc: 'Import data from JSON' },
-        ]);
-
+            apiGroup('Tasks', [
+                { method: 'GET', path: 'ShadowDB.Tasks.getAll()', desc: 'Get all tasks' },
+                { method: 'GET', path: 'ShadowDB.Tasks.get(id)', desc: 'Get task by ID' },
+                { method: 'POST', path: 'ShadowDB.Tasks.create({title, status, priority, ...})', desc: 'Create a new task' },
+                { method: 'PUT', path: 'ShadowDB.Tasks.update(task)', desc: 'Update a task' },
+                { method: 'DELETE', path: 'ShadowDB.Tasks.delete(id)', desc: 'Delete a task' },
+                { method: 'PUT', path: 'ShadowDB.Tasks.complete(id)', desc: 'Mark task as completed' },
+                { method: 'GET', path: 'ShadowDB.Tasks.search(query)', desc: 'Search tasks by title/description' },
+                { method: 'GET', path: 'ShadowDB.Tasks.getStats()', desc: 'Get task statistics' },
+                { method: 'GET', path: 'ShadowDB.Tasks.getByGroup(groupId)', desc: 'Get tasks by group' },
+                { method: 'PUT', path: 'ShadowDB.Tasks.addSubtask(taskId, {title})', desc: 'Add subtask to a task' },
+            ]) +
+            apiGroup('Groups', [
+                { method: 'GET', path: 'ShadowDB.Groups.getAll()', desc: 'Get all groups' },
+                { method: 'POST', path: 'ShadowDB.Groups.create({name, color, type})', desc: 'Create a group' },
+                { method: 'PUT', path: 'ShadowDB.Groups.update(group)', desc: 'Update a group' },
+                { method: 'DELETE', path: 'ShadowDB.Groups.delete(id)', desc: 'Delete a group' },
+            ]) +
+            apiGroup('Tags', [
+                { method: 'GET', path: 'ShadowDB.Tags.getAll()', desc: 'Get all tags' },
+                { method: 'POST', path: 'ShadowDB.Tags.create({name, color})', desc: 'Create a tag' },
+            ]) +
+            apiGroup('Members', [
+                { method: 'GET', path: 'ShadowDB.Members.getAll()', desc: 'Get all members' },
+                { method: 'GET', path: 'ShadowDB.Members.getByGroup(groupId)', desc: 'Get members by group' },
+                { method: 'POST', path: 'ShadowDB.Members.create({name, email, role, group})', desc: 'Add a member' },
+            ]) +
+            apiGroup('Activity & Settings', [
+                { method: 'GET', path: 'ShadowDB.Activity.getRecent(50)', desc: 'Get recent activity log' },
+                { method: 'GET', path: 'ShadowDB.Settings.get(key)', desc: 'Get a setting value' },
+                { method: 'PUT', path: 'ShadowDB.Settings.set(key, value)', desc: 'Set a setting value' },
+            ]) +
+            apiGroup('Utilities', [
+                { method: 'POST', path: 'ShadowDB.resetAll()', desc: 'Reset database to seed data' },
+                { method: 'GET', path: 'ShadowDB.exportAll()', desc: 'Export all data as JSON' },
+                { method: 'POST', path: 'ShadowDB.importAll(data)', desc: 'Import data from JSON' },
+            ]);
         panel.querySelectorAll('.pg-api-item').forEach(item => {
             item.addEventListener('click', () => {
                 const path = item.querySelector('.pg-api-path').textContent;
@@ -310,6 +344,7 @@
 
     // ===== DATA EXPLORER =====
     let currentStore = 'tasks';
+
     function setupDataExplorer() {
         const panel = document.getElementById('dataPanel');
         panel.innerHTML = '<div class="pg-data-stores" id="dataStores"></div><div class="pg-data-table" id="dataTable"></div>';
