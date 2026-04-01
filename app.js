@@ -499,5 +499,13 @@
     renderView();
   }
 
+      // Settings button - navigate to settings page
+      var settingsBtn = document.querySelector('.sidebar-icons button[title="Settings"]');
+      if (settingsBtn) {
+                settingsBtn.addEventListener('click', function() {
+                              window.location.href = 'settings.html';
+                });
+      }
+
   init();
 })();
