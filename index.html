@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shadow ToDo</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  </head>
+  <body>
+    <!-- Top Header Bar -->
+    <header class="top-header">
+      <div class="header-left">
+        <i class="fa-solid fa-check-double logo-icon"></i>
+        <span class="app-title">ToDo</span>
+      </div>
+      <div class="header-center">
+        <div class="tab-bar">
+          <span class="tab-item active"><i class="fa-solid fa-check"></i> ToDo</span>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <span>ToDo</span>
+          <input type="text" placeholder="Search ( / )" id="globalSearch">
+        </div>
+        <button class="icon-btn" title="Notifications"><i class="fa-solid fa-bell"></i><span class="badge">1</span></button>
+        <div class="avatar" title="Profile">P</div>
+        <button class="icon-btn" title="Apps"><i class="fa-solid fa-grip"></i></button>
+      </div>
+    </header>
+
+    <div class="app-container">
+      <!-- Left Sidebar -->
+      <nav class="sidebar" id="sidebar">
+        <button class="new-task-btn" id="newTaskBtn"><i class="fa-solid fa-plus"></i> New Task</button>
+
+        <div class="sidebar-section">
+          <div class="section-title">VIEWS</div>
+          <div class="nav-item active" data-view="agenda"><i class="fa-regular fa-calendar"></i> Agenda view</div>
+          <div class="nav-item" data-view="myday"><i class="fa-solid fa-bolt"></i> My Day</div>
+          <div class="nav-item" data-view="createdbyme"><i class="fa-regular fa-user"></i> Created by Me</div>
+          <div class="nav-item" data-view="assignedtome"><i class="fa-regular fa-user"></i> Assigned to me</div>
+          <div class="nav-item" data-view="sharedwithme"><i class="fa-solid fa-share-nodes"></i> Shared with me</div>
+          <div class="nav-item has-count" data-view="personal"><i class="fa-regular fa-user"></i> Personal tasks <span class="count" id="personalCount">0</span></div>
+          <div class="nav-item" data-view="unified"><i class="fa-solid fa-layer-group"></i> Unified view</div>
+        </div>
+
+        <div class="sidebar-section">
+          <div class="section-title">GROUPS <span class="section-actions"><i class="fa-solid fa-sliders"></i> <i class="fa-solid fa-plus" id="addGroupBtn"></i></span></div>
+          <div id="groupsList"></div>
+        </div>
+
+        <div class="sidebar-section">
+          <div class="section-title">TAGS <span class="section-actions"><i class="fa-solid fa-plus" id="addTagBtn"></i></span></div>
+          <div id="tagsList"></div>
+        </div>
+      </nav>
+
+      <!-- Main Content -->
+      <main class="main-content" id="mainContent">
+        <!-- Toolbar -->
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <i class="fa-regular fa-calendar"></i>
+            <span class="view-title" id="viewTitle">Agenda</span>
+            <span class="sort-info" id="sortInfo">
+              <span class="sort-badge">DUE DATE</span>
+              <span class="sort-direction">Newest on top</span>
+            </span>
+          </div>
+          <div class="toolbar-right">
+            <button class="toolbar-btn" id="filterBtn"><i class="fa-solid fa-filter"></i> Filter</button>
+            <button class="toolbar-btn" id="sortBtn"><i class="fa-solid fa-arrow-down-short-wide"></i> Sort</button>
+            <button class="toolbar-btn" id="manageFieldsBtn"><i class="fa-solid fa-table-columns"></i></button>
+            <button class="toolbar-btn" id="moreActionsBtn"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+          </div>
+        </div>
+
+        <!-- View Toggle (Board/List) -->
+        <div class="view-tabs">
+          <button class="view-tab active" data-viewtype="board"><i class="fa-solid fa-columns"></i> Board</button>
+          <button class="view-tab" data-viewtype="list"><i class="fa-solid fa-list"></i> List</button>
+          <span class="group-by-wrapper" id="groupByWrapper" style="display:none;">
+            | Group by: <button class="toolbar-btn" id="groupByBtn"><i class="fa-regular fa-user"></i> Category <i class="fa-solid fa-caret-down"></i></button>
+          </span>
+          <span class="stats-info" id="statsInfo" style="display:none;"><i class="fa-regular fa-clock"></i> Stats: <span id="statsCount">0</span> Tasks</span>
+        </div>
+
+        <!-- Board View -->
+        <div class="board-view" id="boardView">
+          <div class="board-columns" id="boardColumns"></div>
+        </div>
+
+        <!-- List View -->
+        <div class="list-view" id="listView" style="display:none;">
+          <div class="list-header">
+            <div class="list-col task-title-col">TASK TITLE</div>
+            <div class="list-col assignee-col">ASSIGNEE</div>
+            <div class="list-col status-col">STATUS</div>
+            <div class="list-col due-date-col">DUE DATE</div>
+          </div>
+          <div class="list-body" id="listBody"></div>
+        </div>
+      </main>
+
+      <!-- Task Detail Panel -->
+      <div class="task-detail-panel" id="taskDetailPanel" style="display:none;">
+        <div class="detail-header">
+          <div class="detail-header-left">
+            <button class="status-btn" id="detailStatusBtn">Open</button>
+            <div class="detail-assignee">
+              <div class="avatar-sm" id="detailAssigneeAvatar">P</div>
+              <div>
+                <div class="label-sm">Assigned to</div>
+                <div id="detailAssigneeName">Pradeep</div>
+              </div>
+            </div>
+            <div class="detail-date">
+              <div class="label-sm">Start Date</div>
+              <div id="detailStartDate" class="clickable">Yet to set</div>
+            </div>
+            <div class="detail-date">
+              <div class="label-sm">Due Date</div>
+              <div id="detailDueDate" class="clickable">Yet to set</div>
+            </div>
+          </div>
+          <div class="detail-header-right">
+            <button class="icon-btn" title="Recurrence"><i class="fa-solid fa-repeat"></i></button>
+            <button class="icon-btn" title="Attachment"><i class="fa-solid fa-paperclip"></i></button>
+            <button class="icon-btn" title="Tags"><i class="fa-solid fa-tag"></i></button>
+            <button class="icon-btn" title="More"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+            <button class="icon-btn" id="closeDetailBtn" title="Close"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+        </div>
+
+        <div class="detail-body">
+          <h2 class="detail-task-title" id="detailTaskTitle" contenteditable="true"></h2>
+          <div class="detail-meta">
+            <span>in</span>
+            <button class="meta-btn" id="detailGroup">Personal tasks</button>
+            <span>under</span>
+            <button class="meta-btn" id="detailCategory">General</button>
+            <span>&bull;</span>
+            <button class="priority-btn" id="detailPriority"><i class="fa-solid fa-exclamation"></i> Medium</button>
+            <span>|</span>
+            <button class="reminder-btn" id="detailReminderBtn"><i class="fa-regular fa-calendar-check"></i> Set reminder</button>
+          </div>
+
+          <div class="detail-section">
+            <div class="section-label"><i class="fa-solid fa-align-left"></i> Description</div>
+            <textarea class="detail-textarea" id="detailDescription" placeholder="Description"></textarea>
+          </div>
+
+          <div class="detail-section">
+            <div class="section-label"><i class="fa-regular fa-note-sticky"></i> Notes <span class="required">*</span></div>
+            <textarea class="detail-textarea notes-area" id="detailNotes" placeholder="Notes">NA</textarea>
+          </div>
+
+          <div class="detail-section">
+            <div class="section-label"><i class="fa-solid fa-list-check"></i> Subtasks <i class="fa-regular fa-circle-check"></i></div>
+            <div id="subtasksList"></div>
+            <div class="add-subtask">
+              <i class="fa-solid fa-plus"></i>
+              <input type="text" placeholder="Subtask Title, @mention assignee" id="newSubtaskInput">
+            </div>
+          </div>
+
+          <div class="detail-section">
+            <div class="section-label"><i class="fa-solid fa-timeline"></i> Timeline <i class="fa-regular fa-circle-check"></i></div>
+            <div id="timelineList" class="timeline-list"></div>
+          </div>
+
+          <div class="comment-section">
+            <div class="avatar-sm">P</div>
+            <input type="text" placeholder="Write a Comment" id="commentInput" class="comment-input">
+            <button class="icon-btn"><i class="fa-regular fa-face-smile"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Sidebar -->
+      <aside class="right-sidebar">
+        <button class="icon-btn" title="Ask Zia"><i class="fa-solid fa-robot"></i></button>
+        <button class="icon-btn" title="Settings"><i class="fa-solid fa-gear"></i></button>
+        <button class="icon-btn" title="Calendar"><i class="fa-regular fa-calendar"></i></button>
+        <div class="sidebar-spacer"></div>
+        <button class="icon-btn theme-toggle" id="themeToggle" title="Toggle theme"><i class="fa-solid fa-circle-half-stroke"></i></button>
+        <button class="icon-btn" title="Feedback"><i class="fa-regular fa-comment-dots"></i></button>
+      </aside>
+    </div>
+
+    <!-- New Task Modal -->
+    <div class="modal-overlay" id="taskModal" style="display:none;">
+      <div class="modal-content task-modal">
+        <div class="modal-header">
+          <div class="modal-header-left">
+            <button class="status-btn" id="modalStatusBtn">Open</button>
+            <div class="detail-assignee">
+              <div class="avatar-sm">P</div>
+              <div>
+                <div class="label-sm">Assigned to</div>
+                <select id="modalAssignee" class="inline-select">
+                  <option>Pradeep</option>
+                </select>
+              </div>
+            </div>
+            <div class="detail-date">
+              <div class="label-sm">Start Date</div>
+              <input type="date" id="modalStartDate" class="date-input">
+            </div>
+            <div class="detail-date">
+              <div class="label-sm">Due Date</div>
+              <input type="date" id="modalDueDate" class="date-input">
+            </div>
+          </div>
+          <div class="modal-header-right">
+            <button class="icon-btn" title="Recurrence"><i class="fa-solid fa-repeat"></i></button>
+            <button class="icon-btn" title="Attachment"><i class="fa-solid fa-paperclip"></i></button>
+            <button class="icon-btn" title="Tags" id="modalTagBtn"><i class="fa-solid fa-tag"></i></button>
+            <button class="icon-btn close-modal" id="closeModalBtn"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+        </div>
+
+        <div class="modal-body">
+          <input type="text" class="task-title-input" id="modalTaskTitle" placeholder="Task Title, @mention assignee">
+          <div class="detail-meta">
+            <span>in</span>
+            <select id="modalGroup" class="meta-select">
+              <option value="personal">Personal tasks</option>
+            </select>
+            <span>under</span>
+            <select id="modalCategory" class="meta-select">
+              <option value="General">General</option>
+            </select>
+            <span>&bull;</span>
+            <select id="modalPriority" class="priority-select">
+              <option value="None">None</option>
+              <option value="Low">Low</option>
+              <option value="Medium" selected>Medium</option>
+              <option value="High">High</option>
+            </select>
+            <span>|</span>
+            <button class="reminder-btn" id="modalReminderBtn"><i class="fa-regular fa-calendar-check"></i> Set reminder</button>
+          </div>
+
+          <div class="detail-section">
+            <div class="section-label"><i class="fa-solid fa-align-left"></i> Description</div>
+            <textarea class="detail-textarea" id="modalDescription" placeholder="Description"></textarea>
+          </div>
+
+          <div class="detail-section">
+            <div class="section-label"><i class="fa-regular fa-note-sticky"></i> Notes <span class="required">*</span></div>
+            <textarea class="detail-textarea notes-area" id="modalNotes">NA</textarea>
+          </div>
+
+          <div class="detail-section">
+            <div class="section-label"><i class="fa-solid fa-list-check"></i> Subtasks <i class="fa-regular fa-circle-check"></i></div>
+            <div id="modalSubtasksList"></div>
+            <div class="add-subtask">
+              <i class="fa-solid fa-plus"></i>
+              <input type="text" placeholder="Subtask Title, @mention assignee" id="modalSubtaskInput">
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="save-btn" id="saveTaskBtn">Save</button>
+          <button class="cancel-btn" id="cancelTaskBtn">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Group Modal -->
+    <div class="modal-overlay" id="groupModal" style="display:none;">
+      <div class="modal-content small-modal">
+        <h3>Create Group</h3>
+        <input type="text" id="groupNameInput" placeholder="Group name" class="modal-input">
+        <div class="modal-footer">
+          <button class="save-btn" id="saveGroupBtn">Create</button>
+          <button class="cancel-btn" id="cancelGroupBtn">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Tag Modal -->
+    <div class="modal-overlay" id="tagModal" style="display:none;">
+      <div class="modal-content small-modal">
+        <h3>Create Tag</h3>
+        <input type="text" id="tagNameInput" placeholder="Tag name" class="modal-input">
+        <div class="color-picker">
+          <span class="color-dot" data-color="#e67e22" style="background:#e67e22"></span>
+          <span class="color-dot" data-color="#e74c3c" style="background:#e74c3c"></span>
+          <span class="color-dot" data-color="#9b59b6" style="background:#9b59b6"></span>
+          <span class="color-dot" data-color="#2ecc71" style="background:#2ecc71"></span>
+          <span class="color-dot" data-color="#3498db" style="background:#3498db"></span>
+          <span class="color-dot selected" data-color="#e67e22" style="background:#e67e22"></span>
+        </div>
+        <div class="modal-footer">
+          <button class="save-btn" id="saveTagBtn">Create</button>
+          <button class="cancel-btn" id="cancelTagBtn">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sort Dropdown -->
+    <div class="dropdown-menu" id="sortDropdown" style="display:none;">
+      <div class="dropdown-title">Sort by</div>
+      <div class="dropdown-item" data-sort="dueDate">Due Date</div>
+      <div class="dropdown-item" data-sort="createdTime">Created Time</div>
+      <div class="dropdown-item" data-sort="priority">Priority</div>
+      <div class="dropdown-item" data-sort="title">Title</div>
+      <div class="dropdown-divider"></div>
+      <div class="dropdown-item" data-direction="desc"><i class="fa-solid fa-arrow-down"></i> Newest on top</div>
+      <div class="dropdown-item" data-direction="asc"><i class="fa-solid fa-arrow-up"></i> Oldest on top</div>
+    </div>
+
+    <!-- Status Dropdown -->
+    <div class="dropdown-menu" id="statusDropdown" style="display:none;">
+      <div class="dropdown-item status-option" data-status="Open">Open</div>
+      <div class="dropdown-item status-option" data-status="In Progress">In Progress</div>
+      <div class="dropdown-item status-option" data-status="Fixed">Fixed</div>
+      <div class="dropdown-item status-option" data-status="Closed">Closed</div>
+    </div>
+
+    <!-- Priority Dropdown -->
+    <div class="dropdown-menu" id="priorityDropdown" style="display:none;">
+      <div class="dropdown-item priority-option" data-priority="None">None</div>
+      <div class="dropdown-item priority-option" data-priority="Low"><i class="fa-solid fa-exclamation" style="color:#3498db"></i> Low</div>
+      <div class="dropdown-item priority-option" data-priority="Medium"><i class="fa-solid fa-exclamation" style="color:#e67e22"></i> Medium</div>
+      <div class="dropdown-item priority-option" data-priority="High"><i class="fa-solid fa-exclamation" style="color:#e74c3c"></i> High</div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+  </html>
