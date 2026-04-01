@@ -507,5 +507,19 @@
                 });
       }
 
+      // Playground button - add to header
+    var headerRight = document.querySelector('.header-right');
+    if (headerRight) {
+        var playgroundBtn = document.createElement('button');
+        playgroundBtn.className = 'icon-btn';
+        playgroundBtn.title = 'Playground';
+        playgroundBtn.innerHTML = '<i class="fa-solid fa-flask"></i>';
+        playgroundBtn.style.cssText = 'color:#58a6ff;font-size:16px;';
+        playgroundBtn.addEventListener('click', function() {
+            window.location.href = 'playground.html';
+        });
+        headerRight.insertBefore(playgroundBtn, headerRight.firstChild);
+    }
+
   init();
 })();
