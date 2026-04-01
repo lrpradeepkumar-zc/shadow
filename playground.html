@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shadow ToDo - Playground</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;500;600;700&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --bg: #0d1117; --bg2: #161b22; --bg3: #21262d; --bg4: #30363d; --text: #e6edf3; --text2: #8b949e; --accent: #58a6ff; --green: #3fb950; --red: #f85149; --yellow: #d29922; --purple: #bc8cff; --border: #30363d; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+        /* Top Nav */
+        .pg-nav { display: flex; align-items: center; justify-content: space-between; padding: 0 20px; height: 48px; background: var(--bg2); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+        .pg-nav-left { display: flex; align-items: center; gap: 12px; }
+        .pg-logo { font-size: 16px; font-weight: 700; color: var(--accent); }
+        .pg-logo i { margin-right: 6px; }
+        .pg-badge { background: var(--green); color: #000; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+        .pg-nav-tabs { display: flex; gap: 0; }
+        .pg-nav-tab { padding: 12px 16px; font-size: 13px; color: var(--text2); cursor: pointer; border-bottom: 2px solid transparent; transition: all .15s; }
+        .pg-nav-tab:hover { color: var(--text); }
+        .pg-nav-tab.active { color: var(--text); border-bottom-color: var(--accent); }
+        .pg-nav-right { display: flex; align-items: center; gap: 10px; }
+        .pg-btn { padding: 5px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; border: 1px solid var(--border); background: var(--bg3); color: var(--text); transition: all .15s; display: flex; align-items: center; gap: 6px; }
+        .pg-btn:hover { background: var(--bg4); }
+        .pg-btn.primary { background: var(--green); color: #000; border-color: var(--green); font-weight: 600; }
+        .pg-btn.danger { border-color: var(--red); color: var(--red); }
+
+        /* Main Layout */
+        .pg-main { display: flex; height: calc(100vh - 48px); }
+
+        /* Left Panel - Code Editor */
+        .pg-editor-panel { flex: 1; display: flex; flex-direction: column; border-right: 1px solid var(--border); min-width: 0; }
+        .pg-editor-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--bg2); border-bottom: 1px solid var(--border); }
+        .pg-file-tabs { display: flex; gap: 0; }
+        .pg-file-tab { padding: 6px 14px; font-size: 12px; color: var(--text2); cursor: pointer; background: var(--bg); border-right: 1px solid var(--border); display: flex; align-items: center; gap: 6px; }
+        .pg-file-tab.active { background: var(--bg2); color: var(--text); border-bottom: 2px solid var(--accent); }
+        .pg-file-tab i { font-size: 11px; }
+        .pg-editor-area { flex: 1; position: relative; }
+        #codeEditor { width: 100%; height: 100%; background: var(--bg); color: #e6edf3; border: none; outline: none; padding: 16px; font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.6; resize: none; tab-size: 2; }
+        .pg-editor-status { display: flex; align-items: center; justify-content: space-between; padding: 4px 12px; background: var(--bg2); border-top: 1px solid var(--border); font-size: 11px; color: var(--text2); }
+
+        /* Right Panel - Preview + Console */
+        .pg-right-panel { width: 480px; min-width: 350px; display: flex; flex-direction: column; }
+        .pg-preview-section { flex: 1; display: flex; flex-direction: column; border-bottom: 1px solid var(--border); }
+        .pg-section-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--bg2); border-bottom: 1px solid var(--border); font-size: 12px; font-weight: 600; }
+        .pg-section-header .label { display: flex; align-items: center; gap: 6px; }
+        #previewFrame { flex: 1; width: 100%; border: none; background: var(--bg); }
+
+        /* Console */
+        .pg-console { height: 220px; min-height: 150px; display: flex; flex-direction: column; }
+        .pg-console-output { flex: 1; overflow-y: auto; padding: 8px 12px; font-family: 'JetBrains Mono', monospace; font-size: 12px; background: var(--bg); }
+        .pg-console-line { padding: 3px 0; border-bottom: 1px solid rgba(48,54,61,.3); display: flex; align-items: flex-start; gap: 8px; }
+        .pg-console-line.info { color: var(--accent); }
+        .pg-console-line.success { color: var(--green); }
+        .pg-console-line.error { color: var(--red); }
+        .pg-console-line.warn { color: var(--yellow); }
+        .pg-console-line .timestamp { color: var(--text2); font-size: 10px; white-space: nowrap; }
+        .pg-console-input { display: flex; align-items: center; border-top: 1px solid var(--border); background: var(--bg2); }
+        .pg-console-input span { padding: 0 8px; color: var(--green); font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+        #consoleInput { flex: 1; background: none; border: none; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 8px 0; outline: none; }
+
+        /* Feature Toggles Panel (shown in POC Lab tab) */
+        .pg-features-panel { display: none; flex: 1; overflow-y: auto; padding: 20px; }
+        .pg-features-panel.active { display: block; }
+        .pg-feature-section { margin-bottom: 24px; }
+        .pg-feature-section h3 { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: var(--accent); display: flex; align-items: center; gap: 8px; }
+        .pg-feature-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 10px; }
+        .pg-feature-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+        .pg-feature-card-title { font-size: 13px; font-weight: 600; }
+        .pg-feature-card-desc { font-size: 12px; color: var(--text2); line-height: 1.5; margin-bottom: 10px; }
+        .pg-feature-card-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .pg-toggle { position: relative; width: 36px; height: 20px; }
+        .pg-toggle input { opacity: 0; width: 0; height: 0; }
+        .pg-toggle-slider { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg4); border-radius: 20px; cursor: pointer; transition: .2s; }
+        .pg-toggle-slider::before { content: ''; position: absolute; height: 14px; width: 14px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: .2s; }
+        .pg-toggle input:checked + .pg-toggle-slider { background: var(--green); }
+        .pg-toggle input:checked + .pg-toggle-slider::before { transform: translateX(16px); }
+
+        /* API Docs Tab */
+        .pg-api-panel { display: none; flex: 1; overflow-y: auto; padding: 20px; }
+        .pg-api-panel.active { display: block; }
+        .pg-api-group { margin-bottom: 24px; }
+        .pg-api-group h3 { font-size: 14px; font-weight: 600; color: var(--purple); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .pg-api-item { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 12px; margin-bottom: 8px; cursor: pointer; transition: border-color .15s; }
+        .pg-api-item:hover { border-color: var(--accent); }
+        .pg-api-method { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 3px; margin-right: 8px; }
+        .pg-api-method.get { background: rgba(88,166,255,.2); color: var(--accent); }
+        .pg-api-method.post { background: rgba(63,185,80,.2); color: var(--green); }
+        .pg-api-method.put { background: rgba(210,153,34,.2); color: var(--yellow); }
+        .pg-api-method.delete { background: rgba(248,81,73,.2); color: var(--red); }
+        .pg-api-path { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+        .pg-api-desc { font-size: 11px; color: var(--text2); margin-top: 4px; }
+
+        /* Data Explorer Tab */
+        .pg-data-panel { display: none; flex: 1; overflow-y: auto; }
+        .pg-data-panel.active { display: flex; flex-direction: column; }
+        .pg-data-stores { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px; border-bottom: 1px solid var(--border); }
+        .pg-data-store { padding: 4px 10px; font-size: 11px; border-radius: 4px; cursor: pointer; background: var(--bg3); color: var(--text2); border: 1px solid var(--border); }
+        .pg-data-store.active { background: var(--accent); color: #000; border-color: var(--accent); }
+        .pg-data-table { flex: 1; overflow: auto; padding: 12px; }
+        .pg-data-table table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .pg-data-table th { text-align: left; padding: 8px; background: var(--bg2); border: 1px solid var(--border); color: var(--text2); font-weight: 600; position: sticky; top: 0; }
+        .pg-data-table td { padding: 6px 8px; border: 1px solid var(--border); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <!-- Top Navigation -->
+    <nav class="pg-nav">
+        <div class="pg-nav-left">
+            <div class="pg-logo"><i class="fa-solid fa-flask"></i>Shadow Playground</div>
+            <span class="pg-badge">LIVE</span>
+        </div>
+        <div class="pg-nav-tabs">
+            <div class="pg-nav-tab active" data-tab="editor">Code Editor</div>
+            <div class="pg-nav-tab" data-tab="features">POC Lab</div>
+            <div class="pg-nav-tab" data-tab="api">API Console</div>
+            <div class="pg-nav-tab" data-tab="data">Data Explorer</div>
+        </div>
+        <div class="pg-nav-right">
+            <button class="pg-btn" id="runBtn"><i class="fa-solid fa-play"></i> Run</button>
+            <button class="pg-btn primary" id="saveBtn"><i class="fa-solid fa-save"></i> Save POC</button>
+            <button class="pg-btn danger" id="resetBtn"><i class="fa-solid fa-rotate-left"></i> Reset DB</button>
+            <a href="index.html" class="pg-btn"><i class="fa-solid fa-arrow-left"></i> App</a>
+        </div>
+    </nav>
+
+    <div class="pg-main">
+        <!-- Left: Code Editor -->
+        <div class="pg-editor-panel" id="editorPanel">
+            <div class="pg-editor-header">
+                <div class="pg-file-tabs" id="fileTabs">
+                    <div class="pg-file-tab active" data-file="poc"><i class="fa-solid fa-code"></i> poc.js</div>
+                    <div class="pg-file-tab" data-file="template"><i class="fa-brands fa-html5"></i> template.html</div>
+                    <div class="pg-file-tab" data-file="style"><i class="fa-brands fa-css3-alt"></i> style.css</div>
+                </div>
+                <div style="display:flex;gap:6px;">
+                    <button class="pg-btn" id="snippetBtn"><i class="fa-solid fa-bolt"></i> Snippets</button>
+                    <button class="pg-btn" id="formatBtn"><i class="fa-solid fa-indent"></i> Format</button>
+                </div>
+            </div>
+            <div class="pg-editor-area">
+                <textarea id="codeEditor" spellcheck="false"></textarea>
+            </div>
+            <div class="pg-editor-status">
+                <span id="editorStatus">Ready</span>
+                <span>JavaScript | Shadow Playground v1.0</span>
+            </div>
+        </div>
+
+        <!-- Right: Preview + Console -->
+        <div class="pg-right-panel" id="rightPanel">
+            <!-- Preview -->
+            <div class="pg-preview-section" id="previewSection">
+                <div class="pg-section-header">
+                    <span class="label"><i class="fa-solid fa-eye"></i> Live Preview</span>
+                    <button class="pg-btn" id="refreshPreview"><i class="fa-solid fa-refresh"></i></button>
+                </div>
+                <iframe id="previewFrame" sandbox="allow-scripts allow-same-origin"></iframe>
+            </div>
+            <!-- Console -->
+            <div class="pg-console" id="consoleSection">
+                <div class="pg-section-header">
+                    <span class="label"><i class="fa-solid fa-terminal"></i> Console</span>
+                    <button class="pg-btn" id="clearConsole"><i class="fa-solid fa-eraser"></i> Clear</button>
+                </div>
+                <div class="pg-console-output" id="consoleOutput"></div>
+                <div class="pg-console-input">
+                    <span>&gt;</span>
+                    <input type="text" id="consoleInput" placeholder="Type JavaScript command... (ShadowDB.Tasks.getAll())">
+                </div>
+            </div>
+
+            <!-- Features Panel (hidden by default) -->
+            <div class="pg-features-panel" id="featuresPanel"></div>
+
+            <!-- API Panel (hidden by default) -->
+            <div class="pg-api-panel" id="apiPanel"></div>
+
+            <!-- Data Explorer (hidden by default) -->
+            <div class="pg-data-panel" id="dataPanel"></div>
+        </div>
+    </div>
+
+    <script src="backend.js"></script>
+    <script src="playground.js"></script>
+</body>
+</html>
