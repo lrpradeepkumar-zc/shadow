@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shadow ToDo - Settings</title>
+    <link rel="stylesheet" href="settings.css">
+</head>
+<body>
+    <!-- Settings Modal Overlay -->
+    <div class="settings-overlay" id="settingsOverlay">
+        <div class="settings-dialog">
+            <!-- Close button -->
+            <button class="settings-close-btn" id="closeSettings" title="Close">&times;</button>
+            
+            <!-- Settings Left Sidebar -->
+            <div class="settings-sidebar">
+                <div class="settings-sidebar-header">
+                    <h2>ToDo</h2>
+                </div>
+                <div class="settings-search">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"/>
+                        <path d="M21 21l-4.35-4.35"/>
+                    </svg>
+                    <input type="text" placeholder="Search" id="settingsSearch">
+                </div>
+                
+                <div class="settings-nav-section">
+                    <div class="settings-nav-label">GENERAL</div>
+                    <div class="settings-nav-tree">
+                        <div class="settings-nav-item active" data-section="system">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                                <line x1="8" y1="21" x2="16" y2="21"/>
+                                <line x1="12" y1="17" x2="12" y2="21"/>
+                            </svg>
+                            <span>System</span>
+                        </div>
+                        <div class="settings-nav-item" data-section="keyboard">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="2" y="4" width="20" height="16" rx="2" ry="2"/>
+                                <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10"/>
+                            </svg>
+                            <span>Keyboard Shortcuts</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="settings-nav-divider"></div>
+                
+                <div class="settings-nav-section">
+                    <div class="settings-nav-label">GROUPS</div>
+                    <div class="settings-nav-tree">
+                        <div class="settings-nav-item" data-section="groups">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                            </svg>
+                            <span>Groups</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Settings Content Area -->
+            <div class="settings-content">
+                <!-- System Section -->
+                <div class="settings-section active" id="section-system">
+                    <div class="settings-section-header">
+                        <h1>System</h1>
+                    </div>
+                    <div class="settings-section-body">
+                        <!-- While starting up -->
+                        <div class="settings-block">
+                            <div class="settings-block-title">While starting up</div>
+                            <div class="settings-radio-group">
+                                <label class="settings-radio">
+                                    <input type="radio" name="startup" value="landme" checked>
+                                    <span class="radio-custom"></span>
+                                    <span>Land me in</span>
+                                </label>
+                                <select class="settings-select inline-select" id="startupView">
+                                    <option value="agenda" selected>Agenda view</option>
+                                    <option value="myday">My Day</option>
+                                    <option value="created">Created by Me</option>
+                                    <option value="assigned">Assigned to me</option>
+                                    <option value="shared">Shared with me</option>
+                                    <option value="personal">Personal tasks</option>
+                                </select>
+                            </div>
+                            <div class="settings-radio-group">
+                                <label class="settings-radio">
+                                    <input type="radio" name="startup" value="continue">
+                                    <span class="radio-custom"></span>
+                                    <span>Continue from where I left off</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Display Language -->
+                        <div class="settings-block">
+                            <div class="settings-block-title">Display language</div>
+                            <select class="settings-select" id="displayLanguage">
+                                <option value="en" selected>English</option>
+                                <option value="es">Spanish</option>
+                                <option value="fr">French</option>
+                                <option value="de">German</option>
+                                <option value="ja">Japanese</option>
+                                <option value="zh">Chinese</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Font Options -->
+                        <div class="settings-block">
+                            <h3 class="settings-block-heading">Font options</h3>
+                            <div class="font-preview" id="fontPreview">Hi, User</div>
+                            <div class="font-options-row">
+                                <div class="font-option">
+                                    <div class="font-option-label">Font family</div>
+                                    <select class="settings-select" id="fontFamily">
+                                        <option value="Lato" selected>Lato</option>
+                                        <option value="Roboto">Roboto</option>
+                                        <option value="Open Sans">Open Sans</option>
+                                        <option value="Inter">Inter</option>
+                                        <option value="Arial">Arial</option>
+                                    </select>
+                                </div>
+                                <div class="font-option">
+                                    <div class="font-option-label">Font size</div>
+                                    <select class="settings-select" id="fontSize">
+                                        <option value="browser" selected>Browser</option>
+                                        <option value="small">Small</option>
+                                        <option value="medium">Medium</option>
+                                        <option value="large">Large</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Theme -->
+                        <div class="settings-block">
+                            <h3 class="settings-block-heading">Theme</h3>
+                            <div class="settings-block-subtitle">Left panel</div>
+                            <div class="theme-panels">
+                                <label class="theme-panel-option selected">
+                                    <div class="theme-panel-preview dark-preview">
+                                        <div class="panel-line accent"></div>
+                                        <div class="panel-line"></div>
+                                        <div class="panel-line short"></div>
+                                        <div class="panel-line"></div>
+                                    </div>
+                                    <input type="radio" name="leftPanel" value="dark" checked>
+                                    <span>Dark</span>
+                                </label>
+                                <label class="theme-panel-option">
+                                    <div class="theme-panel-preview light-preview">
+                                        <div class="panel-line accent"></div>
+                                        <div class="panel-line"></div>
+                                        <div class="panel-line short"></div>
+                                        <div class="panel-line"></div>
+                                    </div>
+                                    <input type="radio" name="leftPanel" value="light">
+                                    <span>Light</span>
+                                </label>
+                                <label class="theme-panel-option">
+                                    <div class="theme-panel-preview white-preview">
+                                        <div class="panel-line accent"></div>
+                                        <div class="panel-line"></div>
+                                        <div class="panel-line short"></div>
+                                        <div class="panel-line"></div>
+                                    </div>
+                                    <input type="radio" name="leftPanel" value="white">
+                                    <span>White</span>
+                                </label>
+                            </div>
+                            
+                            <div class="settings-block-subtitle">Theme color</div>
+                            <div class="theme-colors">
+                                <label class="theme-color-option">
+                                    <input type="radio" name="themeColor" value="cobalt" checked>
+                                    <span class="color-circle" style="background: #4285f4;">
+                                        <svg class="check-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="white"/></svg>
+                                    </span>
+                                </label>
+                                <label class="theme-color-option">
+                                    <input type="radio" name="themeColor" value="fern">
+                                    <span class="color-circle" style="background: #0f9d58;">
+                                        <svg class="check-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="white"/></svg>
+                                    </span>
+                                </label>
+                                <label class="theme-color-option">
+                                    <input type="radio" name="themeColor" value="tangerine">
+                                    <span class="color-circle" style="background: #f4b400;">
+                                        <svg class="check-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="white"/></svg>
+                                    </span>
+                                </label>
+                                <label class="theme-color-option">
+                                    <input type="radio" name="themeColor" value="cardinal">
+                                    <span class="color-circle" style="background: #db4437;">
+                                        <svg class="check-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="white"/></svg>
+                                    </span>
+                                </label>
+                                <label class="theme-color-option">
+                                    <input type="radio" name="themeColor" value="storm">
+                                    <span class="color-circle" style="background: #9e9e9e;">
+                                        <svg class="check-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="white"/></svg>
+                                    </span>
+                                </label>
+                                <label class="theme-color-option">
+                                    <input type="radio" name="themeColor" value="vintage">
+                                    <span class="color-circle" style="background: #e8a735;">
+                                        <svg class="check-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="white"/></svg>
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Appearance -->
+                        <div class="settings-block">
+                            <div class="settings-block-title">Appearance</div>
+                            <div class="settings-radio-group">
+                                <label class="settings-radio">
+                                    <input type="radio" name="appearance" value="system">
+                                    <span class="radio-custom"></span>
+                                    <span>Use system settings</span>
+                                </label>
+                            </div>
+                            <div class="settings-radio-group">
+                                <label class="settings-radio">
+                                    <input type="radio" name="appearance" value="light">
+                                    <span class="radio-custom"></span>
+                                    <span>Light mode</span>
+                                </label>
+                            </div>
+                            <div class="settings-radio-group">
+                                <label class="settings-radio">
+                                    <input type="radio" name="appearance" value="night" checked>
+                                    <span class="radio-custom"></span>
+                                    <span>Night mode</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Banner message -->
+                        <div class="settings-block">
+                            <h3 class="settings-block-heading">Banner message</h3>
+                            <label class="settings-checkbox">
+                                <input type="checkbox" id="bannerMessages" checked>
+                                <span class="checkbox-custom"></span>
+                                <span>Show banner messages</span>
+                            </label>
+                            <div class="settings-info-note">
+                                If you disable this, you might miss important service updates or messages from Zoho.
+                            </div>
+                        </div>
+                        
+                        <!-- Secure downloads -->
+                        <div class="settings-block">
+                            <h3 class="settings-block-heading">Secure your downloads</h3>
+                            <label class="settings-checkbox">
+                                <input type="checkbox" id="secureDownloads">
+                                <span class="checkbox-custom"></span>
+                                <span>Secure all attachment downloads or file exports with passwords</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Keyboard Shortcuts Section -->
+                <div class="settings-section" id="section-keyboard">
+                    <div class="settings-section-header">
+                        <h1>Keyboard Shortcuts</h1>
+                        <div class="shortcuts-header-actions">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="shortcutsToggle" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <span class="toggle-label">On</span>
+                            <button class="settings-text-btn" id="printShortcuts">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 6 2 18 2 18 9"/>
+                                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+                                    <rect x="6" y="14" width="12" height="8"/>
+                                </svg>
+                                Print Shortcuts
+                            </button>
+                            <span class="header-divider">·</span>
+                            <button class="settings-text-btn" id="resetShortcuts">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="1 4 1 10 7 10"/>
+                                    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+                                </svg>
+                                Reset Shortcuts
+                            </button>
+                            <select class="settings-select small-select" id="shortcutPreset">
+                                <option value="zoho">Zoho</option>
+                                <option value="gmail">Gmail</option>
+                                <option value="outlook">Outlook</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="shortcuts-info">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="12" y1="16" x2="12" y2="12"/>
+                            <line x1="12" y1="8" x2="12.01" y2="8"/>
+                        </svg>
+                        <span>To <strong>customize</strong> shortcuts, just <strong>click on any keyboard shortcut</strong> and edit it to your convenience.</span>
+                    </div>
+                    <div class="shortcuts-container">
+                        <div class="shortcuts-group">
+                            <h2 class="shortcuts-group-title">Global Shortcuts</h2>
+                            <h3 class="shortcuts-category">New Creation</h3>
+                            <div class="shortcut-item">
+                                <div class="shortcut-keys">
+                                    <kbd>c</kbd><kbd>t</kbd>
+                                </div>
+                                <span class="shortcut-desc">Create Task</span>
+                            </div>
+                        </div>
+                        <div class="shortcuts-group">
+                            <h3 class="shortcuts-category">Search Shortcuts</h3>
+                            <div class="shortcut-item">
+                                <div class="shortcut-keys">
+                                    <kbd>/</kbd>
+                                </div>
+                                <span class="shortcut-desc">Contextual Search</span>
+                            </div>
+                            <div class="shortcut-item">
+                                <div class="shortcut-keys">
+                                    <kbd>/</kbd><kbd>t</kbd>
+                                </div>
+                                <span class="shortcut-desc">Task Search</span>
+                            </div>
+                            <div class="shortcut-item">
+                                <div class="shortcut-keys">
+                                    <kbd>/</kbd><kbd>q</kbd>
+                                </div>
+                                <span class="shortcut-desc">Quick Access</span>
+                            </div>
+                        </div>
+                        <div class="shortcuts-group">
+                            <h3 class="shortcuts-category">Notification Shortcuts</h3>
+                            <div class="shortcut-item">
+                                <div class="shortcut-keys">
+                                    <kbd>Opt</kbd><kbd>n</kbd>
+                                </div>
+                                <span class="shortcut-desc">Notification</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Groups Section -->
+                <div class="settings-section" id="section-groups">
+                    <!-- Groups List View -->
+                    <div id="groupsListView">
+                        <div class="settings-section-header groups-header">
+                            <div class="groups-header-left">
+                                <h1>Groups</h1>
+                                <span class="groups-count" id="groupsCount">6 Groups</span>
+                            </div>
+                            <div class="groups-header-right">
+                                <button class="settings-text-btn create-group-btn" id="createGroupBtn">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <line x1="12" y1="5" x2="12" y2="19"/>
+                                        <line x1="5" y1="12" x2="19" y2="12"/>
+                                    </svg>
+                                    Create new group
+                                </button>
+                                <div class="groups-search">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="11" cy="11" r="8"/>
+                                        <path d="M21 21l-4.35-4.35"/>
+                                    </svg>
+                                    <input type="text" placeholder="Search" id="groupsSearch">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Groups Filters -->
+                        <div class="groups-layout">
+                            <div class="groups-filters">
+                                <div class="filter-section">
+                                    <div class="filter-title">
+                                        <span>Type</span>
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>
+                                    </div>
+                                    <div class="filter-options">
+                                        <label class="settings-radio"><input type="radio" name="groupType" value="all" checked><span class="radio-custom"></span><span>All</span></label>
+                                        <label class="settings-radio"><input type="radio" name="groupType" value="personal"><span class="radio-custom"></span><span>Personal groups</span></label>
+                                        <label class="settings-radio"><input type="radio" name="groupType" value="org-email"><span class="radio-custom"></span><span>Organization email groups</span></label>
+                                        <label class="settings-radio"><input type="radio" name="groupType" value="org-no-email"><span class="radio-custom"></span><span>Organization groups (without email)</span></label>
+                                    </div>
+                                </div>
+                                <div class="filter-section">
+                                    <div class="filter-title">
+                                        <span>Role</span>
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>
+                                    </div>
+                                    <div class="filter-options">
+                                        <label class="settings-radio"><input type="radio" name="groupRole" value="all" checked><span class="radio-custom"></span><span>All</span></label>
+                                        <label class="settings-radio"><input type="radio" name="groupRole" value="owner"><span class="radio-custom"></span><span>Owner</span></label>
+                                        <label class="settings-radio"><input type="radio" name="groupRole" value="moderator"><span class="radio-custom"></span><span>Moderator</span></label>
+                                        <label class="settings-radio"><input type="radio" name="groupRole" value="member"><span class="radio-custom"></span><span>Member</span></label>
+                                    </div>
+                                </div>
+                                <div class="filter-section">
+                                    <div class="filter-title">
+                                        <span>Streams status</span>
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>
+                                    </div>
+                                    <div class="filter-options">
+                                        <label class="settings-checkbox"><input type="checkbox" name="streamsEnabled"><span class="checkbox-custom"></span><span>Enabled groups</span></label>
+                                        <label class="settings-checkbox"><input type="checkbox" name="streamsDisabled"><span class="checkbox-custom"></span><span>Disabled groups</span></label>
+                                        <label class="settings-checkbox"><input type="checkbox" name="streamsHidden"><span class="checkbox-custom"></span><span>Hidden groups</span></label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Groups Grid -->
+                            <div class="groups-grid" id="groupsGrid">
+                                <!-- Groups will be populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Group Detail View (hidden by default) -->
+                    <div id="groupDetailView" class="hidden">
+                        <div class="group-detail-header">
+                            <button class="back-btn" id="backToGroups">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+                            </button>
+                            <h1 id="groupDetailName">Group Name</h1>
+                        </div>
+                        <div class="group-detail-tabs">
+                            <button class="group-tab active" data-tab="general">General</button>
+                            <button class="group-tab" data-tab="members">Members</button>
+                            <button class="group-tab" data-tab="taskSettings">Task Settings</button>
+                        </div>
+                        
+                        <!-- General Tab -->
+                        <div class="group-tab-content active" id="tab-general">
+                            <div class="settings-block">
+                                <div class="settings-block-title">Group Image</div>
+                                <div class="group-image-placeholder">
+                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                        <circle cx="9" cy="7" r="4"/>
+                                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="settings-block">
+                                <div class="settings-block-title">Group Name</div>
+                                <div class="group-detail-value" id="groupNameValue">--</div>
+                            </div>
+                            <div class="settings-block">
+                                <div class="settings-block-title">Streams Enabled</div>
+                                <div class="group-detail-value" id="groupStreamsValue">Yes</div>
+                            </div>
+                            <div class="settings-block">
+                                <label class="settings-checkbox">
+                                    <input type="checkbox" id="hideGroup">
+                                    <span class="checkbox-custom"></span>
+                                    <span>Hide group</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Members Tab -->
+                        <div class="group-tab-content" id="tab-members">
+                            <div class="members-search">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="11" cy="11" r="8"/>
+                                    <path d="M21 21l-4.35-4.35"/>
+                                </svg>
+                                <input type="text" placeholder="Search for members by name or email" id="membersSearch">
+                            </div>
+                            <div class="members-count" id="membersCount">0 Members</div>
+                            <div class="members-list" id="membersList">
+                                <!-- Members populated by JS -->
+                            </div>
+                        </div>
+                        
+                        <!-- Task Settings Tab -->
+                        <div class="group-tab-content" id="tab-taskSettings">
+                            <div class="task-settings-layout">
+                                <div class="task-settings-nav">
+                                    <div class="task-settings-nav-item active" data-tsection="category">Category</div>
+                                    <div class="task-settings-nav-item" data-tsection="status">Status</div>
+                                    <div class="task-settings-nav-item" data-tsection="assignee">Assignee</div>
+                                    <div class="task-settings-nav-item" data-tsection="tags">Tags</div>
+                                    <div class="task-settings-nav-item" data-tsection="customFields">Custom fields</div>
+                                    <div class="task-settings-nav-item" data-tsection="otherSettings">Other settings</div>
+                                </div>
+                                <div class="task-settings-content">
+                                    <!-- Category -->
+                                    <div class="task-settings-section active" id="tsection-category">
+                                        <h2>Category</h2>
+                                        <p class="settings-description">Create, manage, and rearrange task categories. This order will be reflected in the Board/List view when grouped by category.</p>
+                                        <div class="settings-list-search">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                                            <input type="text" placeholder="Search or Create a new category">
+                                        </div>
+                                        <div class="settings-item-list" id="categoryList">
+                                            <!-- Categories populated by JS -->
+                                        </div>
+                                    </div>
+                                    <!-- Status -->
+                                    <div class="task-settings-section" id="tsection-status">
+                                        <h2>Status</h2>
+                                        <p class="settings-description">Manage and rearrange task status. This order will be reflected in the Board/List view when grouped by status.</p>
+                                        <div class="settings-list-search">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                                            <input type="text" placeholder="Search status">
+                                        </div>
+                                        <div class="settings-item-list" id="statusList"></div>
+                                    </div>
+                                    <!-- Assignee -->
+                                    <div class="task-settings-section" id="tsection-assignee">
+                                        <h2>Assignee</h2>
+                                        <p class="settings-description">Manage and rearrange assignees. This order will be reflected in the Board/List view when grouped by assignee.</p>
+                                        <div class="settings-list-search">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                                            <input type="text" placeholder="Search assignee">
+                                        </div>
+                                        <div class="settings-item-list" id="assigneeList"></div>
+                                    </div>
+                                    <!-- Tags -->
+                                    <div class="task-settings-section" id="tsection-tags">
+                                        <h2>Tags</h2>
+                                        <p class="settings-description">Manage and rearrange tags. This order will be reflected in the Board/List view when grouped by tags.</p>
+                                        <div class="settings-list-search">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                                            <input type="text" placeholder="Search tag">
+                                        </div>
+                                        <div class="settings-item-list" id="tagsList"></div>
+                                    </div>
+                                    <!-- Custom Fields -->
+                                    <div class="task-settings-section" id="tsection-customFields">
+                                        <h2>Custom fields</h2>
+                                        <p class="settings-description">Create and manage new custom fields, and associate them with any task within the group.</p>
+                                        <div class="settings-list-search">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                                            <input type="text" placeholder="Search">
+                                        </div>
+                                        <div class="settings-item-list" id="customFieldsList"></div>
+                                    </div>
+                                    <!-- Other Settings -->
+                                    <div class="task-settings-section" id="tsection-otherSettings">
+                                        <h2>Other settings</h2>
+                                        <p class="settings-description">You can automate task management with deadlines and notifications, and view each subtask as an individual item.</p>
+                                        <div class="settings-block">
+                                            <div class="settings-block-title">Task SLA <span class="info-icon" title="Service Level Agreement for task completion">&#9432;</span></div>
+                                            <select class="settings-select" id="taskSLA">
+                                                <option value="none" selected>No Due Date</option>
+                                                <option value="1day">1 Day</option>
+                                                <option value="3days">3 Days</option>
+                                                <option value="1week">1 Week</option>
+                                                <option value="2weeks">2 Weeks</option>
+                                            </select>
+                                        </div>
+                                        <div class="settings-block">
+                                            <div class="toggle-setting">
+                                                <span>Send overdue notification</span>
+                                                <label class="toggle-switch">
+                                                    <input type="checkbox" id="overdueNotification" checked>
+                                                    <span class="toggle-slider"></span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="settings-block">
+                                            <div class="toggle-setting">
+                                                <span>Show all Subtasks <span class="info-icon" title="Show subtasks as individual items">&#9432;</span></span>
+                                                <label class="toggle-switch">
+                                                    <input type="checkbox" id="showSubtasks">
+                                                    <span class="toggle-slider"></span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Back to App link -->
+    <div class="back-to-app" id="backToApp">
+        <a href="index.html">← Back to Shadow ToDo</a>
+    </div>
+    
+    <script src="settings.js"></script>
+</body>
+</html>
