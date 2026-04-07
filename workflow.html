@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shadow ToDo - Workflows & Rules</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="workflow.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body class="workflow-page">
+  <!-- Header -->
+  <div class="wf-header">
+    <div class="wf-header-left">
+      <button class="back-btn" onclick="window.location.href='index.html'" title="Back to ToDo">
+        <i class="fa-solid fa-arrow-left"></i>
+      </button>
+      <h1><i class="fa-solid fa-bolt"></i> Workflows & Rules</h1>
+    </div>
+    <div class="wf-header-right">
+      <button class="wf-btn" id="runScheduledBtn" title="Check scheduled triggers">
+        <i class="fa-solid fa-clock"></i> Run Scheduled
+      </button>
+      <button class="wf-btn primary" id="newRuleBtn">
+        <i class="fa-solid fa-plus"></i> New Rule
+      </button>
+    </div>
+  </div>
+
+  <!-- Layout -->
+  <div class="wf-layout">
+    <!-- Sidebar -->
+    <div class="wf-sidebar">
+      <div class="wf-sidebar-section">
+        <div class="wf-sidebar-title">Navigation</div>
+        <div class="wf-sidebar-item active" data-tab="rules">
+          <i class="fa-solid fa-bolt"></i> My Rules
+          <span class="count" id="rulesCount">0</span>
+        </div>
+        <div class="wf-sidebar-item" data-tab="templates">
+          <i class="fa-solid fa-shapes"></i> Templates
+          <span class="count" id="templatesCount">8</span>
+        </div>
+        <div class="wf-sidebar-item" data-tab="logs">
+          <i class="fa-solid fa-timeline"></i> Execution Logs
+        </div>
+      </div>
+
+      <div class="wf-sidebar-section">
+        <div class="wf-sidebar-title">AI Assistant</div>
+        <div class="wf-sidebar-item" data-tab="ai">
+          <i class="fa-solid fa-robot"></i> Create with AI
+        </div>
+      </div>
+
+      <div class="wf-sidebar-section">
+        <div class="wf-sidebar-title">Filter by State</div>
+        <div class="wf-sidebar-item" data-filter="all">
+          <i class="fa-regular fa-circle"></i> All Rules
+        </div>
+        <div class="wf-sidebar-item" data-filter="published">
+          <i class="fa-solid fa-circle" style="color:#34a853;font-size:8px"></i> Published
+        </div>
+        <div class="wf-sidebar-item" data-filter="draft">
+          <i class="fa-solid fa-circle" style="color:#6b7280;font-size:8px"></i> Drafts
+        </div>
+        <div class="wf-sidebar-item" data-filter="testing">
+          <i class="fa-solid fa-circle" style="color:#e67e22;font-size:8px"></i> Testing
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="wf-main" id="wfMain">
+      <!-- Rules Tab (default) -->
+      <div id="tabRules" class="wf-tab-content">
+        <div class="wf-rules-header">
+          <h2>Automation Rules</h2>
+        </div>
+        <div id="rulesGrid" class="wf-rules-grid"></div>
+        <div id="rulesEmpty" class="wf-empty" style="display:none;">
+          <i class="fa-solid fa-bolt"></i>
+          <h3>No rules yet</h3>
+          <p>Create your first automation rule or pick a template to get started.</p>
+          <button class="wf-btn primary" onclick="showTab('templates')">
+            <i class="fa-solid fa-shapes"></i> Browse Templates
+          </button>
+        </div>
+      </div>
+
+      <!-- Templates Tab -->
+      <div id="tabTemplates" class="wf-tab-content" style="display:none;">
+        <div class="wf-rules-header">
+          <h2>Automation Templates</h2>
+        </div>
+        <div id="templatesGrid" class="wf-templates"></div>
+      </div>
+
+      <!-- Logs Tab -->
+      <div id="tabLogs" class="wf-tab-content" style="display:none;">
+        <div class="wf-rules-header">
+          <h2>Execution Logs</h2>
+          <button class="wf-btn danger" id="clearLogsBtn"><i class="fa-solid fa-trash"></i> Clear</button>
+        </div>
+        <table class="wf-logs-table">
+          <thead>
+            <tr><th>Time</th><th>Rule</th><th>Task</th><th>Trigger</th><th>Status</th><th>Details</th></tr>
+          </thead>
+          <tbody id="logsBody"></tbody>
+        </table>
+        <div id="logsEmpty" class="wf-empty" style="display:none;">
+          <i class="fa-solid fa-timeline"></i>
+          <h3>No execution logs</h3>
+          <p>Logs will appear here when rules are triggered.</p>
+        </div>
+      </div>
+
+      <!-- AI Tab -->
+      <div id="tabAi" class="wf-tab-content" style="display:none;">
+        <div class="wf-rules-header">
+          <h2>Create Rule with AI</h2>
+        </div>
+        <div class="wf-ai-section">
+          <h3><i class="fa-solid fa-robot"></i> Zia AI Assistant</h3>
+          <p style="color:var(--text-secondary);font-size:13px;margin-bottom:12px;">Describe your automation in plain English and Zia will generate a rule for you.</p>
+          <div class="wf-ai-input">
+            <input type="text" id="aiPromptInput" placeholder="e.g. When a high priority task is created, assign it to Pradeep and notify the team">
+            <button class="wf-btn primary" id="aiGenerateBtn"><i class="fa-solid fa-wand-magic-sparkles"></i> Generate</button>
+          </div>
+          <div id="aiResult" style="margin-top:16px;display:none;"></div>
+        </div>
+        <div style="margin-top:20px;">
+          <h3 style="margin-bottom:12px;">Example Prompts</h3>
+          <div style="display:flex;flex-direction:column;gap:8px;" id="aiExamples">
+            <div class="wf-template-card ai-example" style="padding:12px;">When a high priority bug is created, assign to Pradeep and notify the team</div>
+            <div class="wf-template-card ai-example" style="padding:12px;">Remind me 2 days before any task is due</div>
+            <div class="wf-template-card ai-example" style="padding:12px;">When a task is completed, duplicate it for the next cycle</div>
+            <div class="wf-template-card ai-example" style="padding:12px;">When task status changes to Fixed, assign to QA Team and send notification</div>
+            <div class="wf-template-card ai-example" style="padding:12px;">When any overdue task exists, set priority to High and alert the team</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rule Builder (hidden by default, shown when editing/creating) -->
+      <div id="ruleBuilder" class="wf-tab-content" style="display:none;">
+        <div class="wf-canvas">
+          <div class="wf-canvas-header">
+            <div class="wf-canvas-title">
+              <input type="text" id="ruleName" placeholder="Enter rule name...">
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button class="wf-btn" id="testRuleBtn"><i class="fa-solid fa-flask"></i> Test</button>
+              <button class="wf-btn success" id="publishRuleBtn"><i class="fa-solid fa-rocket"></i> Publish</button>
+              <button class="wf-btn primary" id="saveRuleBtn"><i class="fa-solid fa-floppy-disk"></i> Save Draft</button>
+              <button class="wf-btn" id="cancelRuleBtn"><i class="fa-solid fa-xmark"></i> Cancel</button>
+            </div>
+          </div>
+
+          <div class="wf-flow" id="ruleFlow">
+            <!-- Trigger Step -->
+            <div class="wf-step" id="triggerStep">
+              <div class="wf-step-header">
+                <div class="wf-step-icon trigger"><i class="fa-solid fa-bolt"></i></div>
+                <div>
+                  <div class="wf-step-label trigger">TRIGGER</div>
+                  <div class="wf-step-title">When this happens...</div>
+                </div>
+              </div>
+              <div class="wf-step-body">
+                <select id="triggerType">
+                  <option value="">Select a trigger...</option>
+                </select>
+                <div id="triggerConfig"></div>
+              </div>
+            </div>
+
+            <div class="wf-flow-connector"></div>
+
+            <!-- Conditions Step -->
+            <div class="wf-step" id="conditionsStep">
+              <div class="wf-step-header">
+                <div class="wf-step-icon condition"><i class="fa-solid fa-filter"></i></div>
+                <div>
+                  <div class="wf-step-label condition">CONDITIONS</div>
+                  <div class="wf-step-title">Only if these are true...</div>
+                </div>
+              </div>
+              <div class="wf-step-body">
+                <div class="condition-logic">
+                  <button class="active" data-logic="AND">Match ALL (AND)</button>
+                  <button data-logic="OR">Match ANY (OR)</button>
+                </div>
+                <div id="conditionsList"></div>
+                <button class="wf-btn" id="addConditionBtn" style="margin-top:8px;"><i class="fa-solid fa-plus"></i> Add Condition</button>
+              </div>
+            </div>
+
+            <div class="wf-flow-connector"></div>
+
+            <!-- Actions Step -->
+            <div class="wf-step" id="actionsStep">
+              <div class="wf-step-header">
+                <div class="wf-step-icon action"><i class="fa-solid fa-play"></i></div>
+                <div>
+                  <div class="wf-step-label action">ACTIONS</div>
+                  <div class="wf-step-title">Then do this...</div>
+                </div>
+              </div>
+              <div class="wf-step-body">
+                <div id="actionsList"></div>
+                <button class="wf-btn" id="addActionBtn" style="margin-top:8px;"><i class="fa-solid fa-plus"></i> Add Action</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toastContainer"></div>
+
+  <script src="backend.js"></script>
+  <script src="workflow-engine.js"></script>
+  <script src="workflow-ui.js"></script>
+</body>
+</html>
