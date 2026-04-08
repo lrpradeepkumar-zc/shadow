@@ -1164,3 +1164,76 @@ kbd {
         grid-template-columns: 1fr;
     }
 }
+
+/* ===== LIGHT THEME ===== */
+body.light-theme {
+        --bg-primary: #f0f2f5;
+        --bg-secondary: #ffffff;
+        --bg-tertiary: #e4e6ea;
+        --bg-card: #ffffff;
+        --bg-hover: #e2e4e8;
+        --bg-input: #f0f2f5;
+        --text-primary: #1f2937;
+        --text-secondary: #4b5563;
+        --text-muted: #9ca3af;
+        --accent: #4285f4;
+        --accent-hover: #3b78e7;
+        --border: #d1d5db;
+        --border-light: #e5e7eb;
+        --sidebar-bg: #f7f8fa;
+        --dialog-bg: #ffffff;
+        --overlay-bg: rgba(0, 0, 0, 0.4);
+}
+
+body.light-theme .settings-dialog {
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+}
+
+body.light-theme .settings-section-header {
+        background: var(--dialog-bg);
+}
+
+body.light-theme .shortcuts-container {
+        background: var(--bg-card);
+}
+
+body.light-theme kbd {
+        background: var(--bg-input);
+        border-color: var(--border);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+body.light-theme .group-card {
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+body.light-theme .settings-select {
+        background: var(--bg-input);
+        border-color: var(--border);
+}
+
+body.light-theme .settings-info-note {
+        background: rgba(66, 133, 244, 0.08);
+        border-color: rgba(66, 133, 244, 0.2);
+}
+
+body.light-theme .dark-preview {
+        background: #1a1a2e;
+}
+
+body.light-theme .light-preview {
+        background: #e0e5ec;
+}
+
+body.light-theme .white-preview {
+        background: #ffffff;
+        border: 1px solid var(--border);
+}
+
+body.light-theme ::-webkit-scrollbar-thumb {
+        background: #c1c5cc;
+}
+
+body.light-theme ::-webkit-scrollbar-thumb:hover {
+        background: #a8acb4;
+}
