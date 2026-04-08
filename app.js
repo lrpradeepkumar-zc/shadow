@@ -584,10 +584,33 @@
          renderView();
    });
 
-   // Theme toggle
-   document.querySelector('.theme-toggle').addEventListener('click', function() {
-         document.body.classList.toggle('light-theme');
-   });
+// Theme toggle with localStorage persistence
+        document.querySelector('.theme-toggle').addEventListener('click', function() {
+                    document.body.classList.toggle('light-theme');
+                    var isLight = document.body.classList.contains('light-theme');
+                    localStorage.setItem('shadow-theme', isLight ? 'light' : 'night');
+                    // Update icon
+                    var icon = this.querySelector('i');
+                    if (icon) {
+                                    icon.className = isLight ? 'fa-solid fa-sun' : 'fa-solid fa-circle-half-stroke';
+                    }
+        });
+
+        // Apply saved theme on load
+        (function() {
+                    var saved = localStorage.getItem('shadow-theme');
+                    if (saved === 'light') {
+                                    document.body.classList.add('light-theme');
+                                    var icon = document.querySelector('.theme-toggle i');
+                                    if (icon) icon.className = 'fa-solid fa-sun';
+                    } else if (saved === 'system') {
+                                    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+                                                        document.body.classList.add('light-theme');
+                                                        var icon = document.querySelector('.theme-toggle i');
+                                                        if (icon) icon.className = 'fa-solid fa-sun';
+                                    }
+                    }
+        })();
 
    // ===== GROUP SELECT UPDATES =====
    function updateGroupSelects() {
