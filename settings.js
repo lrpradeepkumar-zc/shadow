@@ -109,6 +109,41 @@ function setupThemeHandlers() {
             radio.dispatchEvent(new Event('change'));
         }
     }
+
+        // Appearance mode (light/dark/system)
+        document.querySelectorAll('input[name="appearance"]').forEach(radio => {
+                    radio.addEventListener('change', () => {
+                                    const mode = radio.value;
+                                    localStorage.setItem('shadow-theme', mode);
+                                    if (mode === 'light') {
+                                                        document.body.classList.add('light-theme');
+                                    } else if (mode === 'night') {
+                                                        document.body.classList.remove('light-theme');
+                                    } else if (mode === 'system') {
+                                                        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+                                                                                document.body.classList.add('light-theme');
+                                                        } else {
+                                                                                document.body.classList.remove('light-theme');
+                                                        }
+                                    }
+                    });
+        });
+
+        // Load saved appearance mode and set the correct radio
+        const savedTheme = localStorage.getItem('shadow-theme');
+        if (savedTheme) {
+                    const radio = document.querySelector('input[name="appearance"][value="' + savedTheme + '"]');
+                    if (radio) {
+                                    radio.checked = true;
+                    }
+                    if (savedTheme === 'light') {
+                                    document.body.classList.add('light-theme');
+                    } else if (savedTheme === 'system') {
+                                    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+                                                        document.body.classList.add('light-theme');
+                                    }
+                    }
+        }
 }
 
 // ============ SHORTCUTS TOGGLE ============
