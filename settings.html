@@ -7,6 +7,14 @@
     <link rel="stylesheet" href="settings.css">
 </head>
 <body>
+      <script>
+              // Apply saved theme immediately to prevent flash
+              (function() {
+                        var t = localStorage.getItem('shadow-theme');
+                        if (t === 'light') document.body.classList.add('light-theme');
+                                  else if (t === 'system' && window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) document.body.classList.add('light-theme');
+              })();
+      </script>
     <!-- Settings Modal Overlay -->
     <div class="settings-overlay" id="settingsOverlay">
         <div class="settings-dialog">
