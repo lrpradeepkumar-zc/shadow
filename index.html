@@ -8,6 +8,14 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   </head>
   <body>
+      <script>
+            // Apply saved theme immediately to prevent flash
+            (function() {
+                    var t = localStorage.getItem('shadow-theme');
+                    if (t === 'light') document.body.classList.add('light-theme');
+                            else if (t === 'system' && window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) document.body.classList.add('light-theme');
+            })();
+      </script>
     <!-- Top Header Bar -->
     <header class="top-header">
       <div class="header-left">
