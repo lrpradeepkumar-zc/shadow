@@ -155,3 +155,51 @@
   .wf-sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border-color, #3a3d45); }
   .wf-rules-grid, .wf-templates { grid-template-columns: 1fr; }
 }
+
+/* ===== LIGHT THEME for Workflow Page ===== */
+body.light-theme .workflow-page,
+body.light-theme.workflow-page {
+    --bg-primary: #f5f6f8;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #e8eaed;
+    --bg-card: #ffffff;
+    --bg-hover: #e2e4e8;
+    --text-primary: #1f2937;
+    --text-secondary: #4b5563;
+    --text-muted: #9ca3af;
+    --border-color: #d1d5db;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+body.light-theme .wf-rule-card {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+body.light-theme .wf-rule-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+body.light-theme .wf-template-card {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+body.light-theme .wf-toast {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+body.light-theme .wf-canvas {
+    background: var(--bg-primary);
+}
+
+body.light-theme .wf-step {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+body.light-theme .wf-ai-input input::placeholder {
+    color: var(--text-muted);
+}
+
+body.light-theme .wf-canvas-title input::placeholder {
+    color: var(--text-muted);
+}
