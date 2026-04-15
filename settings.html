@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shadow ToDo - Settings</title>
     <link rel="stylesheet" href="settings.css">
+  <link rel="stylesheet" href="approval.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
       <script>
@@ -505,6 +507,7 @@
                                     <div class="task-settings-nav-item" data-tsection="tags">Tags</div>
                                     <div class="task-settings-nav-item" data-tsection="customFields">Custom fields</div>
                                     <div class="task-settings-nav-item" data-tsection="otherSettings">Other settings</div>
+                <div class="task-settings-nav-item" data-tsection="approvals">Rules & Approvals</div>
                                 </div>
                                 <div class="task-settings-content">
                                     <!-- Category -->
@@ -560,7 +563,13 @@
                                         <div class="settings-item-list" id="customFieldsList"></div>
                                     </div>
                                     <!-- Other Settings -->
-                                    <div class="task-settings-section" id="tsection-otherSettings">
+                                    <div class="task-settings-section" id="tsection-approvals">
+                <h2>Rules & Approvals</h2>
+                <p class="settings-description">Configure the approval workflow for tasks in this group. Only group admins can manage these settings.</p>
+                <div id="approvalSettingsMount"></div>
+              </div>
+              <!-- Other Settings -->
+              <div class="task-settings-section" id="tsection-otherSettings">
                                         <h2>Other settings</h2>
                                         <p class="settings-description">You can automate task management with deadlines and notifications, and view each subtask as an individual item.</p>
                                         <div class="settings-block">
@@ -607,5 +616,7 @@
     </div>
     
     <script src="backend.js"></script>    <script src="approval-backend.js"></script>
+  <script src="approval-ui.js"></script>
+  <script src="settings.js"></script>
 </body>
 </html>
