@@ -1,6 +1,7 @@
 /**
  * Shadow ToDo - Approval Workflow UI (PRD-Compliant)
  * Request modal, decision panel, task locking, timeline, admin abort, notifications
+ * Updated: Rules and Approval workflow in View Task popup with responsive layout
  */
 const ApprovalUI = (function() {
   'use strict';
@@ -67,7 +68,7 @@ const ApprovalUI = (function() {
           '</div>' +
         '</div>';
 
-      // Populate approver dropdown with avatars
+      // Populate approver dropdown
       ApprovalWorkflow.getAvailableApprovers(groupId).then(members => {
         const select = container.querySelector('#defaultApprover');
         members.filter(m => m.name !== 'System').forEach(m => {
@@ -127,6 +128,7 @@ const ApprovalUI = (function() {
 
   /* ════════════════════════════════
      REQUEST APPROVAL BUTTON / STATUS BANNER
+     Matches reference images: button in header, banners below header
      ════════════════════════════════ */
   function renderRequestButton(task, groupId) {
     const container = document.createElement('div');
@@ -135,26 +137,24 @@ const ApprovalUI = (function() {
     ApprovalWorkflow.Settings.isEnabled(groupId).then(async enabled => {
       if (!enabled) return;
 
-      const canRequest     = ApprovalWorkflow.canRequestApproval(task, CURRENT_USER);
-      const activeRequest  = await ApprovalWorkflow.Requests.getActiveForTask(task.id);
-      const allRequests    = await ApprovalWorkflow.Requests.getAllForTask(task.id);
-      const latestRequest  = allRequests.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
-      const isAdmin        = await ApprovalWorkflow.isGroupAdmin(groupId, CURRENT_USER);
+      const canRequest = ApprovalWorkflow.canRequestApproval(task, CURRENT_USER);
+      const activeRequest = await ApprovalWorkflow.Requests.getActiveForTask(task.id);
+      const allRequests = await ApprovalWorkflow.Requests.getAllForTask(task.id);
+      const latestRequest = allRequests.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+      const isAdmin = await ApprovalWorkflow.isGroupAdmin(groupId, CURRENT_USER);
 
       if (activeRequest) {
         const isApprover = activeRequest.approverId === CURRENT_USER;
 
-        /* Pending banner */
+        /* Status banner below header - matching reference image 3 (Approval Pending) */
         container.innerHTML =
-          '<div class="approval-status-banner pending">' +
-            '<i class="fa-solid fa-clock"></i>' +
-            '<div class="approval-status-info">' +
-              '<strong><i class="fa-solid fa-clock"></i> Approval Pending</strong>' +
-              '<span>Awaiting review from <strong>' + activeRequest.approverId + '</strong></span>' +
-            '</div>' +
+          '<div class="approval-status-strip pending">' +
+            '<span class="approval-status-strip-text">' +
+              '<i class="fa-solid fa-clock"></i> Approval Pending' +
+            '</span>' +
           '</div>';
 
-        /* Header badge: "Approval Requested" tag in task header */
+        /* Header badge: "Approval Requested" in task header */
         injectHeaderBadge('pending');
 
         /* Approver decision panel */
@@ -171,27 +171,24 @@ const ApprovalUI = (function() {
           abortBtn.addEventListener('click', () => showAbortModal(activeRequest));
           container.appendChild(abortBtn);
         }
-
       } else if (latestRequest && latestRequest.status === 'approved') {
+        /* Status banner - matching reference image 2 (Approved - green strip) */
         container.innerHTML =
-          '<div class="approval-status-banner approved">' +
-            '<i class="fa-solid fa-circle-check"></i>' +
-            '<div class="approval-status-info">' +
-              '<strong>Approved</strong>' +
-              '<span>Approved by ' + latestRequest.approverId + ' on ' + formatTimestamp(latestRequest.resolvedAt) + '</span>' +
-            '</div>' +
+          '<div class="approval-status-strip approved">' +
+            '<span class="approval-status-strip-text">' +
+              '<i class="fa-solid fa-circle-check"></i> Approved' +
+            '</span>' +
           '</div>';
-        injectHeaderBadge('approved');
 
+        injectHeaderBadge('approved');
       } else if (latestRequest && latestRequest.status === 'changes_requested') {
         container.innerHTML =
-          '<div class="approval-status-banner changes-requested">' +
-            '<i class="fa-solid fa-rotate-left"></i>' +
-            '<div class="approval-status-info">' +
-              '<strong>Changes Requested</strong>' +
-              '<span>' + (latestRequest.rejectionCategory ? '[' + latestRequest.rejectionCategory + '] ' : '') + (latestRequest.decisionNote || '') + '</span>' +
-            '</div>' +
+          '<div class="approval-status-strip changes-requested">' +
+            '<span class="approval-status-strip-text">' +
+              '<i class="fa-solid fa-rotate-left"></i> Changes Requested' +
+            '</span>' +
           '</div>';
+
         injectHeaderBadge('changes');
 
         if (canRequest) {
@@ -201,7 +198,6 @@ const ApprovalUI = (function() {
           resubmitBtn.addEventListener('click', () => showResubmitModal(latestRequest));
           container.appendChild(resubmitBtn);
         }
-
       } else if (canRequest) {
         /* "Request Approval" button in task header (PRD: prominent in header) */
         injectHeaderButton(task, groupId);
@@ -211,24 +207,30 @@ const ApprovalUI = (function() {
     return container;
   }
 
-  /* Inject "Request Approval" button into task detail header */
+  /* Inject "Request Approval" button into task detail header - matches reference image 1 */
   function injectHeaderButton(task, groupId) {
     const headerRight = document.querySelector('.detail-header-right');
     if (!headerRight) return;
+
     let existing = headerRight.querySelector('.request-approval-header-btn');
     if (existing) existing.remove();
+    let oldBadge = headerRight.querySelector('.approval-header-badge');
+    if (oldBadge) oldBadge.remove();
 
     const btn = document.createElement('button');
     btn.className = 'request-approval-header-btn';
     btn.innerHTML = 'Request Approval';
     btn.addEventListener('click', () => showRequestModal(task, groupId));
+
+    /* Insert before the icon buttons (recurrence, attachment, etc.) */
     headerRight.insertBefore(btn, headerRight.firstChild);
   }
 
-  /* Inject status badge into task detail header */
+  /* Inject status badge into task detail header - matches reference images 2 & 3 */
   function injectHeaderBadge(type) {
     const headerRight = document.querySelector('.detail-header-right');
     if (!headerRight) return;
+
     let existing = headerRight.querySelector('.approval-header-badge');
     if (existing) existing.remove();
     let btn = headerRight.querySelector('.request-approval-header-btn');
@@ -236,13 +238,15 @@ const ApprovalUI = (function() {
 
     const badge = document.createElement('span');
     badge.className = 'approval-header-badge ' + type;
+
     if (type === 'pending') {
-      badge.innerHTML = '<i class="fa-solid fa-clock"></i> Approval Requested';
+      badge.innerHTML = 'Approval  Requested';
     } else if (type === 'approved') {
-      badge.innerHTML = '<i class="fa-solid fa-check"></i> Approved';
+      badge.innerHTML = 'Approval  Requested';
     } else {
-      badge.innerHTML = '<i class="fa-solid fa-rotate-left"></i> Changes Requested';
+      badge.innerHTML = 'Changes  Requested';
     }
+
     headerRight.insertBefore(badge, headerRight.firstChild);
   }
 
@@ -294,7 +298,7 @@ const ApprovalUI = (function() {
       banner.className = 'task-lock-banner';
       banner.innerHTML =
         '<i class="fa-solid fa-lock"></i>' +
-        '<span>Task fields locked — Pending approval from <strong>' + lockInfo.approverId + '</strong></span>';
+        '<span>Task fields locked \u2014 Pending approval from <strong>' + lockInfo.approverId + '</strong></span>';
       if (isApprover) {
         banner.innerHTML += '<span class="approver-badge">You are the approver</span>';
       }
@@ -373,6 +377,7 @@ const ApprovalUI = (function() {
   function showRequestModal(task, groupId) {
     const overlay = createModal('request-approval-modal');
     const modal = overlay.querySelector('.modal-content');
+
     modal.innerHTML =
       '<div class="modal-header">' +
         '<h3>Request Approval</h3>' +
@@ -402,12 +407,11 @@ const ApprovalUI = (function() {
     ApprovalWorkflow.getAvailableApprovers(groupId).then(async members => {
       const select = modal.querySelector('#modalApprover');
       const settings = await ApprovalWorkflow.Settings.get(groupId);
-
       members.filter(m => m.name !== CURRENT_USER).forEach(m => {
         const opt = document.createElement('option');
         opt.value = m.name;
         const isDefault = settings.defaultApprover === m.name;
-        opt.textContent = m.name + (isDefault ? '  (Default)' : '');
+        opt.textContent = m.name + (isDefault ? ' (Default)' : '');
         if (isDefault) opt.selected = true;
         select.appendChild(opt);
       });
@@ -422,13 +426,24 @@ const ApprovalUI = (function() {
     modal.querySelector('.btn-submit').addEventListener('click', async () => {
       const approverId = modal.querySelector('#modalApprover').value;
       const note = modal.querySelector('#modalNote').value;
-      if (!approverId) { showToast('Please select an approver', 'error'); return; }
+      if (!approverId) {
+        showToast('Please select an approver', 'error');
+        return;
+      }
       try {
-        await ApprovalWorkflow.Requests.submit({ taskId: task.id, requesterId: CURRENT_USER, approverId, note, groupId });
+        await ApprovalWorkflow.Requests.submit({
+          taskId: task.id,
+          requesterId: CURRENT_USER,
+          approverId,
+          note,
+          groupId
+        });
         closeModal(overlay);
         showToast('Approval request submitted!', 'success');
         refreshTaskDetail(task.id);
-      } catch (e) { showToast(e.message, 'error'); }
+      } catch (e) {
+        showToast(e.message, 'error');
+      }
     });
 
     modal.querySelector('.btn-cancel').addEventListener('click', () => closeModal(overlay));
@@ -441,6 +456,7 @@ const ApprovalUI = (function() {
   function showApproveModal(request) {
     const overlay = createModal('approve-modal');
     const modal = overlay.querySelector('.modal-content');
+
     modal.innerHTML =
       '<div class="modal-header approve-header">' +
         '<h3><i class="fa-solid fa-check-circle"></i> Approve Task</h3>' +
@@ -460,12 +476,19 @@ const ApprovalUI = (function() {
     modal.querySelector('.btn-approve-submit').addEventListener('click', async () => {
       const note = modal.querySelector('#approveNote').value;
       try {
-        await ApprovalWorkflow.Requests.approve({ requestId: request.id, approverId: CURRENT_USER, note });
+        await ApprovalWorkflow.Requests.approve({
+          requestId: request.id,
+          approverId: CURRENT_USER,
+          note
+        });
         closeModal(overlay);
         showToast('Task approved!', 'success');
         refreshTaskDetail(request.taskId);
-      } catch (e) { showToast(e.message, 'error'); }
+      } catch (e) {
+        showToast(e.message, 'error');
+      }
     });
+
     modal.querySelector('.btn-cancel').addEventListener('click', () => closeModal(overlay));
     modal.querySelector('.modal-close').addEventListener('click', () => closeModal(overlay));
   }
@@ -476,6 +499,7 @@ const ApprovalUI = (function() {
   function showRejectModal(request) {
     const overlay = createModal('reject-approval-modal');
     const modal = overlay.querySelector('.modal-content');
+
     modal.innerHTML =
       '<div class="modal-header reject-header">' +
         '<h3><i class="fa-solid fa-xmark"></i> Reject Request</h3>' +
@@ -509,12 +533,20 @@ const ApprovalUI = (function() {
       if (!category) { showToast('Please select a category', 'error'); return; }
       if (!reason) { showToast('Please provide a reason', 'error'); return; }
       try {
-        await ApprovalWorkflow.Requests.reject({ requestId: request.id, approverId: CURRENT_USER, category, reason });
+        await ApprovalWorkflow.Requests.reject({
+          requestId: request.id,
+          approverId: CURRENT_USER,
+          category,
+          reason
+        });
         closeModal(overlay);
         showToast('Request rejected', 'warning');
         refreshTaskDetail(request.taskId);
-      } catch (e) { showToast(e.message, 'error'); }
+      } catch (e) {
+        showToast(e.message, 'error');
+      }
     });
+
     modal.querySelector('.btn-cancel').addEventListener('click', () => closeModal(overlay));
     modal.querySelector('.modal-close').addEventListener('click', () => closeModal(overlay));
   }
@@ -525,6 +557,7 @@ const ApprovalUI = (function() {
   function showChangesModal(request) {
     const overlay = createModal('changes-approval-modal');
     const modal = overlay.querySelector('.modal-content');
+
     modal.innerHTML =
       '<div class="modal-header changes-header">' +
         '<h3><i class="fa-solid fa-pen"></i> Request Changes</h3>' +
@@ -545,12 +578,19 @@ const ApprovalUI = (function() {
       const feedback = modal.querySelector('#changesFeedback').value;
       if (!feedback) { showToast('Feedback is required', 'error'); return; }
       try {
-        await ApprovalWorkflow.Requests.requestChanges({ requestId: request.id, approverId: CURRENT_USER, feedback });
+        await ApprovalWorkflow.Requests.requestChanges({
+          requestId: request.id,
+          approverId: CURRENT_USER,
+          feedback
+        });
         closeModal(overlay);
         showToast('Changes requested', 'info');
         refreshTaskDetail(request.taskId);
-      } catch (e) { showToast(e.message, 'error'); }
+      } catch (e) {
+        showToast(e.message, 'error');
+      }
     });
+
     modal.querySelector('.btn-cancel').addEventListener('click', () => closeModal(overlay));
     modal.querySelector('.modal-close').addEventListener('click', () => closeModal(overlay));
   }
@@ -561,6 +601,7 @@ const ApprovalUI = (function() {
   function showResubmitModal(request) {
     const overlay = createModal('resubmit-modal');
     const modal = overlay.querySelector('.modal-content');
+
     modal.innerHTML =
       '<div class="modal-header">' +
         '<h3><i class="fa-solid fa-paper-plane"></i> Resubmit for Approval</h3>' +
@@ -580,12 +621,19 @@ const ApprovalUI = (function() {
     modal.querySelector('.btn-submit').addEventListener('click', async () => {
       const note = modal.querySelector('#resubmitNote').value;
       try {
-        await ApprovalWorkflow.Requests.resubmit({ requestId: request.id, requesterId: CURRENT_USER, note });
+        await ApprovalWorkflow.Requests.resubmit({
+          requestId: request.id,
+          requesterId: CURRENT_USER,
+          note
+        });
         closeModal(overlay);
         showToast('Resubmitted for approval!', 'success');
         refreshTaskDetail(request.taskId);
-      } catch (e) { showToast(e.message, 'error'); }
+      } catch (e) {
+        showToast(e.message, 'error');
+      }
     });
+
     modal.querySelector('.btn-cancel').addEventListener('click', () => closeModal(overlay));
     modal.querySelector('.modal-close').addEventListener('click', () => closeModal(overlay));
   }
@@ -596,6 +644,7 @@ const ApprovalUI = (function() {
   function showAbortModal(request) {
     const overlay = createModal('abort-modal');
     const modal = overlay.querySelector('.modal-content');
+
     modal.innerHTML =
       '<div class="modal-header abort-header">' +
         '<h3><i class="fa-solid fa-ban"></i> Abort Approval</h3>' +
@@ -616,12 +665,19 @@ const ApprovalUI = (function() {
     modal.querySelector('.btn-abort').addEventListener('click', async () => {
       const reason = modal.querySelector('#abortReason').value;
       try {
-        await ApprovalWorkflow.Requests.abort({ requestId: request.id, adminId: CURRENT_USER, reason });
+        await ApprovalWorkflow.Requests.abort({
+          requestId: request.id,
+          adminId: CURRENT_USER,
+          reason
+        });
         closeModal(overlay);
         showToast('Approval aborted', 'warning');
         refreshTaskDetail(request.taskId);
-      } catch (e) { showToast(e.message, 'error'); }
+      } catch (e) {
+        showToast(e.message, 'error');
+      }
     });
+
     modal.querySelector('.btn-cancel').addEventListener('click', () => closeModal(overlay));
     modal.querySelector('.modal-close').addEventListener('click', () => closeModal(overlay));
   }
@@ -679,10 +735,14 @@ const ApprovalUI = (function() {
       });
       updateBadge();
     });
-    document.addEventListener('click', () => { dropdown.style.display = 'none'; });
+
+    document.addEventListener('click', () => {
+      dropdown.style.display = 'none';
+    });
 
     ApprovalWorkflow.on('approval:notification:new', () => updateBadge());
     updateBadge();
+
     return container;
   }
 
@@ -718,7 +778,9 @@ const ApprovalUI = (function() {
     overlay.className = 'approval-modal-overlay';
     overlay.id = id;
     overlay.innerHTML = '<div class="modal-content"></div>';
-    overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(overlay); });
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) closeModal(overlay);
+    });
     document.body.appendChild(overlay);
     return overlay;
   }
@@ -735,7 +797,10 @@ const ApprovalUI = (function() {
     toast.innerHTML = '<i class="fa-solid ' + getToastIcon(type) + '"></i> ' + message;
     document.body.appendChild(toast);
     setTimeout(() => toast.classList.add('show'), 10);
-    setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 3000);
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
   }
 
   function formatTimestamp(ts) {
@@ -790,7 +855,12 @@ const ApprovalUI = (function() {
   }
 
   function getToastIcon(type) {
-    return { success: 'fa-check-circle', error: 'fa-exclamation-circle', warning: 'fa-exclamation-triangle', info: 'fa-info-circle' }[type] || 'fa-info-circle';
+    return {
+      success: 'fa-check-circle',
+      error: 'fa-exclamation-circle',
+      warning: 'fa-exclamation-triangle',
+      info: 'fa-info-circle'
+    }[type] || 'fa-info-circle';
   }
 
   function refreshTaskDetail(taskId) {
@@ -821,22 +891,28 @@ const ApprovalUI = (function() {
       if (oldHeaderBtn) oldHeaderBtn.remove();
       const oldBadge = document.querySelector('.approval-header-badge');
       if (oldBadge) oldBadge.remove();
+      // Remove old status strips
+      panel.querySelectorAll('.approval-status-strip').forEach(el => el.remove());
 
       try {
         const task = await ShadowDB.Tasks.getById(data.taskId);
         if (!task) return;
+
         const groupId = task.group || 1;
 
         // Insert approval request/status section
         const requestSection = renderRequestButton(task, groupId);
-        const timelineSection = panel.querySelector('#timelineList');
-        if (timelineSection && timelineSection.parentNode) {
-          timelineSection.parentNode.insertBefore(requestSection, timelineSection);
+
+        // Insert as first child of detail-body (status strip goes below header)
+        const detailBody = panel.querySelector('.detail-body');
+        if (detailBody) {
+          detailBody.insertBefore(requestSection, detailBody.firstChild);
         }
 
-        // Insert audit trail
-        const auditTrail = renderAuditTrail(task.id);
+        // Insert audit trail before timeline
+        const timelineSection = panel.querySelector('#timelineList');
         if (timelineSection && timelineSection.parentNode) {
+          const auditTrail = renderAuditTrail(task.id);
           timelineSection.parentNode.insertBefore(auditTrail, timelineSection);
         }
 
