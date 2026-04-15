@@ -355,3 +355,258 @@
 .light-theme .audit-content strong { color: #333; }
 .light-theme .audit-notes { background: #f0f0f0; }
 .light-theme .task-lock-banner { background: rgba(255, 171, 0, 0.08); }
+
+
+/* ═══════════════════════════════════════════
+   PRD-COMPLIANT ADDITIONS
+   ═══════════════════════════════════════════ */
+
+/* ── Request Approval Header Button ── */
+.request-approval-header-btn {
+  background: none;
+  border: 1px solid var(--border-color, #444);
+  color: var(--text-primary, #e0e0e0);
+  padding: 6px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.request-approval-header-btn:hover {
+  border-color: #58a6ff;
+  color: #58a6ff;
+}
+.light-theme .request-approval-header-btn {
+  border-color: #d0d0d0;
+  color: #333;
+}
+.light-theme .request-approval-header-btn:hover {
+  border-color: #4285f4;
+  color: #4285f4;
+}
+
+/* ── Approval Header Badge ── */
+.approval-header-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.approval-header-badge.pending {
+  background: rgba(255, 171, 0, 0.12);
+  color: #ffab00;
+  border: 1px solid rgba(255, 171, 0, 0.3);
+}
+.approval-header-badge.approved {
+  background: rgba(52, 168, 83, 0.12);
+  color: #34a853;
+  border: 1px solid rgba(52, 168, 83, 0.3);
+}
+.approval-header-badge.changes {
+  background: rgba(234, 67, 53, 0.12);
+  color: #ea4335;
+  border: 1px solid rgba(234, 67, 53, 0.3);
+}
+
+/* ── Settings Card (Group Settings §1) ── */
+.approval-settings-card {
+  background: var(--bg-secondary, #1e1e2e);
+  border: 1px solid var(--border-color, #333);
+  border-radius: 10px;
+  padding: 24px;
+  margin: 20px 0;
+}
+.approval-settings-header-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+.approval-settings-header-row h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text-primary, #e0e0e0);
+}
+.approval-settings-icon {
+  color: var(--text-secondary, #888);
+  font-size: 18px;
+}
+.approval-settings-divider {
+  height: 1px;
+  background: var(--border-color, #333);
+  margin: 18px 0;
+}
+.approval-setting-block {
+  padding: 4px 0;
+}
+.approval-setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+}
+.setting-info label {
+  display: block;
+  font-weight: 600;
+  color: var(--text-primary, #e0e0e0);
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+.setting-desc {
+  font-size: 13px;
+  color: var(--text-secondary, #888);
+  line-height: 1.5;
+  max-width: 600px;
+}
+.approver-select {
+  width: 100%;
+  max-width: 380px;
+  padding: 10px 14px;
+  background: var(--bg-primary, #161622);
+  color: var(--text-primary, #e0e0e0);
+  border: 1px solid var(--border-color, #444);
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.approver-warning {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: rgba(255, 171, 0, 0.1);
+  border: 1px solid rgba(255, 171, 0, 0.3);
+  border-radius: 6px;
+  margin-top: 12px;
+  color: #ffab00;
+  font-size: 13px;
+}
+.approver-warning i {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.light-theme .approval-settings-card {
+  background: #fff;
+  border-color: #e0e0e0;
+}
+.light-theme .approver-select {
+  background: #f8f9fa;
+  color: #333;
+  border-color: #d0d0d0;
+}
+
+/* ── Lock Info Banner in Request Modal ── */
+.lock-info-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: rgba(88, 166, 255, 0.08);
+  border-radius: 8px;
+  color: var(--text-secondary, #888);
+  font-size: 13px;
+  margin-top: 8px;
+}
+.lock-info-banner i {
+  color: #58a6ff;
+  font-size: 16px;
+}
+.light-theme .lock-info-banner {
+  background: #f0f5ff;
+  color: #555;
+}
+
+/* ── Character Counter ── */
+.char-counter {
+  text-align: right;
+  font-size: 12px;
+  color: var(--text-secondary, #666);
+  margin-top: 4px;
+}
+.char-count-inline {
+  font-weight: normal;
+  color: var(--text-secondary, #666);
+}
+
+/* ── Form Labels ── */
+.form-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary, #e0e0e0);
+}
+.light-theme .form-label { color: #333; }
+
+/* ── Modal Header Variants ── */
+.modal-header.approve-header h3 i { color: #34a853; }
+.modal-header.reject-header h3 i { color: #ea4335; }
+.modal-header.changes-header h3 i { color: #ffab00; }
+.modal-header.abort-header h3 i { color: #ea4335; }
+
+/* ── Approve Submit Button ── */
+.btn-approve-submit {
+  padding: 8px 20px;
+  background: #34a853;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-approve-submit:hover { background: #2d9249; }
+
+/* ── Abort Button ── */
+.abort-btn {
+  background: transparent;
+  color: #ea4335;
+  border: 1px solid rgba(234, 67, 53, 0.4);
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+.abort-btn:hover {
+  background: rgba(234, 67, 53, 0.1);
+}
+
+.btn-abort {
+  padding: 8px 20px;
+  background: #ea4335;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-abort:hover { background: #d33426; }
+
+.abort-warning-text {
+  color: var(--text-secondary, #888);
+  font-size: 13px;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+/* ── Approver Field Styling ── */
+.approver-field {
+  font-size: 14px !important;
+  padding: 10px 14px !important;
+}
