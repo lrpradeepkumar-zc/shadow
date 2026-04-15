@@ -124,3 +124,4 @@ A replica of **Zoho ToDo** – Task Management Application built with pure HTML,
 - **Main App**: https://lrpradeepkumar-zc.github.io/shadow/
 - **Settings**: https://lrpradeepkumar-zc.github.io/shadow/settings.html
 - **Playground**: https://lrpradeepkumar-zc.github.io/shadow/playground.html
+- **Workflow**: https://lrpradeepkumar-zc.github.io/shadow/workflow.html
