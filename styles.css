@@ -210,3 +210,127 @@ body.light-theme .color-dot.selected {
     border-color: #1f2937;
 }
 ::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--bg-hover);border-radius:3px}
+
+/* ═══════════════════════════════════════════
+   RESPONSIVE DESIGN - Task Detail Panel & App Layout
+   Makes the task detail panel responsive to screen size
+   ═══════════════════════════════════════════ */
+
+/* Large screens - task detail panel adjustments */
+@media (max-width: 1400px) {
+  .task-detail-panel {
+    width: 420px;
+  }
+}
+
+/* Medium screens - task detail panel overlay */
+@media (max-width: 1100px) {
+  .task-detail-panel {
+    width: 380px;
+  }
+  .detail-header-left {
+    gap: 10px;
+  }
+  .detail-header-right {
+    gap: 2px;
+  }
+  .detail-meta {
+    font-size: 12px;
+    gap: 6px;
+  }
+}
+
+/* Tablet and smaller screens */
+@media (max-width: 900px) {
+  .sidebar {
+    display: none;
+  }
+  .right-sidebar {
+    display: none;
+  }
+  .task-detail-panel {
+    position: fixed;
+    top: 48px;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: 500px;
+    z-index: 50;
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.3);
+  }
+  .detail-header {
+    padding: 10px 12px;
+  }
+  .detail-header-left {
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .detail-body {
+    padding: 12px;
+  }
+  .detail-task-title {
+    font-size: 18px;
+  }
+}
+
+/* Small mobile screens */
+@media (max-width: 600px) {
+  .task-detail-panel {
+    max-width: 100%;
+    width: 100%;
+  }
+  .detail-header {
+    padding: 8px 10px;
+    gap: 6px;
+  }
+  .detail-header-left {
+    gap: 6px;
+    width: 100%;
+  }
+  .detail-header-right {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  .status-btn {
+    padding: 4px 10px;
+    font-size: 12px;
+  }
+  .detail-assignee {
+    gap: 4px;
+  }
+  .detail-body {
+    padding: 10px;
+  }
+  .detail-task-title {
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
+  .detail-meta {
+    font-size: 11px;
+    gap: 4px;
+    margin-bottom: 14px;
+  }
+  .detail-section {
+    margin-bottom: 14px;
+  }
+  .section-label {
+    font-size: 13px;
+  }
+  .detail-textarea {
+    min-height: 60px;
+    font-size: 13px;
+  }
+  .comment-section {
+    padding: 8px 10px;
+  }
+  .comment-input {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  .top-header {
+    padding: 0 8px;
+  }
+  .search-box {
+    display: none;
+  }
+}
