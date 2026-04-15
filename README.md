@@ -76,6 +76,19 @@ A replica of **Zoho ToDo** – Task Management Application built with pure HTML,
 - **Data Explorer** – Browse all 9 database stores in table format
 - **Console** – Execute JavaScript commands with ShadowDB API
 
+### Approval Workflow
+- **State Machine** – Three-state approval flow: Pending Approval → Approved | Changes Requested
+- **Single Active Request** – One active approval request constraint per task enforced at DB level
+- **Task Locking** – Task fields are locked during pending approval to prevent edits
+- **In-Flight Preservation** – Toggling approval feature OFF does not cancel existing requests
+- **Audit Trail** – Immutable audit trail with timestamped entries for all approval events
+- **Notification System** – Notification system for approval events
+- **Admin Settings Panel** – Per-group approval workflow configuration with enable/disable toggle
+- **Decision Interface** – Approve/Request Changes modal with comments for reviewers
+- **Lock Indicators** – Visual lock indicators on tasks pending approval
+- **Audit Timeline** – Full audit history timeline viewable per task
+- **Dark/Light Theme Support** – Complete CSS styling with dark and light theme support
+
 ## Tech Stack
 - Pure HTML5
 - CSS3 with CSS Variables
@@ -98,6 +111,13 @@ A replica of **Zoho ToDo** – Task Management Application built with pure HTML,
 - settings.js – Settings page logic
 - playground.html – Interactive POC playground UI
 - playground.js – Playground logic with code editor, POC templates, API console
+- workflow-engine.js – Rule-based automation engine with triggers, conditions, and actions
+- workflow-ui.js – Visual rule builder UI logic and interactions
+- workflow.html – Workflow automation page UI
+- workflow.css – Workflow page styles
+- approval-backend.js – Approval workflow backend with state machine, audit trail, and task locking
+- approval-ui.js – Approval workflow UI with modals, lock indicators, and audit timeline
+- approval.css – Approval workflow styles with dark/light theme support
 - README.md – This file
 
 ## Live Demo
