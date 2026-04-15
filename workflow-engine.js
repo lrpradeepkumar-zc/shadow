@@ -44,7 +44,8 @@ const WorkflowEngine = (function() {
     ADD_TAG: { id: 'add_tag', label: 'Add Tag', icon: 'fa-tag', description: 'Add a tag to the task', params: ['tag'] },
     SEND_NOTIFICATION: { id: 'send_notification', label: 'Send Notification', icon: 'fa-bell', description: 'Send an in-app notification', params: ['message', 'recipients'] },
     SET_DUE_DATE: { id: 'set_due_date', label: 'Set Due Date', icon: 'fa-calendar', description: 'Set or adjust due date', params: ['dateMode', 'value'] },
-    DUPLICATE_TASK: { id: 'duplicate_task', label: 'Duplicate Task', icon: 'fa-copy', description: 'Create a copy of the task', params: ['group', 'suffix'] }
+    DUPLICATE_TASK: { id: 'duplicate_task', label: 'Duplicate Task', icon: 'fa-copy', description: 'Create a copy of the task', params: ['group', 'suffix'] },
+    REQUEST_APPROVAL: { id: 'request_approval', label: 'Request Approval', icon: 'fa-stamp', description: 'Submit task for approval via approval workflow', params: ['approverId', 'note'] }
   };
 
   const TaskFields = {
@@ -223,6 +224,31 @@ const WorkflowEngine = (function() {
           await ShadowDB.Tasks.create(dup);
           result.success = true; result.details = 'Duplicated as: ' + dup.title; break;
         }
+        case 'request_approval': {
+          try {
+            if (typeof ApprovalWorkflow !== 'undefined') {
+              const settings = await ApprovalWorkflow.Settings.get(taskData.group);
+              if (settings.enabled) {
+                await ApprovalWorkflow.Requests.submit({
+                  taskId: taskData.id,
+                  requesterId: taskData.assignee || 'current_user',
+                  approverId: action.params.approverId || settings.defaultApprover,
+                  note: action.params.note || 'Auto-submitted by workflow rule: ' + rule.name,
+                  groupId: taskData.group
+                });
+                result.success = true;
+                result.details = 'Approval requested from ' + (action.params.approverId || settings.defaultApprover);
+              } else {
+                result.details = 'Approval workflow not enabled for group: ' + taskData.group;
+              }
+            } else {
+              result.details = 'ApprovalWorkflow module not loaded';
+            }
+          } catch(approvalErr) {
+            result.details = 'Approval error: ' + approvalErr.message;
+          }
+          break;
+        }
         default: result.details = 'Unknown action: ' + action.type;
       }
     } catch(e) { result.details = 'Error: ' + e.message; }
@@ -301,7 +327,13 @@ const WorkflowEngine = (function() {
     { id: 'tpl_7', name: 'Auto-Duplicate on Completion', description: 'Copy task when completed for recurring work', category: 'Automation', icon: 'fa-copy',
       rule: { trigger: { type: 'task_completed', config: {} }, conditions: [], conditionLogic: 'AND', actions: [{ type: 'duplicate_task', params: { suffix: ' (Next Cycle)' } }] } },
     { id: 'tpl_8', name: 'New Task Review Creation', description: 'Create a review task when group task added', category: 'Workflow', icon: 'fa-list-check',
-      rule: { trigger: { type: 'task_created', config: {} }, conditions: [{ field: 'group', operator: 'is_not_empty', value: '' }], conditionLogic: 'AND', actions: [{ type: 'create_task', params: { title: 'Review new task', priority: 'Medium', status: 'Open' } }] } }
+      rule: { trigger: { type: 'task_created', config: {} }, conditions: [{ field: 'group', operator: 'is_not_empty', value: '' }], conditionLogic: 'AND', actions: [{ type: 'create_task', params: { title: 'Review new task', priority: 'Medium', status: 'Open' } }] } },
+    { id: 'tpl_approval_1', name: 'Task Approval Gate', description: 'Require approval before high-priority tasks can proceed. Automatically submits for approval when a task is marked as Fixed.', category: 'Approval', icon: 'fa-stamp',
+      rule: { trigger: { type: 'status_changed', config: {} }, conditions: [{ field: 'status', operator: 'equals', value: 'Fixed' }, { field: 'priority', operator: 'equals', value: 'High' }], conditionLogic: 'AND', actions: [{ type: 'request_approval', params: { approverId: 'Team Lead', note: 'High-priority task ready for review' } }, { type: 'send_notification', params: { message: 'Approval required for high-priority task', recipients: 'Team Lead' } }] } },
+    { id: 'tpl_approval_2', name: 'Completion Approval Workflow', description: 'When a task is completed, submit it for manager approval and notify the team.', category: 'Approval', icon: 'fa-clipboard-check',
+      rule: { trigger: { type: 'task_completed', config: {} }, conditions: [{ field: 'group', operator: 'is_not_empty', value: '' }], conditionLogic: 'AND', actions: [{ type: 'request_approval', params: { approverId: 'Manager', note: 'Task completed - pending approval' } }, { type: 'send_notification', params: { message: 'Task completed and sent for approval', recipients: 'all' } }] } },
+    { id: 'tpl_approval_3', name: 'New Task Approval Required', description: 'Automatically request approval when a new high-priority task is created in any group.', category: 'Approval', icon: 'fa-file-circle-check',
+      rule: { trigger: { type: 'task_created', config: {} }, conditions: [{ field: 'priority', operator: 'equals', value: 'High' }], conditionLogic: 'AND', actions: [{ type: 'request_approval', params: { approverId: 'Team Lead', note: 'New high-priority task needs approval' } }, { type: 'assign_task', params: { assignee: 'Team Lead' } }] } }
   ];
 
   // ===== AI PROMPT-TO-RULE (Simulated NLP) =====
