@@ -1,4 +1,4 @@
-// Settings Page JavaScript - Shadow ToDo
+// Settings Page JavaScript - Shadow ToDo (with Approval Integration)
 document.addEventListener('DOMContentLoaded', () => {
     initSettings();
 });
@@ -605,4 +605,48 @@ if (resetBtn) {
     resetBtn.addEventListener('click', () => {
         alert('Keyboard shortcuts have been reset to defaults.');
     });
+}
+
+
+// ============ APPROVAL SETTINGS INTEGRATION ============
+// When "Rules & Approvals" tab is clicked in Task Settings,
+// mount the ApprovalUI settings panel into #approvalSettingsMount.
+
+function setupApprovalSettings() {
+  // Extend the task settings nav click handler to handle the approvals tab
+  document.querySelectorAll('.task-settings-nav-item').forEach(item => {
+    item.addEventListener('click', async function() {
+      if (this.dataset.tsection === 'approvals') {
+        // Show approval section
+        document.querySelectorAll('.task-settings-nav-item').forEach(n => n.classList.remove('active'));
+        this.classList.add('active');
+        document.querySelectorAll('.task-settings-section').forEach(s => s.classList.remove('active'));
+        var target = document.getElementById('tsection-approvals');
+        if (target) target.classList.add('active');
+
+        // Mount the approval settings panel
+        var mount = document.getElementById('approvalSettingsMount');
+        if (mount && typeof ApprovalUI !== 'undefined' && currentGroup) {
+          mount.innerHTML = ''; // Clear previous
+          try {
+            await ShadowDB.init();
+            await ApprovalWorkflow.init();
+            var groupId = currentGroup.id;
+            var panel = await ApprovalUI.renderSettingsPanel(groupId);
+            mount.appendChild(panel);
+          } catch(e) {
+            mount.innerHTML = '<p style="color:var(--text-secondary)">Unable to load approval settings. Make sure the database is initialized.</p>';
+            console.error('Approval settings error:', e);
+          }
+        }
+      }
+    });
+  });
+}
+
+// Call it after DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', setupApprovalSettings);
+} else {
+  setupApprovalSettings();
 }
