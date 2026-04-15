@@ -610,3 +610,102 @@
   font-size: 14px !important;
   padding: 10px 14px !important;
 }
+
+
+/* ═══════════════════════════════════════════
+   STATUS STRIP BANNERS (View Task Popup)
+   ═══════════════════════════════════════════ */
+.approval-status-strip {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 8px 16px;
+  margin: 0 -16px 16px -16px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.approval-status-strip.approved {
+  background: linear-gradient(135deg, rgba(52, 168, 83, 0.12), rgba(52, 168, 83, 0.06));
+  border-bottom: 1px solid rgba(52, 168, 83, 0.2);
+}
+.approval-status-strip.approved .approval-status-strip-text {
+  color: #34a853;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.approval-status-strip.pending {
+  background: linear-gradient(135deg, rgba(234, 67, 53, 0.08), rgba(234, 67, 53, 0.03));
+  border-bottom: 1px solid rgba(234, 67, 53, 0.15);
+}
+.approval-status-strip.pending .approval-status-strip-text {
+  color: #ea4335;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.approval-status-strip.changes-requested {
+  background: linear-gradient(135deg, rgba(255, 171, 0, 0.1), rgba(255, 171, 0, 0.04));
+  border-bottom: 1px solid rgba(255, 171, 0, 0.2);
+}
+.approval-status-strip.changes-requested .approval-status-strip-text {
+  color: #ffab00;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.approval-status-strip-text i {
+  font-size: 14px;
+}
+
+/* Override header badge to neutral bordered look matching reference images */
+.approval-header-badge.pending,
+.approval-header-badge.approved,
+.approval-header-badge.changes {
+  background: transparent !important;
+  color: var(--text-primary, #e0e0e0) !important;
+  border: 1px solid var(--border-color, #444) !important;
+}
+.light-theme .approval-header-badge.pending,
+.light-theme .approval-header-badge.approved,
+.light-theme .approval-header-badge.changes {
+  color: #333 !important;
+  border-color: #d0d0d0 !important;
+}
+
+/* Light theme strip overrides */
+.light-theme .approval-status-strip.approved {
+  background: linear-gradient(135deg, rgba(52, 168, 83, 0.15), rgba(52, 168, 83, 0.05));
+}
+.light-theme .approval-status-strip.pending {
+  background: linear-gradient(135deg, rgba(234, 67, 53, 0.08), rgba(234, 67, 53, 0.02));
+}
+
+/* ═══════════════════════════════════════════
+   RESPONSIVE DESIGN - Approval UI Elements
+   ═══════════════════════════════════════════ */
+@media (max-width: 1200px) {
+  .approval-modal-overlay .modal-content { width: 420px; max-width: 92vw; }
+  .decision-actions { flex-direction: column; gap: 6px; }
+  .decision-btn { width: 100%; justify-content: center; }
+}
+@media (max-width: 768px) {
+  .approval-modal-overlay .modal-content { width: 95vw; max-height: 90vh; border-radius: 8px; }
+  .modal-footer { flex-direction: column; }
+  .modal-footer .btn-cancel,
+  .modal-footer .btn-submit,
+  .modal-footer .btn-reject,
+  .modal-footer .btn-changes,
+  .modal-footer .btn-abort,
+  .modal-footer .btn-approve-submit { width: 100%; justify-content: center; }
+  .approval-status-strip { padding: 6px 12px; margin: 0 -12px 12px -12px; font-size: 13px; }
+  .request-approval-header-btn { padding: 4px 10px; font-size: 12px; }
+  .approval-header-badge { padding: 3px 8px; font-size: 11px; }
+  .notif-dropdown { width: 280px; right: -20px; }
+}
+@media (max-width: 480px) {
+  .approval-modal-overlay .modal-content { width: 100vw; max-height: 100vh; border-radius: 0; margin: 0; }
+  .approval-status-strip { padding: 6px 10px; font-size: 12px; }
+  .form-select, .form-textarea { font-size: 16px; }
+  .decision-btn { width: 100%; justify-content: center; padding: 10px; }
+}
