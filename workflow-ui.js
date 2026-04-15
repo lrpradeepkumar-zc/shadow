@@ -261,6 +261,7 @@
       case 'add_tag': return { tag: '' };
       case 'duplicate_task': return { suffix: ' (Copy)' };
       case 'update_task': return { field: 'status', value: '' };
+      case 'request_approval': return { approverId: '', note: '' };
       default: return {};
     }
   }
