@@ -1,0 +1,99 @@
+/* auth.css - Login Screen & User Role Styles */
+#shadow-login-screen {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  z-index: 99999; display: flex; align-items: center; justify-content: center;
+  animation: loginFadeIn 0.5s ease; overflow-y: auto;
+}
+#shadow-login-screen.login-exit { animation: loginFadeOut 0.4s ease forwards; }
+@keyframes loginFadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes loginFadeOut { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(1.05); } }
+.login-container {
+  width: 520px; max-width: 95vw; max-height: 95vh; overflow-y: auto;
+  background: #fff; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  animation: loginSlideUp 0.5s ease;
+}
+@keyframes loginSlideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+.login-header {
+  text-align: center; padding: 40px 30px 20px;
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  border-radius: 16px 16px 0 0; color: #fff;
+}
+.login-logo {
+  width: 64px; height: 64px; background: rgba(255,255,255,0.2); border-radius: 16px;
+  display: inline-flex; align-items: center; justify-content: center; font-size: 28px; margin-bottom: 12px;
+}
+.login-header h1 { margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
+.login-subtitle { margin: 6px 0 0; opacity: 0.85; font-size: 14px; }
+.login-form { padding: 24px 30px; }
+.login-form h2 { margin: 0 0 4px; font-size: 20px; color: #2c3e50; }
+.login-desc { margin: 0 0 20px; color: #7f8c8d; font-size: 14px; }
+.user-cards { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+.user-card {
+  display: flex; align-items: center; gap: 14px; padding: 14px 16px;
+  border: 2px solid #ecf0f1; border-radius: 12px; cursor: pointer; transition: all 0.2s ease;
+}
+.user-card:hover { border-color: #e74c3c; background: #fdf2f2; transform: translateX(4px); }
+.user-card:focus { outline: none; border-color: #e74c3c; box-shadow: 0 0 0 3px rgba(231,76,60,0.2); }
+.user-card.selected { border-color: #e74c3c; background: #e74c3c; color: #fff; }
+.user-card.selected .user-card-email, .user-card.selected .role-badge { color: #fff !important; background: rgba(255,255,255,0.2) !important; }
+.user-card-avatar {
+  width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center;
+  justify-content: center; color: #fff; font-weight: 700; font-size: 18px; flex-shrink: 0;
+}
+.user-card-info { flex: 1; min-width: 0; }
+.user-card-name { font-weight: 600; font-size: 15px; color: #2c3e50; }
+.user-card.selected .user-card-name { color: #fff; }
+.user-card-email { font-size: 12px; color: #95a5a6; margin-top: 2px; }
+.user-card-role { flex-shrink: 0; }
+.role-badge {
+  display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px;
+  border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap;
+}
+.login-roles-info { border-top: 1px solid #ecf0f1; padding-top: 20px; }
+.login-roles-info h3 { margin: 0 0 14px; font-size: 14px; color: #7f8c8d; text-transform: uppercase; letter-spacing: 0.5px; }
+.roles-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.role-info-card { padding: 12px; background: #f8f9fa; border-radius: 10px; text-align: center; }
+.role-info-icon { font-size: 20px; margin-bottom: 6px; }
+.role-info-label { font-weight: 600; font-size: 13px; color: #2c3e50; margin-bottom: 4px; }
+.role-info-desc { font-size: 11px; color: #7f8c8d; line-height: 1.4; }
+.login-footer { text-align: center; padding: 16px; border-top: 1px solid #ecf0f1; }
+.login-footer p { margin: 0; font-size: 12px; color: #bdc3c7; }
+/* User Bar */
+#shadow-user-bar { background: #2c3e50; color: #fff; padding: 0; z-index: 1000; position: relative; }
+.user-bar-content { display: flex; align-items: center; justify-content: space-between; padding: 6px 16px; }
+.user-bar-left { display: flex; align-items: center; gap: 10px; }
+.user-bar-avatar { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 12px; }
+.user-bar-name { font-weight: 600; font-size: 13px; }
+.user-bar-role { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+.user-bar-right { display: flex; align-items: center; gap: 10px; }
+.user-bar-logout { background: none; border: 1px solid rgba(255,255,255,0.3); color: #fff; padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; transition: all 0.2s; display: flex; align-items: center; gap: 5px; }
+.user-bar-logout:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.5); }
+/* Onboarding */
+#shadow-onboarding { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 99998; display: flex; align-items: center; justify-content: center; animation: loginFadeIn 0.3s ease; }
+.onboarding-container { width: 600px; max-width: 95vw; max-height: 90vh; overflow-y: auto; background: #fff; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+.onboarding-header { padding: 30px; text-align: center; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 16px 16px 0 0; color: #fff; }
+.onboarding-header h2 { margin: 0 0 8px; font-size: 24px; }
+.onboarding-header p { margin: 0; opacity: 0.85; font-size: 14px; }
+.onboarding-body { padding: 30px; }
+.onboarding-step { display: none; }
+.onboarding-step.active { display: block; animation: loginSlideUp 0.3s ease; }
+.onboarding-step h3 { margin: 0 0 16px; font-size: 18px; color: #2c3e50; }
+.feature-list { list-style: none; padding: 0; margin: 0 0 20px; }
+.feature-list li { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
+.feature-list li:last-child { border-bottom: none; }
+.feature-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.feature-text strong { display: block; font-size: 14px; color: #2c3e50; margin-bottom: 2px; }
+.feature-text span { font-size: 12px; color: #7f8c8d; }
+.onboarding-progress { display: flex; justify-content: center; gap: 8px; margin-bottom: 20px; }
+.progress-dot { width: 10px; height: 10px; border-radius: 50%; background: #ecf0f1; transition: all 0.3s; }
+.progress-dot.active { background: #667eea; transform: scale(1.2); }
+.progress-dot.completed { background: #2ecc71; }
+.onboarding-actions { display: flex; justify-content: space-between; padding: 0 30px 24px; }
+.onboarding-btn { padding: 10px 24px; border-radius: 8px; border: none; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.2s; }
+.onboarding-btn.secondary { background: #ecf0f1; color: #7f8c8d; }
+.onboarding-btn.secondary:hover { background: #dfe6e9; }
+.onboarding-btn.primary { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; }
+.onboarding-btn.primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(102,126,234,0.4); }
+.perm-denied-tooltip { position: fixed; background: #e74c3c; color: #fff; padding: 8px 14px; border-radius: 8px; font-size: 13px; z-index: 99999; animation: tooltipIn 0.2s ease; pointer-events: none; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+@keyframes tooltipIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
