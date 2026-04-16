@@ -14,39 +14,23 @@ const ShadowOnboarding = (() => {
     });
   }
 
-  async function clearDummyData() {
+    async function clearDummyData() {
     try {
-      if (typeof ShadowDB !== 'undefined') {
-        await ShadowDB.init();
-        // Clear all stores
-        const stores = ['tasks', 'tags', 'categories', 'members', 'customFields', 'comments', 'activity'];
-        for (const store of stores) {
-          try {
-            const tx = ShadowDB._db.transaction(store, 'readwrite');
-            const objectStore = tx.objectStore(store);
-            objectStore.clear();
-            await new Promise((resolve, reject) => {
-              tx.oncomplete = resolve;
-              tx.onerror = reject;
-            });
-          } catch(e) { console.warn('Could not clear ' + store, e); }
-        }
-        // Reset groups to just Personal tasks
-        try {
-          const tx = ShadowDB._db.transaction('groups', 'readwrite');
-          const objectStore = tx.objectStore('groups');
-          objectStore.clear();
-          await new Promise((resolve, reject) => { tx.oncomplete = resolve; tx.onerror = reject; });
-        } catch(e) {}
-
-        // Re-seed minimal data - just Personal tasks group
-        await ShadowDB.Groups.create({ name: 'Personal tasks', icon: 'user', color: '#e74c3c', createdAt: new Date().toISOString() });
-        console.log('Dummy data cleared, fresh start ready');
+      // Delete the entire IndexedDB to get a completely fresh start
+      if (typeof ShadowDB !== 'undefined' && ShadowDB._db) {
+        ShadowDB._db.close();
       }
+      await new Promise((resolve, reject) => {
+        const req = indexedDB.deleteDatabase('ShadowToDoDB');
+        req.onsuccess = () => resolve();
+        req.onerror = () => reject(req.error);
+        req.onblocked = () => resolve(); // resolve even if blocked
+      });
+      console.log('Database deleted for fresh start');
     } catch(e) {
       console.error('Error clearing data:', e);
     }
-  }
+    }
 
   function renderOnboarding() {
     const existing = document.getElementById('shadow-onboarding');
