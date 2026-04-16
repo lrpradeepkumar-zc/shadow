@@ -650,3 +650,222 @@ if (document.readyState === 'loading') {
 } else {
   setupApprovalSettings();
 }
+
+// ============ CUSTOM FIELD CREATION IN SETTINGS ============
+// Adds "Create Custom Field" functionality to Task Settings > Custom Fields
+(function setupCustomFieldCreation() {
+      function enhanceCustomFieldsSection() {
+              var cfSection = document.getElementById('tsection-customfields');
+              if (!cfSection) return;
+              if (cfSection.querySelector('.create-cf-btn')) return;
+
+              // Add Create button
+              var header = cfSection.querySelector('h3') || cfSection.querySelector('.tsection-title');
+              var createBtn = document.createElement('button');
+              createBtn.className = 'create-cf-btn';
+              createBtn.textContent = '+ Create Custom Field';
+              createBtn.style.cssText = 'background:#4285f4;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;margin:12px 0;display:block;';
+              createBtn.addEventListener('click', showCreateCustomFieldForm);
+
+              if (header) {
+                        header.parentElement.insertBefore(createBtn, header.nextElementSibling);
+              } else {
+                        cfSection.appendChild(createBtn);
+              }
+
+              // Also add it after the search bar if it exists
+              var searchBar = cfSection.querySelector('input[type="search"], input[placeholder*="Search"]');
+              if (searchBar) {
+                        searchBar.parentElement.insertBefore(createBtn, searchBar.nextElementSibling);
+              }
+      }
+
+      function showCreateCustomFieldForm() {
+              var existing = document.getElementById('createCFModal');
+              if (existing) existing.remove();
+
+              var modal = document.createElement('div');
+              modal.id = 'createCFModal';
+              modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:10000;display:flex;align-items:center;justify-content:center;';
+              modal.innerHTML = '<div style="background:var(--bg-primary,#fff);border-radius:12px;padding:24px;min-width:400px;max-width:500px;box-shadow:0 8px 24px rgba(0,0,0,0.2);">' +
+                        '<h3 style="margin:0 0 16px 0;font-size:16px;">Create Custom Field</h3>' +
+                        '<div style="margin-bottom:12px;">' +
+                          '<label style="display:block;font-size:12px;color:#666;margin-bottom:4px;">Field Name *</label>' +
+                          '<input type="text" id="cfName" placeholder="e.g., Location, Sprint, Component" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:6px;font-size:13px;box-sizing:border-box;">' +
+                        '</div>' +
+                        '<div style="margin-bottom:12px;">' +
+                          '<label style="display:block;font-size:12px;color:#666;margin-bottom:4px;">Field Type *</label>' +
+                          '<select id="cfType" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:6px;font-size:13px;">' +
+                            '<option value="text">Text Field</option>' +
+                            '<option value="numeric">Numeric</option>' +
+                            '<option value="dropdown">Dropdown</option>' +
+                            '<option value="multichoice">MultiChoice</option>' +
+                          '</select>' +
+                        '</div>' +
+                        '<div id="cfOptionsContainer" style="margin-bottom:12px;display:none;">' +
+                          '<label style="display:block;font-size:12px;color:#666;margin-bottom:4px;">Options (one per line)</label>' +
+                          '<textarea id="cfOptions" rows="4" placeholder="Option 1&#10;Option 2&#10;Option 3" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:6px;font-size:13px;box-sizing:border-box;resize:vertical;"></textarea>' +
+                        '</div>' +
+                        '<div style="margin-bottom:16px;">' +
+                          '<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">' +
+                            '<input type="checkbox" id="cfMandatory"> Make this field mandatory' +
+                          '</label>' +
+                        '</div>' +
+                        '<div id="cfPreview" style="margin-bottom:16px;padding:12px;background:var(--bg-secondary,#f8f9fa);border-radius:8px;display:none;">' +
+                          '<div style="font-size:11px;color:#999;margin-bottom:4px;">Preview</div>' +
+                          '<div id="cfPreviewContent"></div>' +
+                        '</div>' +
+                        '<div style="display:flex;gap:8px;justify-content:flex-end;">' +
+                          '<button id="cfCancelBtn" style="padding:8px 20px;border:1px solid #ddd;border-radius:6px;background:transparent;cursor:pointer;font-size:13px;">Cancel</button>' +
+                          '<button id="cfCreateBtn" style="padding:8px 20px;border:none;border-radius:6px;background:#4285f4;color:#fff;cursor:pointer;font-size:13px;">Create</button>' +
+                        '</div>' +
+                      '</div>';
+              document.body.appendChild(modal);
+
+              // Show/hide options based on type
+              document.getElementById('cfType').addEventListener('change', function() {
+                        var optContainer = document.getElementById('cfOptionsContainer');
+                        var preview = document.getElementById('cfPreview');
+                        if (this.value === 'dropdown' || this.value === 'multichoice') {
+                                    optContainer.style.display = 'block';
+                        } else {
+                                    optContainer.style.display = 'none';
+                        }
+                        updateCFPreview();
+              });
+
+              document.getElementById('cfName').addEventListener('input', updateCFPreview);
+              document.getElementById('cfOptions').addEventListener('input', updateCFPreview);
+              document.getElementById('cfMandatory').addEventListener('change', updateCFPreview);
+
+              document.getElementById('cfCancelBtn').addEventListener('click', function() {
+                        modal.remove();
+              });
+
+              document.getElementById('cfCreateBtn').addEventListener('click', async function() {
+                        var name = document.getElementById('cfName').value.trim();
+                        var type = document.getElementById('cfType').value;
+                        var mandatory = document.getElementById('cfMandatory').checked;
+                        var optionsText = document.getElementById('cfOptions').value.trim();
+                        var options = optionsText ? optionsText.split('\n').map(function(o) { return o.trim(); }).filter(function(o) { return o; }) : [];
+
+                        if (!name) {
+                                    alert('Please enter a field name');
+                                    return;
+                        }
+
+                        // Get current group ID
+                        var groupId = 1; // default to personal
+                        if (typeof currentGroup !== 'undefined' && currentGroup) {
+                                    groupId = currentGroup.id;
+                        }
+
+                        try {
+                                    await ShadowDB.init();
+                                    await ShadowDB.CustomFields.create({
+                                                  name: name,
+                                                  type: type,
+                                                  group: groupId,
+                                                  mandatory: mandatory,
+                                                  options: options
+                                    });
+                                    modal.remove();
+                                    // Refresh the custom fields list
+                                    refreshCustomFieldsList(groupId);
+                                    alert('Custom field "' + name + '" created successfully!');
+                        } catch (e) {
+                                    console.error('Error creating custom field:', e);
+                                    alert('Error creating custom field: ' + e.message);
+                        }
+              });
+
+              modal.addEventListener('click', function(e) {
+                        if (e.target === modal) modal.remove();
+              });
+      }
+
+      function updateCFPreview() {
+              var name = document.getElementById('cfName').value.trim();
+              var type = document.getElementById('cfType').value;
+              var preview = document.getElementById('cfPreview');
+              var content = document.getElementById('cfPreviewContent');
+              if (!name) { preview.style.display = 'none'; return; }
+              preview.style.display = 'block';
+
+              var html = '<div style="display:flex;align-items:center;gap:8px;">';
+              html += '<label style="min-width:80px;font-size:12px;font-weight:600;">' + name + '</label>';
+              if (type === 'text') {
+                        html += '<input type="text" disabled placeholder="Text value" style="flex:1;padding:4px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px;">';
+              } else if (type === 'numeric') {
+                        html += '<input type="number" disabled placeholder="0" style="flex:1;padding:4px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px;">';
+              } else if (type === 'dropdown') {
+                        var opts = document.getElementById('cfOptions').value.trim().split('\n').filter(function(o) { return o.trim(); });
+                        html += '<select disabled style="flex:1;padding:4px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px;"><option>Select...</option>';
+                        opts.forEach(function(o) { html += '<option>' + o.trim() + '</option>'; });
+                        html += '</select>';
+              } else if (type === 'multichoice') {
+                        var opts = document.getElementById('cfOptions').value.trim().split('\n').filter(function(o) { return o.trim(); });
+                        html += '<div style="display:flex;flex-wrap:wrap;gap:4px;">';
+                        opts.forEach(function(o) { html += '<label style="font-size:11px;"><input type="checkbox" disabled> ' + o.trim() + '</label>'; });
+                        html += '</div>';
+              }
+              html += '</div>';
+              content.innerHTML = html;
+      }
+
+      async function refreshCustomFieldsList(groupId) {
+              try {
+                        await ShadowDB.init();
+                        var fields = await ShadowDB.CustomFields.getByGroup(groupId);
+                        var container = document.querySelector('#tsection-customfields .custom-fields-list') ||
+                                                  document.querySelector('#tsection-customfields');
+                        if (!container) return;
+
+                        // Find or create the list area
+                        var listArea = container.querySelector('.cf-items-list');
+                        if (!listArea) {
+                                    listArea = document.createElement('div');
+                                    listArea.className = 'cf-items-list';
+                                    container.appendChild(listArea);
+                        }
+
+                        if (fields.length === 0) {
+                                    listArea.innerHTML = '<p style="color:var(--text-secondary);font-size:13px;">No custom fields configured</p>';
+                                    return;
+                        }
+
+                        var html = '';
+                        fields.forEach(function(f) {
+                                    html += '<div class="cf-item" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border-color,#eee);">';
+                                    html += '<i class="fa-regular fa-square-check" style="color:#999;"></i>';
+                                    html += '<div><div style="font-size:11px;color:#999;">' + (f.type === 'multichoice' ? 'Multi Choice' : f.type.charAt(0).toUpperCase() + f.type.slice(1)) + '</div>';
+                                    html += '<div style="font-size:13px;font-weight:500;">' + f.name + '</div></div>';
+                                    html += '<button class="delete-cf-btn" data-cf-id="' + f.id + '" style="margin-left:auto;background:none;border:none;color:#e74c3c;cursor:pointer;font-size:12px;" title="Delete"><i class="fa-solid fa-trash"></i></button>';
+                                    html += '</div>';
+                        });
+                        listArea.innerHTML = html;
+
+                        // Add delete handlers
+                        listArea.querySelectorAll('.delete-cf-btn').forEach(function(btn) {
+                                    btn.addEventListener('click', async function() {
+                                                  var cfId = parseInt(this.getAttribute('data-cf-id'));
+                                                  if (confirm('Delete this custom field?')) {
+                                                                  await ShadowDB.CustomFields.delete(cfId);
+                                                                  refreshCustomFieldsList(groupId);
+                                                  }
+                                    });
+                        });
+              } catch (e) {
+                        console.error('Error refreshing custom fields:', e);
+              }
+      }
+
+      // Observe for section changes
+      var observer = new MutationObserver(function() {
+              enhanceCustomFieldsSection();
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+
+      // Initial setup
+      setTimeout(enhanceCustomFieldsSection, 1000);
+})();
