@@ -256,3 +256,126 @@ body.light-theme .new-task-btn{box-shadow:0 1px 3px rgba(66,133,244,0.3)}
 @media(max-width:1100px){.task-detail-panel.panel-mode{max-width:420px;min-width:380px}}
 @media(max-width:900px){.sidebar{display:none}.right-sidebar{display:none}.task-detail-panel.modal-mode{width:95vw;max-width:95vw}.task-detail-panel.panel-mode{position:fixed;top:48px;right:0;bottom:0;width:100%;max-width:500px;min-width:auto;z-index:50;box-shadow:-4px 0 20px rgba(0,0,0,0.3)}}
 @media(max-width:600px){.task-detail-panel.panel-mode{max-width:100%;width:100%}.task-detail-panel.modal-mode{width:98vw;max-width:98vw;max-height:90vh}.detail-header{padding:8px 10px;gap:6px}.detail-header-left{gap:6px;width:100%}.detail-header-right{width:100%;justify-content:flex-end}.status-btn{padding:4px 10px;font-size:12px}.detail-body{padding:10px}.detail-task-title{font-size:16px;margin-bottom:8px}.detail-meta{font-size:11px;gap:4px;margin-bottom:14px}.top-header{padding:0 8px}.search-box{display:none}}
+
+
+/* ===== NEW FEATURE STYLES ===== */
+
+/* Task tags on cards */
+.task-card-tags {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+.task-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  color: #fff;
+}
+.task-tag .tag-remove {
+  cursor: pointer;
+  opacity: 0.7;
+  font-size: 10px;
+}
+.task-tag .tag-remove:hover {
+  opacity: 1;
+}
+
+/* Detail tags display */
+.detail-tags {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+/* Attachment item */
+.attachment-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--bg-secondary);
+  border-radius: 6px;
+  margin: 4px 0;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+.attachment-item .attachment-remove {
+  cursor: pointer;
+  opacity: 0.5;
+  margin-left: auto;
+}
+.attachment-item .attachment-remove:hover {
+  opacity: 1;
+  color: #e74c3c;
+}
+
+/* Group context menu */
+#groupContextMenu {
+  min-width: 160px;
+}
+
+/* Sidebar active states */
+.group-item.active,
+.tag-item.active {
+  background: var(--bg-secondary);
+  border-radius: 6px;
+}
+
+/* Bulk checkbox */
+.bulk-checkbox {
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  cursor: pointer;
+  accent-color: #4285f4;
+}
+
+/* Bulk actions bar */
+#bulkActionsBar .bulk-btn {
+  padding: 4px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+/* Modal overlay common */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Recurrence/Reminder/Filter modals */
+#recurrenceModal .modal-content,
+#reminderModal .modal-content,
+#filterModal .modal-content,
+#tagsPickerModal .modal-content,
+#copyMoveModal .modal-content {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 20px;
+  min-width: 320px;
+  color: var(--text-primary);
+}
+
+/* Clickable dates in detail panel */
+.clickable {
+  cursor: pointer;
+}
+.clickable:hover {
+  color: #4285f4;
+  text-decoration: underline;
+}
