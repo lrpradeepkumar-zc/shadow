@@ -472,7 +472,8 @@
    // ============ SEED CUSTOM FIELDS ============
    async function seedCustomFieldsIfNeeded() {
          try {
-                 var allCF = await ShadowDB.CustomFields.getAll();
+                   await ShadowDB.init();    
+             var allCF = await ShadowDB.CustomFields.getAll();
                  if (allCF.length === 0) {
                            // Seed custom fields for Development group (id: 2)
                    await ShadowDB.CustomFields.create({
