@@ -139,6 +139,9 @@
           <span>|</span>
           <button class="reminder-btn" id="detailReminderBtn"><i class="fa-regular fa-calendar-check"></i> Set reminder</button>
         </div>
+        <div id="detailTagsDisplay" style="margin:4px 0;display:flex;gap:4px;flex-wrap:wrap"></div>
+        <div id="detailRecurrenceDisplay" style="color:#4285f4;font-size:12px;margin:4px 0"></div>
+        <div id="detailReminderDisplay" style="color:#e67e22;font-size:12px;margin:4px 0"></div>
         <div class="detail-section">
           <div class="section-label"><i class="fa-solid fa-align-left"></i> Description</div>
           <textarea class="detail-textarea" id="detailDescription" placeholder="Description"></textarea>
@@ -147,7 +150,12 @@
           <div class="section-label"><i class="fa-regular fa-note-sticky"></i> Notes <span class="required">*</span></div>
           <textarea class="detail-textarea notes-area" id="detailNotes" placeholder="Notes">NA</textarea>
         </div>
+        
         <div class="detail-section">
+          <div class="section-label"><i class="fa-solid fa-paperclip"></i> Attachments</div>
+          <div id="detailAttachments"></div>
+        </div>
+<div class="detail-section">
           <div class="section-label"><i class="fa-solid fa-list-check"></i> Subtasks <i class="fa-regular fa-circle-check"></i></div>
           <div id="subtasksList"></div>
           <div class="add-subtask">
