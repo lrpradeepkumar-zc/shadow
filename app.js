@@ -1536,7 +1536,7 @@
   }
 
   // Task detail close button
-  const detailCloseBtn = document.getElementById('closeDetailBtn');
+  const detailCloseBtn = document.getElementById('detailCloseBtn');
   if (detailCloseBtn) detailCloseBtn.addEventListener('click', function(){ hideTaskDetail(); renderView(); });
 
   // Task detail more menu
