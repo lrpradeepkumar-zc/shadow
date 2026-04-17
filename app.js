@@ -708,7 +708,7 @@
 
     const panel = document.getElementById('taskDetailPanel');
     if (!panel) return;
-    panel.classList.add('open');
+    panel.style.display = 'flex'; panel.classList.add('open');
 
     // Status
     const statusSel = document.getElementById('detailStatus');
@@ -799,7 +799,7 @@
 
   function hideTaskDetail() {
     const panel = document.getElementById('taskDetailPanel');
-    if (panel) panel.classList.remove('open');
+    if (panel) panel.classList.remove('open'); panel.style.display = 'none';
     state.selectedTaskId = null;
     const listViewEl = document.querySelector('.list-view');
     if (listViewEl) listViewEl.classList.remove('list-with-panel');
