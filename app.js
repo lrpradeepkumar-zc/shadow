@@ -324,7 +324,7 @@
 
   // ===== BOARD VIEW =====
   function renderBoardView() {
-    const area = document.getElementById('boardColumns');
+    const area = document.getElementById('boardArea');
     if (!area) return;
     const tasks = getFilteredTasks();
 
@@ -435,7 +435,7 @@
   }
 
   function renderListView() {
-    const area = document.getElementById('listBody');
+    const area = document.getElementById('listArea');
     if (!area) return;
     const isPanelOpen = !!state.selectedTaskId;
     const lh = document.getElementById('listHeader');
@@ -499,10 +499,10 @@
   // ===== RENDER VIEW =====
   function renderView() {
     const vt = state.currentViewType;
-    const boardArea = document.getElementById('boardColumns');
-    const listArea = document.getElementById('listBody');
-    if (boardArea) boardColumns.style.display = vt==='board' ? '' : 'none';
-    if (listArea)  listBody.style.display  = vt==='list'  ? '' : 'none';
+    const boardArea = document.getElementById('boardArea');
+    const listArea = document.getElementById('listArea');
+    if (boardArea) boardView.style.display = vt==='board' ? '' : 'none';
+    if (listArea)  listView.style.display  = vt==='list'  ? '' : 'none';
     if (vt === 'board') renderBoardView();
     else renderListView();
     updateViewHeader();
