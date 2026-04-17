@@ -159,7 +159,7 @@ const ShadowOnboarding = (() => {
       manageCustomFields: 'Manage custom fields',
       viewTasks: 'View all tasks',
       commentOnTask: 'Comment on tasks',
-      manageApprovals: 'Manage approvals'
+      manageApprovals: 'Manage approvals', manageOrg: 'Manage organization', manageUsers: 'Manage all users', manageBilling: 'Manage billing'
     };
 
     let permHtml = '<div style="margin:16px 0">' +
