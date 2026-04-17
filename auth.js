@@ -6,7 +6,12 @@
 
 const ShadowAuth = (() => {
   const ROLES = {
-    ADMIN: {
+        ORG_ADMIN: {
+      id: 'org_admin', label: 'Org Admin', icon: 'fa-crown', color: '#8e44ad',
+      description: 'Organization-wide access: manage all groups, users, approvals, settings & billing',
+      permissions: { createTask:true, editTask:true, deleteTask:true, completeTask:true, assignTask:true, createGroup:true, editGroup:true, deleteGroup:true, manageMembers:true, manageSettings:true, manageCustomFields:true, viewTasks:true, commentOnTask:true, manageApprovals:true, manageOrg:true, manageUsers:true, manageBilling:true }
+    },
+ADMIN: {
       id: 'admin', label: 'Group Admin', icon: 'fa-shield-halved', color: '#e74c3c',
       description: 'Full access: create/edit/delete tasks, manage groups, settings & members',
       permissions: { createTask:true, editTask:true, deleteTask:true, completeTask:true, assignTask:true, createGroup:true, editGroup:true, deleteGroup:true, manageMembers:true, manageSettings:true, manageCustomFields:true, viewTasks:true, commentOnTask:true, manageApprovals:true }
@@ -29,7 +34,8 @@ const ShadowAuth = (() => {
   };
 
   const DEFAULT_USERS = [
-    { id: 1, name: 'Pradeep Kumar', email: 'pradeep@shadow.app', role: 'admin', avatar: 'P', color: '#e74c3c' },
+        { id: 0, name: 'Maya Patel', email: 'maya@shadow.app', role: 'org_admin', avatar: 'M', color: '#8e44ad' },
+{ id: 1, name: 'Pradeep Kumar', email: 'pradeep@shadow.app', role: 'admin', avatar: 'P', color: '#e74c3c' },
     { id: 2, name: 'Alex Johnson', email: 'alex@shadow.app', role: 'member', avatar: 'A', color: '#3498db' },
     { id: 3, name: 'Sarah Chen', email: 'sarah@shadow.app', role: 'user', avatar: 'S', color: '#2ecc71' },
     { id: 4, name: 'Rachel Kim', email: 'rachel@shadow.app', role: 'viewer', avatar: 'R', color: '#95a5a6' }
