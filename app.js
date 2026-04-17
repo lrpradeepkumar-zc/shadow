@@ -1574,7 +1574,7 @@
   // Detail status & priority
   const detailStatus = document.getElementById('detailStatus');
   if (detailStatus) {
-    detailStatus.addEventListener('click', async function() {
+    detailStatus.addEventListener('change', async function() {
       const task = state.tasks.find(function(t){return t.id===state.selectedTaskId;});
       if (!task) return;
       const ns = this.value;
