@@ -324,7 +324,7 @@
 
   // ===== BOARD VIEW =====
   function renderBoardView() {
-    const area = document.getElementById('boardArea');
+    const area = document.getElementById('boardColumns');
     if (!area) return;
     const tasks = getFilteredTasks();
 
@@ -435,7 +435,7 @@
   }
 
   function renderListView() {
-    const area = document.getElementById('listArea');
+    const area = document.getElementById('listBody');
     if (!area) return;
     const isPanelOpen = !!state.selectedTaskId;
     const lh = document.getElementById('listHeader');
@@ -499,10 +499,10 @@
   // ===== RENDER VIEW =====
   function renderView() {
     const vt = state.currentViewType;
-    const boardArea = document.getElementById('boardArea');
-    const listArea = document.getElementById('listArea');
-    if (boardArea) boardArea.style.display = vt==='board' ? '' : 'none';
-    if (listArea)  listArea.style.display  = vt==='list'  ? '' : 'none';
+    const boardArea = document.getElementById('boardColumns');
+    const listArea = document.getElementById('listBody');
+    if (boardArea) boardColumns.style.display = vt==='board' ? '' : 'none';
+    if (listArea)  listBody.style.display  = vt==='list'  ? '' : 'none';
     if (vt === 'board') renderBoardView();
     else renderListView();
     updateViewHeader();
@@ -624,16 +624,16 @@
     state.selectedTaskId = taskId;
     state.taskDetailMode = source || 'panel';
     const mode = state.taskDetailMode;
-    document.getElementById('detailTitle').textContent = task.title;
-    document.getElementById('detailTitle').dataset.taskid = taskId;
+    document.getElementById('detailTaskTitle').textContent = task.title;
+    document.getElementById('detailTaskTitle').dataset.taskid = taskId;
     document.getElementById('detailGroup').textContent = getGroupName(task.group);
     document.getElementById('detailCategory').textContent = task.category||'';
-    document.getElementById('detailAssignee').textContent = task.assignee||'Unassigned';
-    document.getElementById('detailStatus').value = task.status||'Open';
+    document.getElementById('detailAssigneeName').textContent = task.assignee||'Unassigned';
+    document.getElementById('detailStatusBtn').value = task.status||'Open';
     document.getElementById('detailPriority').value = task.priority||'None';
     document.getElementById('detailStartDate').textContent = task.startDate ? formatDateFull(task.startDate) : 'Set start date';
     document.getElementById('detailDueDate').textContent = task.dueDate ? formatDateFull(task.dueDate) : 'Set due date';
-    document.getElementById('detailDesc').textContent = task.description||'';
+    document.getElementById('detailDescription').textContent = task.description||'';
     // Subtasks
     document.getElementById('subtasksList').innerHTML=(task.subtasks||[]).map(function(s){
       return '<div class="subtask-item"><input type="checkbox" '+(s.completed?'checked':'')+' data-subtaskid="'+s.id+'"> '+s.title+'</div>';
@@ -1268,7 +1268,7 @@
     if (modal) {
       modal.style.display='flex';
       document.getElementById('modalTaskTitle').value='';
-      const descEl = document.getElementById('modalDesc');
+      const descEl = document.getElementById('modalDescription');
       if (descEl) descEl.value='';
       document.getElementById('modalStatus').value='Open';
       document.getElementById('modalPriority').value='None';
@@ -1291,7 +1291,7 @@
   }
 
   // Modal close/cancel
-  const modalCancelBtn = document.getElementById('modalCancelBtn');
+  const modalCancelBtn = document.getElementById('cancelTaskBtn');
   if (modalCancelBtn) modalCancelBtn.addEventListener('click', function(){
     document.getElementById('taskModal').style.display='none';
   });
@@ -1356,12 +1356,12 @@
   }
 
   // Modal Save (create task)
-  const modalSaveBtn = document.getElementById('modalSaveBtn');
+  const modalSaveBtn = document.getElementById('saveTaskBtn');
   if (modalSaveBtn) {
     modalSaveBtn.addEventListener('click', async function() {
       const title = document.getElementById('modalTaskTitle').value.trim();
       if (!title) { alert('Please enter a task title.'); return; }
-      const descEl = document.getElementById('modalDesc');
+      const descEl = document.getElementById('modalDescription');
       const startEl = document.getElementById('modalStartDate');
       const task = {
         title: title,
@@ -1370,7 +1370,7 @@
         priority: document.getElementById('modalPriority').value,
         group: parseInt(document.getElementById('modalGroup').value) || null,
         category: document.getElementById('modalCategory').value,
-        assignee: document.getElementById('modalAssignee').value,
+        assignee: document.getElementById('modalAssigneeField').value,
         dueDate: document.getElementById('modalDueDate').value || null,
         startDate: startEl ? startEl.value || null : null,
         tags: state.modalTags.slice(),
@@ -1396,7 +1396,7 @@
   }
 
   // Task detail close button
-  const detailCloseBtn = document.getElementById('detailCloseBtn');
+  const detailCloseBtn = document.getElementById('closeDetailBtn');
   if (detailCloseBtn) detailCloseBtn.addEventListener('click', function(){ hideTaskDetail(); renderView(); });
 
   // Task detail more menu
@@ -1404,7 +1404,7 @@
   if (detailMoreBtn) detailMoreBtn.addEventListener('click', function(e){ e.stopPropagation(); showDetailMoreMenu(e); });
 
   // Detail panel title inline edit
-  const detailTitle = document.getElementById('detailTitle');
+  const detailTitle = document.getElementById('detailTaskTitle');
   if (detailTitle) {
     detailTitle.addEventListener('blur', async function() {
       const task = state.tasks.find(function(t){return t.id===state.selectedTaskId;});
@@ -1419,7 +1419,7 @@
   }
 
   // Detail panel description inline edit
-  const detailDesc = document.getElementById('detailDesc');
+  const detailDesc = document.getElementById('detailDescription');
   if (detailDesc) {
     detailDesc.addEventListener('blur', async function() {
       const task = state.tasks.find(function(t){return t.id===state.selectedTaskId;});
@@ -1432,9 +1432,9 @@
   }
 
   // Detail status & priority
-  const detailStatus = document.getElementById('detailStatus');
+  const detailStatus = document.getElementById('detailStatusBtn');
   if (detailStatus) {
-    detailStatus.addEventListener('change', async function() {
+    detailStatus.addEventListener('click', async function() {
       const task = state.tasks.find(function(t){return t.id===state.selectedTaskId;});
       if (!task) return;
       const ns = this.value;
@@ -1580,7 +1580,7 @@
   });
 
   // Search
-  const searchInput = document.getElementById('searchInput');
+  const searchInput = document.getElementById('globalSearch');
   if (searchInput) {
     searchInput.addEventListener('input', function() {
       state.searchQuery = this.value;
