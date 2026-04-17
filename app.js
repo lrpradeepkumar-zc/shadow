@@ -1800,6 +1800,14 @@
     renderView();
   }
 
-  init().catch(function(err){ console.error('Init error:', err); });
+    // RHS sidebar navigation
+  document.getElementById('workflowBtn').addEventListener('click', function() {
+    window.location.href = 'workflow.html';
+  });
+  document.getElementById('playgroundBtn').addEventListener('click', function() {
+    window.location.href = 'playground.html';
+  });
+
+init().catch(function(err){ console.error('Init error:', err); });
 
 })();
