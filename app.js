@@ -422,7 +422,7 @@
     document.querySelectorAll('.col-add-btn').forEach(function(btn) {
       btn.addEventListener('click', function(e) {
         e.stopPropagation();
-        document.getElementById('newTaskModal') && (document.getElementById('newTaskModal').style.display='flex');
+        document.getElementById('taskModal') && (document.getElementById('taskModal').style.display='flex');
       });
     });
   }
@@ -1408,9 +1408,9 @@
     if (modal) {
       modal.style.display='flex';
       document.getElementById('modalTaskTitle').value='';
-      const descEl = document.getElementById('modalDescription');
+      const descEl = document.getElementById('modalDesc');
       if (descEl) descEl.value='';
-      document.getElementById('modalStatus').value='Open';
+      document.getElementById('modalStatusBtn').value='Open';
       document.getElementById('modalPriority').value='None';
       document.getElementById('modalDueDate').value='';
       const startEl = document.getElementById('modalStartDate');
@@ -1431,7 +1431,7 @@
   }
 
   // Modal close/cancel
-  const modalCancelBtn = document.getElementById('cancelTaskBtn');
+  const modalCancelBtn = document.getElementById('modalCancelBtn');
   if (modalCancelBtn) modalCancelBtn.addEventListener('click', function(){
     document.getElementById('taskModal').style.display='none';
   });
@@ -1496,21 +1496,21 @@
   }
 
   // Modal Save (create task)
-  const modalSaveBtn = document.getElementById('saveTaskBtn');
+  const modalSaveBtn = document.getElementById('modalSaveBtn');
   if (modalSaveBtn) {
     modalSaveBtn.addEventListener('click', async function() {
       const title = document.getElementById('modalTaskTitle').value.trim();
       if (!title) { alert('Please enter a task title.'); return; }
-      const descEl = document.getElementById('modalDescription');
+      const descEl = document.getElementById('modalDesc');
       const startEl = document.getElementById('modalStartDate');
       const task = {
         title: title,
         description: descEl ? descEl.value : '',
-        status: document.getElementById('modalStatus').value,
+        status: document.getElementById('modalStatusBtn').value,
         priority: document.getElementById('modalPriority').value,
         group: parseInt(document.getElementById('modalGroup').value) || null,
         category: document.getElementById('modalCategory').value,
-        assignee: document.getElementById('modalAssigneeField').value,
+        assignee: document.getElementById('modalAssignee').value,
         dueDate: document.getElementById('modalDueDate').value || null,
         startDate: startEl ? startEl.value || null : null,
         tags: state.modalTags.slice(),
@@ -1544,7 +1544,7 @@
   if (detailMoreBtn) detailMoreBtn.addEventListener('click', function(e){ e.stopPropagation(); showDetailMoreMenu(e); });
 
   // Detail panel title inline edit
-  const detailTitle = document.getElementById('detailTaskTitle');
+  const detailTitle = document.getElementById('detailTitle');
   if (detailTitle) {
     detailTitle.addEventListener('blur', async function() {
       const task = state.tasks.find(function(t){return t.id===state.selectedTaskId;});
@@ -1559,7 +1559,7 @@
   }
 
   // Detail panel description inline edit
-  const detailDesc = document.getElementById('detailDescription');
+  const detailDesc = document.getElementById('detailDesc');
   if (detailDesc) {
     detailDesc.addEventListener('blur', async function() {
       const task = state.tasks.find(function(t){return t.id===state.selectedTaskId;});
@@ -1572,7 +1572,7 @@
   }
 
   // Detail status & priority
-  const detailStatus = document.getElementById('detailStatusBtn');
+  const detailStatus = document.getElementById('detailStatus');
   if (detailStatus) {
     detailStatus.addEventListener('click', async function() {
       const task = state.tasks.find(function(t){return t.id===state.selectedTaskId;});
@@ -1720,7 +1720,7 @@
   });
 
   // Search
-  const searchInput = document.getElementById('globalSearch');
+  const searchInput = document.getElementById('searchInput');
   if (searchInput) {
     searchInput.addEventListener('input', function() {
       state.searchQuery = this.value;
