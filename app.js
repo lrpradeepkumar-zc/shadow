@@ -1351,7 +1351,7 @@
   // Board / List tabs
   document.querySelectorAll('.view-tab').forEach(function(tab) {
     tab.addEventListener('click', function() {
-      state.currentViewType = this.dataset.viewtype;
+      state.currentDisplay = this.dataset.viewtype;
       document.querySelectorAll('.view-tab').forEach(function(t){t.classList.remove('active');});
       this.classList.add('active');
       renderView();
@@ -1654,7 +1654,7 @@
         task.tags = selected;
         task.modifiedDate = new Date().toISOString();
         addTimelineEntry(task, 'updated tags');
-        ShadowDB.Tasks.update(task).then(function(){ renderView(); showTaskDetail(state.selectedTaskId, state.taskDetailMode); });
+        ShadowDB.Tasks.update(task).then(function(){ renderView(); showTaskDetail(state.selectedTaskId, 'panel'); });
       });
     });
   }
