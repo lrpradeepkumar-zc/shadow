@@ -1748,19 +1748,37 @@
     state.members  = await ShadowDB.Members.getAll();
     state.categories = await ShadowDB.Categories.getAll();
 
-    // Deduplicate groups by name (keep first occurrence)
-    const seenNames = new Set();
-    state.groups = state.groups.filter(function(g){
-      if (seenNames.has(g.name)) return false;
-      seenNames.add(g.name); return true;
-    });
-
-    // Deduplicate tags by name (keep first occurrence)
+    // ── Auto-dedup: remove duplicate tasks (same title + group name + dueDate) ──
+    const seenTaskKeys = new Set();
+    for (const t of state.tasks.slice()) {
+      const g = state.groups.find(function(gr){return gr.id===(t.group||t.groupId);});
+      const key = t.title + '|' + (g?g.name:'none') + '|' + (t.dueDate||'');
+      if (seenTaskKeys.has(key)) { await ShadowDB.Tasks.delete(t.id); }
+      else seenTaskKeys.add(key);
+    }
+    // ── Auto-dedup: remove duplicate groups, tags, members by name ──
+    const seenGroupNames = new Set();
+    for (const g of state.groups.slice()) {
+      if (seenGroupNames.has(g.name)) { await ShadowDB.Groups.delete(g.id); }
+      else seenGroupNames.add(g.name);
+    }
     const seenTagNames = new Set();
-    state.tags = state.tags.filter(function(t){
-      if (seenTagNames.has(t.name)) return false;
-      seenTagNames.add(t.name); return true;
-    });
+    for (const t of state.tags.slice()) {
+      if (seenTagNames.has(t.name)) { await ShadowDB.Tags.delete(t.id); }
+      else seenTagNames.add(t.name);
+    }
+    const seenMemberNames = new Set();
+    for (const m of state.members.slice()) {
+      if (seenMemberNames.has(m.name)) { await ShadowDB.Members.delete(m.id); }
+      else seenMemberNames.add(m.name);
+    }
+
+    // Reload after cleanup
+    state.tasks    = await ShadowDB.Tasks.getAll();
+    state.groups   = await ShadowDB.Groups.getAll();
+    state.tags     = await ShadowDB.Tags.getAll();
+    state.members  = await ShadowDB.Members.getAll();
+    state.categories = await ShadowDB.Categories.getAll();
 
     // Set currentUserId to first member (owner)
     const owner = state.members.find(function(m){return m.role==='Owner';});
