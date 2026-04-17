@@ -32,7 +32,7 @@
       <div class="search-box">
         <i class="fa-solid fa-magnifying-glass"></i>
         <span>ToDo</span>
-        <input type="text" placeholder="Search ( / )" id="globalSearch">
+        <input type="text" placeholder="Search ( / )" id="searchInput">
       </div>
       <button class="icon-btn" title="Notifications"><i class="fa-solid fa-bell"></i><span class="badge">1</span></button>
       <div class="avatar" title="Profile">P</div>
@@ -67,7 +67,7 @@
           <i class="fa-regular fa-calendar"></i>
           <span class="view-title" id="viewTitle">Agenda</span>
           <span class="sort-info" id="sortInfo">
-            <span class="sort-badge">DUE DATE</span>
+            <span class="sort-badge" id="sortLabel">DUE DATE</span>
             <span class="sort-direction">Newest on top</span>
           </span>
         </div>
@@ -75,7 +75,7 @@
           <button class="toolbar-btn" id="filterBtn"><i class="fa-solid fa-filter"></i> Filter</button>
           <button class="toolbar-btn" id="sortBtn"><i class="fa-solid fa-arrow-down-short-wide"></i> Sort</button>
           <button class="toolbar-btn" id="manageFieldsBtn"><i class="fa-solid fa-table-columns"></i></button>
-          <button class="toolbar-btn" id="moreActionsBtn"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+          <button class="toolbar-btn" id="groupByBtn" title="Group by" style="display:none"><i class="fa-solid fa-layer-group"></i> Group by</button><span class="sort-chip" id="groupByChip" style="display:none"></span><button class="toolbar-btn" id="moreActionsBtn"><i class="fa-solid fa-ellipsis-vertical"></i></button>
         </div>
       </div>
       <div class="view-tabs">
@@ -83,7 +83,7 @@
         <button class="view-tab" data-viewtype="list"><i class="fa-solid fa-list"></i> List</button>
       </div>
       <div class="board-view" id="boardView">
-        <div class="board-columns" id="boardColumns"></div>
+        <div class="board-columns" id="boardArea"></div>
       </div>
       <div class="list-view" id="listView" style="display:none;">
         <div class="list-header" id="listHeader">
@@ -94,7 +94,7 @@
           <div class="list-col created-date-col">CREATED DATE</div>
           <div class="list-col category-col">CATEGORY</div>
         </div>
-        <div class="list-body" id="listBody"></div>
+        <div id="listArea"><div class="list-body"></div></div>
       </div>
     </main>
     <!-- Task Detail Modal Overlay -->
@@ -103,12 +103,12 @@
     <div class="task-detail-panel" id="taskDetailPanel" style="display:none;">
       <div class="detail-header">
         <div class="detail-header-left">
-          <button class="status-btn" id="detailStatusBtn">Open</button>
+          <select class="status-btn" id="detailStatus"><option>Open</option><option>In Progress</option><option>Fixed</option><option>Completed</option><option>Closed</option></select>
           <div class="detail-assignee">
             <div class="avatar-sm" id="detailAssigneeAvatar">P</div>
             <div>
               <div class="label-sm">Assigned to</div>
-              <div id="detailAssigneeName">Pradeep</div>
+              <div id="detailAssignee">Pradeep</div>
             </div>
           </div>
           <div class="detail-date">
@@ -122,30 +122,30 @@
         </div>
         <div class="detail-header-right">
           <button class="icon-btn" title="Recurrence"><i class="fa-solid fa-repeat"></i></button>
-          <button class="icon-btn" title="Attachment"><i class="fa-solid fa-paperclip"></i></button>
-          <button class="icon-btn" title="Tags"><i class="fa-solid fa-tag"></i></button>
-          <button class="icon-btn" title="More"><i class="fa-solid fa-ellipsis-vertical"></i></button>
-          <button class="icon-btn" id="closeDetailBtn" title="Close"><i class="fa-solid fa-xmark"></i></button>
+          <button class="icon-btn" id="detailAttachBtn" title="Attachment"><i class="fa-solid fa-paperclip"></i></button>
+          <button class="icon-btn" id="detailTagsBtn" title="Tags"><i class="fa-solid fa-tag"></i></button>
+          <button class="icon-btn" id="detailMoreBtn" title="More"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+          <button class="icon-btn" id="detailCloseBtn" title="Close"><i class="fa-solid fa-xmark"></i></button>
         </div>
       </div>
       <div class="detail-body">
-        <h2 class="detail-task-title" id="detailTaskTitle" contenteditable="true"></h2>
+        <h2 class="detail-task-title" id="detailTitle" contenteditable="true"></h2>
         <div class="detail-meta">
           <span>in</span>
           <button class="meta-btn" id="detailGroup">Personal tasks</button>
           <span>under</span>
           <button class="meta-btn" id="detailCategory">General</button>
           <span>&bull;</span>
-          <button class="priority-btn" id="detailPriority"><i class="fa-solid fa-exclamation"></i> Medium</button>
+          <select class="priority-btn" id="detailPriority"><option value="None">None</option><option value="Low">Low</option><option value="Medium">Medium</option><option value="High">High</option></select>
           <span>|</span>
-          <button class="reminder-btn" id="detailReminderBtn"><i class="fa-regular fa-calendar-check"></i> Set reminder</button>
+          <div id="detailTagsContainer" style="display:inline-flex;gap:4px;flex-wrap:wrap;margin-right:8px"></div><button class="reminder-btn" id="detailReminderBtn"><i class="fa-regular fa-calendar-check"></i> Set reminder</button>
         </div>
         <div id="detailTagsDisplay" style="margin:4px 0;display:flex;gap:4px;flex-wrap:wrap"></div>
         <div id="detailRecurrenceDisplay" style="color:#4285f4;font-size:12px;margin:4px 0"></div>
         <div id="detailReminderDisplay" style="color:#e67e22;font-size:12px;margin:4px 0"></div>
         <div class="detail-section">
           <div class="section-label"><i class="fa-solid fa-align-left"></i> Description</div>
-          <textarea class="detail-textarea" id="detailDescription" placeholder="Description"></textarea>
+          <textarea class="detail-textarea" id="detailDesc" placeholder="Description"></textarea>
         </div>
         <div class="detail-section">
           <div class="section-label"><i class="fa-regular fa-note-sticky"></i> Notes <span class="required">*</span></div>
@@ -210,7 +210,7 @@
           <button class="icon-btn" title="Recurrence"><i class="fa-solid fa-repeat"></i></button>
           <button class="icon-btn" title="Attachment"><i class="fa-solid fa-paperclip"></i></button>
           <button class="icon-btn" title="Tags" id="modalTagBtn"><i class="fa-solid fa-tag"></i></button>
-          <button class="icon-btn close-modal" id="closeModalBtn"><i class="fa-solid fa-xmark"></i></button>
+          <span id="modalTagsContainer" style="display:inline-flex;gap:4px;flex-wrap:wrap"></span><button class="icon-btn close-modal" id="closeModalBtn"><i class="fa-solid fa-xmark"></i></button>
         </div>
       </div>
       <div class="modal-body">
@@ -230,7 +230,7 @@
         </div>
         <div class="detail-section">
           <div class="section-label"><i class="fa-solid fa-align-left"></i> Description</div>
-          <textarea class="detail-textarea" id="modalDescription" placeholder="Description"></textarea>
+          <textarea class="detail-textarea" id="modalDesc" placeholder="Description"></textarea>
         </div>
         <div class="detail-section">
           <div class="section-label"><i class="fa-regular fa-note-sticky"></i> Notes <span class="required">*</span></div>
@@ -239,12 +239,12 @@
         <div class="detail-section">
           <div class="section-label"><i class="fa-solid fa-list-check"></i> Subtasks <i class="fa-regular fa-circle-check"></i></div>
           <div id="modalSubtasksList"></div>
-          <div class="add-subtask"><i class="fa-solid fa-plus"></i><input type="text" placeholder="Subtask Title, @mention assignee" id="modalSubtaskInput"></div>
+          <div class="add-subtask"><i class="fa-solid fa-plus"></i><input type="text" placeholder="Subtask Title" id="modalSubtaskInput"><button type="button" id="modalAddSubtaskBtn" class="icon-btn"><i class="fa-solid fa-plus"></i></button></div>
         </div>
       </div>
       <div class="modal-footer">
-        <button class="save-btn" id="saveTaskBtn">Save</button>
-        <button class="cancel-btn" id="cancelTaskBtn">Cancel</button>
+        <button class="save-btn" id="modalSaveBtn">Save</button>
+        <button class="cancel-btn" id="modalCancelBtn">Cancel</button>
       </div>
     </div>
   </div>
