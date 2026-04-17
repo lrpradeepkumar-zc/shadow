@@ -729,19 +729,23 @@
     const startDateEl = document.getElementById('detailStartDate');
     if (startDateEl) startDateEl.textContent = task.startDate ? formatDateFull(task.startDate) : 'Yet to set';
 
-    // Title
-    const titleEl = document.getElementById('detailTaskTitle');
-    if (titleEl) { titleEl.value = task.title; titleEl.dataset.id = taskId; }
+    // Title (index.html uses detailTitle as contenteditable h2)
+    const titleEl = document.getElementById('detailTitle');
+    if (titleEl) { titleEl.textContent = task.title; titleEl.dataset.id = taskId; }
 
-    // Description
-    const descEl = document.getElementById('detailDescription');
+    // Description (index.html uses detailDesc)
+    const descEl = document.getElementById('detailDesc');
     if (descEl) descEl.value = task.description || '';
+
+    // Notes
+    const notesEl = document.getElementById('detailNotes');
+    if (notesEl && task.notes) notesEl.value = task.notes;
 
     // Priority
     const priSel = document.getElementById('detailPriority');
     if (priSel) priSel.value = task.priority || 'Medium';
 
-    // Tags
+    // Tags container (index.html uses detailTagsContainer)
     const tagsContainer = document.getElementById('detailTagsContainer');
     if (tagsContainer) {
       tagsContainer.innerHTML = (task.tags||[]).map(function(tid){
@@ -763,7 +767,7 @@
       });
     }
 
-    // Subtasks
+    // Subtasks (index.html uses subtasksList)
     renderModalSubtasks(taskId);
     renderTimeline(task);
 
@@ -776,11 +780,12 @@
     // Add class to list-view for compact mode
     const listViewEl = document.querySelector('.list-view');
     if (listViewEl) listViewEl.classList.add('list-with-panel');
-    renderListView();
+    if (state.currentDisplay === 'list') renderListView();
   }
 
+  
   function renderTimeline(task) {
-    const el = document.getElementById('detailTimeline');
+    const el = document.getElementById('timelineList');
     if (!el) return;
     const entries = task.timeline || [];
     el.innerHTML = entries.length ?
@@ -1267,7 +1272,7 @@
   // ===== MODAL SUBTASKS =====
   function renderModalSubtasks(taskId) {
     const task = state.tasks.find(function(t){return t.id===(taskId||state.selectedTaskId);});
-    const el = document.getElementById('detailSubtasks');
+    const el = document.getElementById('subtasksList');
     if (!el || !task) return;
     el.innerHTML = (task.subtasks||[]).map(function(st,i){
       return '<div class="subtask-item" data-idx="'+i+'">' +
