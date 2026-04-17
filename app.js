@@ -988,6 +988,7 @@
         '<div class="dropdown-item" data-dir="desc">'+(state.sortDirection==='desc'?'<i class="fa-solid fa-check"></i> ':'')+' Newest on top</div>' +
         '<div class="dropdown-item" data-dir="asc">'+(state.sortDirection==='asc'?'<i class="fa-solid fa-check"></i> ':'')+' Oldest on top</div>' : '');
     const btn = document.getElementById('sortBtn');
+    if (!btn) { menu.style.display='none'; return; }
     const rect = btn.getBoundingClientRect();
     menu.style.left = rect.left+'px';
     menu.style.top = (rect.bottom+4)+'px';
@@ -1023,7 +1024,8 @@
       opts.map(function(o){
         return '<div class="dropdown-item'+(state.groupBy===o.key?' active':'')+'" data-groupby="'+o.key+'">'+o.label+'</div>';
       }).join('');
-    const btn = document.getElementById('groupByBtn');
+    const btn = document.getElementById('groupByBtn') || document.getElementById('moreActionsBtn');
+    if (!btn) { menu.style.display='none'; return; }
     const rect = btn.getBoundingClientRect();
     menu.style.left = rect.left+'px';
     menu.style.top = (rect.bottom+4)+'px';
@@ -1075,6 +1077,7 @@
       '<div class="dropdown-item" id="showAllSubtasksToggle">' +
         '<input type="checkbox" '+(state.showAllSubtasks[state.currentView]?'checked':'')+' style="pointer-events:none"> Show all Subtasks</div>';
     const btn = document.getElementById('manageFieldsBtn');
+    if (!btn) { menu.style.display='none'; return; }
     const rect = btn.getBoundingClientRect();
     menu.style.left = (rect.right - 220)+'px';
     menu.style.top = (rect.bottom+4)+'px';
@@ -1251,11 +1254,24 @@
     showManageFieldsDropdown();
   });
 
-  // More actions button (now shows Group By)
-  document.getElementById('moreActionsBtn').addEventListener('click', function(e) {
-    e.stopPropagation();
-    showGroupByDropdown();
-  });
+  // Group By button
+  const groupByBtnEl = document.getElementById('groupByBtn');
+  if (groupByBtnEl) {
+    groupByBtnEl.addEventListener('click', function(e) {
+      e.stopPropagation();
+      showGroupByDropdown();
+    });
+  }
+
+  // More actions button (task settings / other)
+  const moreActionsBtnEl = document.getElementById('moreActionsBtn');
+  if (moreActionsBtnEl) {
+    moreActionsBtnEl.addEventListener('click', function(e) {
+      e.stopPropagation();
+      // Show task settings in future; for now open group by
+      showGroupByDropdown();
+    });
+  }
 
   // New Task button
   document.getElementById('newTaskBtn').addEventListener('click', function(){
