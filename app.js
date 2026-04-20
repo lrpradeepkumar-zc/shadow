@@ -1808,6 +1808,8 @@
     window.location.href = 'playground.html';
   });
 
-init().catch(function(err){ console.error('Init error:', err); });
-
+  // Wait for Supabase backend to be ready, then run init (exactly once).
+    window.__shadowAppInit = () => init().catch(function(err){ console.error('Init error:', err); });
+    if (window.ShadowDB && window.ShadowDB._sb) window.__shadowAppInit();
+    else document.addEventListener('shadowdb:ready', window.__shadowAppInit, { once: true });
 })();
