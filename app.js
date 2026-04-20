@@ -412,10 +412,10 @@
         const rawId = this.dataset.taskid;
         if (!rawId) return;
         if (rawId.includes('_sub_')) {
-          const parentId = parseInt(rawId.split('_sub_')[0]);
+          const parentId = rawId.split('_sub_')[0];
           showTaskDetail(parentId, 'panel');
         } else {
-          showTaskDetail(parseInt(rawId), 'panel');
+          showTaskDetail(rawId, 'panel');
         }
       });
     });
@@ -553,9 +553,9 @@
         const rawId = this.dataset.taskid;
         if (!rawId) return;
         if (rawId.includes('_sub_')) {
-          showTaskDetail(parseInt(rawId.split('_sub_')[0]), 'panel');
+          showTaskDetail(rawId.split('_sub_')[0], 'panel');
         } else {
-          showTaskDetail(parseInt(rawId), 'panel');
+          showTaskDetail(rawId, 'panel');
         }
       });
     });
@@ -564,7 +564,7 @@
   function bindBulkCheckboxes() {
     document.querySelectorAll('.bulk-checkbox').forEach(function(cb) {
       cb.addEventListener('change', function() {
-        const id = parseInt(this.dataset.id);
+        const id = this.dataset.id;
         if (this.checked) state.selectedBulkTasks.add(id);
         else state.selectedBulkTasks.delete(id);
         updateBulkBar();
@@ -1707,7 +1707,7 @@
       const cb = e.target;
       const task = state.tasks.find(function(t){return t.id===state.selectedTaskId;});
       if (!task || !task.subtasks) return;
-      const stId = parseInt(cb.dataset.subtaskid);
+      const stId = cb.dataset.subtaskid;
       const sub = task.subtasks.find(function(s){return s.id===stId;});
       if (sub) {
         sub.completed = cb.checked;
