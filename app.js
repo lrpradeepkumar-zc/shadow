@@ -168,7 +168,7 @@
         document.querySelectorAll('.group-item').forEach(function(n){n.classList.remove('active')});
         this.classList.add('active');
         state.currentView = 'group';
-        state.filterGroup = parseInt(this.dataset.group);
+        state.filterGroup = this.dataset.group;
         state.groupBy = null;
         renderSidebar();
         updateViewHeader();
@@ -176,7 +176,7 @@
       });
       el.addEventListener('contextmenu', function(e) {
         e.preventDefault();
-        showGroupContextMenu(e, parseInt(this.dataset.group));
+        showGroupContextMenu(e, this.dataset.group);
       });
     });
 
@@ -185,7 +185,7 @@
       el.addEventListener('click', function() {
         document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active')});
         document.querySelectorAll('.group-item').forEach(function(n){n.classList.remove('active')});
-        const tagId = parseInt(this.dataset.tag);
+        const tagId = this.dataset.tag;
         if (state.filterTag === tagId) {
           state.filterTag = null;
         } else {
@@ -915,7 +915,7 @@
     document.body.appendChild(modal);
     modal.querySelector('#cmCancel').addEventListener('click',function(){modal.remove();});
     modal.querySelector('#cmOk').addEventListener('click',function(){
-      const targetGroupId = parseInt(modal.querySelector('#cmGroupSel').value);
+      const targetGroupId = modal.querySelector('#cmGroupSel').value;
       modal.remove();
       if (action==='move') {
         task.group = targetGroupId; task.modifiedDate = new Date().toISOString();
@@ -1417,7 +1417,7 @@
       if (startEl) startEl.value='';
       renderModalSubtasks();
       renderModalTags();
-      updateCategorySelect(parseInt(document.getElementById('modalGroup').value), document.getElementById('modalCategory'));
+      updateCategorySelect(document.getElementById('modalGroup').value, document.getElementById('modalCategory'));
       document.getElementById('modalTaskTitle').focus();
     }
   });
@@ -1426,7 +1426,7 @@
   const modalGroupEl = document.getElementById('modalGroup');
   if (modalGroupEl) {
     modalGroupEl.addEventListener('change', function() {
-      updateCategorySelect(parseInt(this.value), document.getElementById('modalCategory'));
+      updateCategorySelect(this.value, document.getElementById('modalCategory'));
     });
   }
 
@@ -1508,7 +1508,7 @@
         description: descEl ? descEl.value : '',
         status: document.getElementById('modalStatusBtn').value,
         priority: document.getElementById('modalPriority').value,
-        group: parseInt(document.getElementById('modalGroup').value) || null,
+        group: document.getElementById('modalGroup').value || null,
         category: document.getElementById('modalCategory').value,
         assignee: document.getElementById('modalAssignee').value,
         dueDate: document.getElementById('modalDueDate').value || null,
