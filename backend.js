@@ -1,6 +1,32 @@
 // backend.js — Supabase-backed drop-in replacement for ShadowDB.
 // Public API identical to the previous IndexedDB backend used by app.js.
 
+
+// Stub so app.js never hits "ShadowDB is not defined" during early init.
+// Every call becomes a promise that resolves once the real backend boots.
+(function () {
+    if (window.ShadowDB) return;
+    const pending = [];
+    window.__shadowdbReady = () => new Promise(res => pending.push(res));
+    window.__shadowdbFlush = () => { pending.splice(0).forEach(r => r()); };
+    const wrap = (ns, m) => async (...a) => { await window.__shadowdbReady(); return window.ShadowDB[ns][m](...a); };
+    const ns = (name) => {
+          const methods = ['create','get','getById','getAll','update','delete','count',
+                                 'complete','reopen','addSubtask','toggleSubtask','search','getStats',
+                                 'getByGroup','getByStatus','getByAssignee','getByTask','getRecent','clear','set'];
+          const o = {}; methods.forEach(m => o[m] = wrap(name, m)); return o;
+    };
+    window.ShadowDB = {
+          STORES:{tasks:'tasks',groups:'groups',tags:'tags',categories:'categories',members:'members',customFields:'customFields',comments:'comments',activity:'activity',settings:'settings'},
+          on:() => {}, emit:() => {},
+          init: async () => { await window.__shadowdbReady(); return window.ShadowDB.init(); },
+          openDB: async () => { await window.__shadowdbReady(); return true; },
+          Tasks:ns('Tasks'), Groups:ns('Groups'), Tags:ns('Tags'), Categories:ns('Categories'),
+          Members:ns('Members'), CustomFields:ns('CustomFields'), Comments:ns('Comments'),
+          Activity:ns('Activity'), Settings:ns('Settings')
+    };
+})();
+
 (function () {
   // 1) Fill these two in:
   const SUPABASE_URL  = 'https://ycysvoolkezntbxcfrnq.supabase.co';
@@ -209,6 +235,7 @@
     window.ShadowDB = ShadowDB;
 
     // Make sure a session always exists so RLS works
+    if (typeof window.__shadowdbFlush === 'function') window.__shadowdbFlush();
     sb.auth.getSession().then(({ data }) => {
       if (!data.session) sb.auth.signInAnonymously().catch(err => console.warn('Anon sign-in error:', err));
     });
