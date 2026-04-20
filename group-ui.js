@@ -1,4 +1,4 @@
-// group-ui.js — adds "Create Group" and "Create task in group" flows.
+—// group-ui.js — adds "Create Group" and "Create task in group" flows.
 (function () {
       const ready = () => (window.ShadowDB && window.ShadowDB._sb);
       const getGid = (row) => row.dataset.group || row.dataset.groupId;
