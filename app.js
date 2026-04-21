@@ -441,6 +441,7 @@
         if (!title) return;
         var todayS = localToday();
         var created = await ShadowDB.Tasks.create({
+          createdBy: state.currentUserId,
           title: title,
           status: 'Open',
           priority: 'Normal',
@@ -453,6 +454,55 @@
       }
     };
   }
+
+  // ===== BUILD CREATED-BY-ME CTX =====
+  // Builds ctx for the ShadowCreatedByMe module.
+  // Sub-filter (all/mine/delegated) is kept in-memory on state.cbmSub.
+  function buildCreatedByMeCtx() {
+    return {
+      members: state.members,
+      groups: state.groups,
+      currentUserId: state.currentUserId,
+      priColor: priColor,
+      sub: state.cbmSub || 'all',
+      onSubChange: function (key) {
+        state.cbmSub = key;
+        renderView();
+      },
+      onToggleComplete: async function (id) {
+        const t = state.tasks.find(function (x) { return x.id === id; });
+        if (!t) return;
+        // Permissions placeholder: creator should not be able to toggle
+        // delegated task completion in a full RBAC model. For the demo we
+        // allow it; enforcement would go here.
+        const done = t.status === 'Completed';
+        t.status = done ? 'Open' : 'Completed';
+        t.completedAt = done ? null : new Date().toISOString();
+        t.modifiedDate = new Date().toISOString();
+        await ShadowDB.Tasks.update(t);
+        renderView();
+      },
+      onRename: async function (id, nextTitle) {
+        const t = state.tasks.find(function (x) { return x.id === id; });
+        if (!t) return;
+        t.title = nextTitle;
+        t.modifiedDate = new Date().toISOString();
+        await ShadowDB.Tasks.update(t);
+        renderView();
+      },
+      onNudge: function (id) {
+        const t = state.tasks.find(function (x) { return x.id === id; });
+        if (!t) return;
+        const who = t.assignee || 'Unassigned';
+        // Placeholder: real impl would trigger an email/slack ping.
+        if (window.ShadowCreatedByMe && window.ShadowCreatedByMe.toast) {
+          window.ShadowCreatedByMe.toast('Task Assigned to ' + who);
+        }
+      },
+      onRerender: function () { renderView(); }
+    };
+  }
+
   function renderBoardView() {
     const area = document.getElementById('boardArea');
     if (!area) return;
@@ -464,6 +514,16 @@
         return;
       }
     }
+    if (state.currentView === 'createdbyme' && window.ShadowCreatedByMe) {
+      // Delegate to ShadowCreatedByMe module (board layout by status)
+      updateViewHeader();
+      const area = document.getElementById('contentArea') || document.querySelector('.content-area');
+      if (area) {
+        window.ShadowCreatedByMe.renderBoard(area, state.tasks, buildCreatedByMeCtx());
+      }
+      return;
+    }
+
     if (state.currentView === 'agenda') {
       // Delegate to ShadowAgenda module for the Agenda view (board display).
       if (window.ShadowAgenda && typeof ShadowAgenda.renderBoard === 'function') {
@@ -634,6 +694,15 @@
         return;
       }
     }
+    if (state.currentView === 'createdbyme' && window.ShadowCreatedByMe) {
+      updateViewHeader();
+      const area = document.getElementById('contentArea') || document.querySelector('.content-area');
+      if (area) {
+        window.ShadowCreatedByMe.renderList(area, state.tasks, buildCreatedByMeCtx());
+      }
+      return;
+    }
+
     if (state.currentView === 'agenda') {
       // Delegate to ShadowAgenda module for the Agenda view (list display).
       if (window.ShadowAgenda && typeof ShadowAgenda.renderList === 'function') {
@@ -1038,6 +1107,7 @@
         ShadowDB.Tasks.update(task).then(function(){ renderView(); });
       } else {
         const newTask = Object.assign({},task,{id:undefined,group:targetGroupId,createdAt:new Date().toISOString(),modifiedDate:new Date().toISOString()});
+        newTask.createdBy = state.currentUserId;
         ShadowDB.Tasks.create(newTask).then(function(created){
           state.tasks.push(created); renderView();
         });
@@ -1639,6 +1709,7 @@
         modifiedDate: new Date().toISOString(),
         activity: []
       };
+      task.createdBy = state.currentUserId;
       const created = await ShadowDB.Tasks.create(task);
       state.tasks = await ShadowDB.Tasks.getAll();
       document.getElementById('taskModal').style.display='none';
