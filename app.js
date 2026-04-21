@@ -396,41 +396,51 @@
   // Build ctx for the ShadowMyDay module. Mirrors buildAgendaCtx but adds
   // quick-add, pin toggle, inline rename, and a single-parent-label helper.
   function buildMyDayCtx() {
-    var today = (function(){ var d = new Date(); var pad=function(n){return (n<10?'0':'')+n;}; return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); })();
+    function localToday() {
+      var d = new Date();
+      return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    }
     return {
-      today: today,
+      today: localToday(),
       priColor: priColor,
       parentLabel: function(t){ return (t && t.group) ? String(t.group) : 'Personal Task'; },
       onTaskClick: function (id) { showTaskDetail(id, 'panel'); },
       onToggleComplete: async function (id) {
-        var all = ShadowDB.Tasks.getAll();
-        var t = all.find(function(x){ return x.id === id; });
-        if (!t) return;
-        var nextStatus = (t.status === 'Completed') ? 'Open' : 'Completed';
-        var patch = { status: nextStatus };
-        if (nextStatus === 'Completed') patch.completedAt = new Date().toISOString();
-        else patch.completedAt = null;
-        await ShadowDB.Tasks.update(id, patch);
+        var task = state.tasks.find(function (t) { return t.id === id; });
+        if (!task) return;
+        if (task.status === 'Completed') {
+          task.status = 'Open';
+          task.completedAt = null;
+        } else {
+          task.status = 'Completed';
+          task.completedAt = new Date().toISOString();
+        }
+        task.modifiedDate = new Date().toISOString();
+        await ShadowDB.Tasks.update(task);
         renderView();
       },
       onTogglePin: async function (id) {
-        var all = ShadowDB.Tasks.getAll();
-        var t = all.find(function(x){ return x.id === id; });
-        if (!t) return;
-        var next = !(t.isMyDay === true);
-        await ShadowDB.Tasks.update(id, { isMyDay: next });
+        var task = state.tasks.find(function (t) { return t.id === id; });
+        if (!task) return;
+        task.isMyDay = !(task.isMyDay === true);
+        task.modifiedDate = new Date().toISOString();
+        await ShadowDB.Tasks.update(task);
         renderView();
       },
       onRenameTitle: async function (id, newTitle) {
         if (!newTitle) return;
-        await ShadowDB.Tasks.update(id, { title: String(newTitle).trim() });
+        var task = state.tasks.find(function (t) { return t.id === id; });
+        if (!task) return;
+        task.title = String(newTitle).trim();
+        task.modifiedDate = new Date().toISOString();
+        await ShadowDB.Tasks.update(task);
         renderView();
       },
       onQuickAdd: async function (title) {
         title = String(title||'').trim();
         if (!title) return;
-        var todayS = (function(){ var d = new Date(); var pad=function(n){return (n<10?'0':'')+n;}; return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); })();
-        await ShadowDB.Tasks.create({
+        var todayS = localToday();
+        var created = await ShadowDB.Tasks.create({
           title: title,
           status: 'Open',
           priority: 'Normal',
@@ -438,6 +448,7 @@
           dueDate: todayS,
           isMyDay: true
         });
+        if (created && created.id) { state.tasks.push(created); }
         renderView();
       }
     };
@@ -695,7 +706,7 @@
     let tasks = state.tasks.slice();
     const v = state.currentView;
     const today = new Date(); today.setHours(0,0,0,0);
-    const todayStr = today.toISOString().split('T')[0];
+    const todayStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
 
     // Search
     if (state.searchQuery) {
