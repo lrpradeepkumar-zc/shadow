@@ -526,238 +526,64 @@
     };
   }
 
-  function renderBoardView() {
-    const area = document.getElementById('boardArea');
-    if (!area) return;
-    const tasks = getFilteredTasks();
-    if (state.currentView === 'myday') {
-      // Delegate to ShadowMyDay module for the My Day view (board display).
-      if (window.ShadowMyDay && typeof ShadowMyDay.renderBoard === 'function') {
-        ShadowMyDay.renderBoard(area, tasks, buildMyDayCtx());
-        return;
-      }
-    }
-    if (state.currentView === 'createdbyme' && window.ShadowCreatedByMe) {
-      // Delegate to ShadowCreatedByMe module (board layout by status).
-      // Reuse the outer `area` (= boardArea) already acquired at the top of
-      // renderBoardView — mirrors the ShadowMyDay / ShadowAgenda pattern.
-      if (area) {
-        window.ShadowCreatedByMe.renderBoard(area, state.tasks, buildCreatedByMeCtx());
-        return;
-      }
-    }
-
-    if (state.currentView === 'agenda') {
-      // Delegate to ShadowAgenda module for the Agenda view (board display).
-      if (window.ShadowAgenda && typeof ShadowAgenda.renderBoard === 'function') {
-        ShadowAgenda.renderBoard(area, tasks, buildAgendaCtx());
-        return;
-      }
-      // Fallback (legacy) if module missing:
-      area.innerHTML = AGENDA_SECTIONS.map(function(sec) {
-        const ts = tasks.filter(function(t){return getDateCategory(t.dueDate)===sec.key;});
-        return '<div class="board-column">' +
-          '<div class="board-col-header '+sec.key+'" style="border-top:3px solid '+sec.color+'">' +
-            '<span class="board-col-title">'+sec.label+'</span>' +
-            '<span class="board-col-count">'+ts.length+'</span>' +
-            '<button class="col-add-btn" data-section="'+sec.key+'" title="Add task">+</button>' +
-          '</div>' +
-          '<div class="board-col-body">' +
-            (ts.length ? ts.map(renderTaskCard).join('') : '<div class="empty-col">'+sec.emptyMsg+'</div>') +
-          '</div></div>';
-      }).join('');
-    } else {
-      const grouped = applyGroupBy(tasks);
-      if (grouped) {
-        area.innerHTML = Object.entries(grouped).map(function(entry) {
-          const key = entry[0]; const ts = entry[1];
-          return '<div class="board-column">' +
-            '<div class="board-col-header">' +
-            '<span class="board-col-title">'+key+'</span>' +
-            '<span class="board-col-count">'+ts.length+'</span>' +
-            '</div>' +
-            '<div class="board-col-body">'+ts.map(renderTaskCard).join('')+'</div></div>';
-        }).join('');
-      } else {
-        area.innerHTML = '<div class="board-column">' +
-          '<div class="board-col-header"><span class="board-col-title">All Tasks</span>' +
-          '<span class="board-col-count">'+tasks.length+'</span></div>' +
-          '<div class="board-col-body">' +
-          (tasks.length ? tasks.map(renderTaskCard).join('') : '<div class="empty-col">No tasks</div>') +
-          '</div></div>';
-      }
-    }
-    bindCardClicks();
+  function buildUnifiedCtx(viewName) {
+  var base = buildCreatedByMeCtx();
+  // Per-view header titles/subtitles (Zoho-style)
+  var map = {
+    agenda:       { title: 'Agenda view',     subtitle: 'Plan your week by due date' },
+    myday:        { title: 'My Day',          subtitle: "Today's focus list" },
+    createdbyme:  { title: 'Created by me',   subtitle: 'Tasks you originated \u2014 track delegated work' },
+    assignedtome: { title: 'Assigned to me',  subtitle: 'Tasks others assigned to you' },
+    sharedwithme: { title: 'Shared with me',  subtitle: 'Tasks shared with you' },
+    personal:     { title: 'Personal tasks',  subtitle: 'Your private to-dos' },
+    unified:      { title: 'Unified view',    subtitle: 'All your tasks, everywhere' },
+    group:        { title: 'Group',           subtitle: 'Tasks for this group' }
+  };
+  var info = map[viewName] || { title: viewName||'Tasks', subtitle: '' };
+  // Override title for current group
+  if (viewName === 'group' && state.filterGroup) {
+    var g = (state.groups||[]).find(function(gr){ return gr.id === state.filterGroup; });
+    if (g) { info.title = g.name; info.subtitle = 'Tasks in ' + g.name; }
   }
+  base.viewName = viewName;
+  base.title = info.title;
+  base.subtitle = info.subtitle;
+  // Sub-filter tabs only make sense for Created by me
+  base.hideSubFilters = (viewName !== 'createdbyme');
+  // Other views already come pre-filtered via getFilteredTasks(), so bypass owner filter
+  base.skipOwnerFilter = (viewName !== 'createdbyme');
+  return base;
+}
 
-  function bindCardClicks() {
-    document.querySelectorAll('.task-card').forEach(function(card) {
-      card.addEventListener('click', function() {
-        const rawId = this.dataset.taskid;
-        if (!rawId) return;
-        if (rawId.includes('_sub_')) {
-          const parentId = rawId.split('_sub_')[0];
-          showTaskDetail(parentId, 'panel');
-        } else {
-          showTaskDetail(rawId, 'panel');
-        }
-      });
-    });
-    document.querySelectorAll('.col-add-btn').forEach(function(btn) {
-      btn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        document.getElementById('taskModal') && (document.getElementById('taskModal').style.display='flex');
-      });
-    });
+function renderBoardView() {
+  var area = document.getElementById('boardArea');
+  if (!area) return;
+  var tasks = getFilteredTasks();
+  var kit = window.ShadowViewKit || window.ShadowCreatedByMe;
+  if (kit && typeof kit.renderBoard === 'function') {
+    kit.renderBoard(area, tasks, buildUnifiedCtx(state.currentView));
+    return;
   }
-  // ===== LIST VIEW =====
-  function renderListRow(t) {
-    const fields = getFields('list');
-    const initials = getInitials(t.assignee);
-    const bgColor  = avatarColor(t.assignee);
-    const assigneeHtml = fields.assignee && t.assignee ?
-      '<div class="list-col assignee-col">' +
-      '<span class="avatar-sm" style="background:'+bgColor+'" title="'+t.assignee+'">'+initials+'</span>' +
-      '<span class="assignee-name">'+t.assignee+'</span>' +
-      '</div>' : (fields.assignee ? '<div class="list-col assignee-col"></div>' : '');
+  // Fallback (should not happen): empty area
+  area.innerHTML = '';
+}
 
-    const statusHtml = fields.status ?
-      '<div class="list-col status-col">' +
-      '<span class="status-badge '+statusClass(t.status)+'">'+t.status+'</span>' +
-      '</div>' : '';
-
-    const dueDateHtml = fields.dueDate ?
-      '<div class="list-col due-date-col' + (isOverdue(t.dueDate)?' overdue':'') + '">' +
-      (t.dueDate ? '<i class="fa-regular fa-calendar"></i> ' + formatDate(t.dueDate) : '—') +
-      '</div>' : '';
-
-    const createdHtml = fields.createdDate ?
-      '<div class="list-col created-date-col">' +
-      (t.createdAt ? formatDate(t.createdAt.split('T')[0]) : '—') +
-      '</div>' : '';
-
-    const categoryHtml = fields.category ?
-      '<div class="list-col category-col">' + (t.category || '—') + '</div>' : '';
-
-    const subtaskHtml = fields.subtasks && t.subtasks && t.subtasks.length ?
-      '<span class="list-meta-counts"><i class="fa-regular fa-square-check"></i> ' +
-      t.subtasks.filter(s=>s.completed).length+'/'+t.subtasks.length + '</span>' : '';
-
-    const priDot = (t.priority==='High'||t.priority==='Medium') ?
-      '<span class="priority-dot" style="background:'+priColor(t.priority)+'" title="'+t.priority+' priority"></span>' : '';
-
-    const subtaskIndent = t._isSubtask ? '<span class="subtask-indent-indicator"></span>' : '';
-
-    return '<div class="list-row' + (t.id===state.selectedTaskId?' active-row':'') +
-      (t._isSubtask?' is-subtask':'') + '" data-taskid="'+t.id+'">' +
-      '<div class="list-col title-col">' +
-      '<label class="bulk-checkbox-wrap"><input type="checkbox" class="bulk-checkbox" data-id="'+t.id+'"></label>' +
-      subtaskIndent + priDot +
-      '<span class="task-title-text">'+t.title+'</span>' +
-      subtaskHtml +
-      '</div>' +
-      assigneeHtml + statusHtml + dueDateHtml + createdHtml + categoryHtml +
-      '</div>';
+function renderListView() {
+  var listView = document.querySelector('.list-view');
+  var area = document.getElementById('listArea');
+  var lh = document.getElementById('listHeader');
+  if (!area) return;
+  // Hide the legacy column strip — ShadowViewKit renders its own columnar table.
+  if (lh) { lh.innerHTML = ''; lh.classList.add('compact-header'); }
+  var tasks = getFilteredTasks();
+  var kit = window.ShadowViewKit || window.ShadowCreatedByMe;
+  if (kit && typeof kit.renderList === 'function') {
+    kit.renderList(area, tasks, buildUnifiedCtx(state.currentView));
+    return;
   }
+  area.innerHTML = '';
+}
 
-  function renderCompactListRow(t) {
-    const priDot = (t.priority==='High'||t.priority==='Medium') ?
-      '<span class="priority-dot" style="background:'+priColor(t.priority)+'"></span>' : '';
-    return '<div class="list-row compact' + (t._isSubtask?' is-subtask':'') + '" data-taskid="'+t.id+'">' +
-      '<div class="list-col title-col">' + priDot + '<span class="task-title-text">'+t.title+'</span></div>' +
-      '</div>';
-  }
-
-  function renderListSection(key, label, color, tasks, compact) {
-    const rows = tasks.map(compact ? renderCompactListRow : renderListRow).join('');
-    return '<div class="list-section" data-section="'+key+'">' +
-      '<div class="list-section-header" style="border-left:3px solid '+color+'">' +
-      '<span class="list-section-title">'+label+'</span>' +
-      '<span class="list-section-count">'+tasks.length+'</span>' +
-      '</div>' +
-      '<div class="list-section-body">' +
-      (tasks.length ? rows : '<div class="list-empty-row">No tasks</div>') +
-      '</div>' +
-      '</div>';
-  }
-
-  function renderListView() {
-    const listView = document.querySelector('.list-view');
-    const area = document.getElementById('listArea');
-    const lh = document.getElementById('listHeader');
-    if (!area) return;
-
-    const isPanelOpen = !!document.getElementById('taskDetailPanel') &&
-      document.getElementById('taskDetailPanel').classList.contains('open');
-
-    if (lh) {
-      if (isPanelOpen) {
-        lh.classList.add('compact-header');
-      } else {
-        const fields = getFields('list');
-        lh.innerHTML =
-          '<div class="list-col title-col">TASK TITLE</div>' +
-          (fields.assignee    ? '<div class="list-col assignee-col">ASSIGNEE</div>' : '') +
-          (fields.status      ? '<div class="list-col status-col">STATUS</div>' : '') +
-          (fields.dueDate     ? '<div class="list-col due-date-col">DUE DATE</div>' : '') +
-          (fields.createdDate ? '<div class="list-col created-date-col">CREATED DATE</div>' : '') +
-          (fields.category    ? '<div class="list-col category-col">CATEGORY</div>' : '');
-        lh.classList.remove('compact-header');
-      }
-    }
-
-    const tasks = getFilteredTasks();
-    let html = '';
-
-    if (state.currentView === 'myday') {
-      // Delegate to ShadowMyDay module for the My Day view (list display).
-      if (window.ShadowMyDay && typeof ShadowMyDay.renderList === 'function') {
-        if (lh) { lh.innerHTML = ''; lh.classList.add('compact-header'); }
-        ShadowMyDay.renderList(area, tasks, buildMyDayCtx());
-        return;
-      }
-    }
-    if (state.currentView === 'createdbyme' && window.ShadowCreatedByMe) {
-      // Reuse outer listArea/area acquired earlier in renderListView. Also
-      // compact the legacy column-header strip (TASK TITLE | ASSIGNEE | ...)
-      // so the CBM custom rendering isn't visually duplicated — mirrors the
-      // My Day list-branch approach.
-      const listHost = document.getElementById('listArea') || document.querySelector('.list-body');
-      const legacyListHeader = document.getElementById('listHeader');
-      if (legacyListHeader) { legacyListHeader.innerHTML = ''; legacyListHeader.classList.add('compact-header'); }
-      if (listHost) {
-        window.ShadowCreatedByMe.renderList(listHost, state.tasks, buildCreatedByMeCtx());
-        return;
-      }
-    }
-
-    if (state.currentView === 'agenda') {
-      // Delegate to ShadowAgenda module for the Agenda view (list display).
-      if (window.ShadowAgenda && typeof ShadowAgenda.renderList === 'function') {
-        if (lh) { lh.innerHTML = ''; lh.classList.add('compact-header'); }
-        ShadowAgenda.renderList(area, tasks, buildAgendaCtx());
-        return;
-      }
-      // Fallback (legacy) if module missing:
-      AGENDA_SECTIONS.forEach(function(sec) {
-        const ts = tasks.filter(function(t){return getDateCategory(t.dueDate)===sec.key;});
-        html += renderListSection(sec.key, sec.label, sec.color, ts, isPanelOpen);
-      });
-    } else {
-      const grouped = applyGroupBy(tasks);
-      if (grouped) {
-        Object.entries(grouped).forEach(function(entry) {
-          html += renderListSection(entry[0], entry[0], 'var(--accent-blue)', entry[1], isPanelOpen);
-        });
-      } else {
-        html = tasks.map(isPanelOpen ? renderCompactListRow : renderListRow).join('');
-      }
-    }
-
-    area.innerHTML = '<div class="list-body">'+html+'</div>';
-    bindListRowClicks();
-    bindBulkCheckboxes();
-  }
 
   function bindListRowClicks() {
     document.querySelectorAll('.list-row').forEach(function(row) {
