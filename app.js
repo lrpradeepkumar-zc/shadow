@@ -403,7 +403,7 @@
     return {
       today: localToday(),
       priColor: priColor,
-      parentLabel: function(t){ return (t && t.group) ? String(t.group) : 'Personal Task'; },
+      parentLabel: function(t){ if (!t || !t.group) return 'Personal Task'; var g = (state.groups||[]).find(function(x){ return x && x.id === t.group; }); return (g && g.name) ? String(g.name) : String(t.group); },
       onTaskClick: function (id) { showTaskDetail(id, 'panel'); },
       onToggleComplete: async function (id) {
         var task = state.tasks.find(function (t) { return t.id === id; });
