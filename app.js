@@ -365,21 +365,54 @@
   }
 
   // ===== BOARD VIEW =====
+
+  // ===== Agenda View context builder =====
+  // Dependency-injection bundle passed to window.ShadowAgenda
+  function buildAgendaCtx() {
+    return {
+      groups:   state.groups,
+      formatDate: formatDate,
+      isOverdue:  isOverdue,
+      priColor:   priColor,
+      onTaskClick: function (id) { showTaskDetail(id, 'panel'); },
+      onToggleComplete: async function (id, isChecked) {
+        const task = state.tasks.find(function (t) { return t.id === id; });
+        if (!task) return;
+        if (isChecked) {
+          task.status = 'Completed';
+          task.completedAt = new Date().toISOString();
+          task.modifiedDate = task.completedAt;
+        } else {
+          task.status = 'Open';
+          task.completedAt = null;
+          task.modifiedDate = new Date().toISOString();
+        }
+        await ShadowDB.Tasks.update(task);
+        renderView();
+      }
+    };
+  }
   function renderBoardView() {
     const area = document.getElementById('boardArea');
     if (!area) return;
     const tasks = getFilteredTasks();
     if (state.currentView === 'agenda') {
+      // Delegate to ShadowAgenda module for the Agenda view (board display).
+      if (window.ShadowAgenda && typeof ShadowAgenda.renderBoard === 'function') {
+        ShadowAgenda.renderBoard(area, tasks, buildAgendaCtx());
+        return;
+      }
+      // Fallback (legacy) if module missing:
       area.innerHTML = AGENDA_SECTIONS.map(function(sec) {
         const ts = tasks.filter(function(t){return getDateCategory(t.dueDate)===sec.key;});
         return '<div class="board-column">' +
           '<div class="board-col-header '+sec.key+'" style="border-top:3px solid '+sec.color+'">' +
-          '<span class="board-col-title">'+sec.label+'</span>' +
-          '<span class="board-col-count">'+ts.length+'</span>' +
-          '<button class="col-add-btn" data-section="'+sec.key+'" title="Add task">+</button>' +
+            '<span class="board-col-title">'+sec.label+'</span>' +
+            '<span class="board-col-count">'+ts.length+'</span>' +
+            '<button class="col-add-btn" data-section="'+sec.key+'" title="Add task">+</button>' +
           '</div>' +
           '<div class="board-col-body">' +
-          (ts.length ? ts.map(renderTaskCard).join('') : '<div class="empty-col">'+sec.emptyMsg+'</div>') +
+            (ts.length ? ts.map(renderTaskCard).join('') : '<div class="empty-col">'+sec.emptyMsg+'</div>') +
           '</div></div>';
       }).join('');
     } else {
@@ -526,6 +559,13 @@
     let html = '';
 
     if (state.currentView === 'agenda') {
+      // Delegate to ShadowAgenda module for the Agenda view (list display).
+      if (window.ShadowAgenda && typeof ShadowAgenda.renderList === 'function') {
+        if (lh) { lh.innerHTML = ''; lh.classList.add('compact-header'); }
+        ShadowAgenda.renderList(area, tasks, buildAgendaCtx());
+        return;
+      }
+      // Fallback (legacy) if module missing:
       AGENDA_SECTIONS.forEach(function(sec) {
         const ts = tasks.filter(function(t){return getDateCategory(t.dueDate)===sec.key;});
         html += renderListSection(sec.key, sec.label, sec.color, ts, isPanelOpen);
