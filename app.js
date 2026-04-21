@@ -392,10 +392,67 @@
       }
     };
   }
+
+  // Build ctx for the ShadowMyDay module. Mirrors buildAgendaCtx but adds
+  // quick-add, pin toggle, inline rename, and a single-parent-label helper.
+  function buildMyDayCtx() {
+    var today = (function(){ var d = new Date(); var pad=function(n){return (n<10?'0':'')+n;}; return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); })();
+    return {
+      today: today,
+      priColor: priColor,
+      parentLabel: function(t){ return (t && t.group) ? String(t.group) : 'Personal Task'; },
+      onTaskClick: function (id) { showTaskDetail(id, 'panel'); },
+      onToggleComplete: async function (id) {
+        var all = ShadowDB.Tasks.getAll();
+        var t = all.find(function(x){ return x.id === id; });
+        if (!t) return;
+        var nextStatus = (t.status === 'Completed') ? 'Open' : 'Completed';
+        var patch = { status: nextStatus };
+        if (nextStatus === 'Completed') patch.completedAt = new Date().toISOString();
+        else patch.completedAt = null;
+        await ShadowDB.Tasks.update(id, patch);
+        renderView();
+      },
+      onTogglePin: async function (id) {
+        var all = ShadowDB.Tasks.getAll();
+        var t = all.find(function(x){ return x.id === id; });
+        if (!t) return;
+        var next = !(t.isMyDay === true);
+        await ShadowDB.Tasks.update(id, { isMyDay: next });
+        renderView();
+      },
+      onRenameTitle: async function (id, newTitle) {
+        if (!newTitle) return;
+        await ShadowDB.Tasks.update(id, { title: String(newTitle).trim() });
+        renderView();
+      },
+      onQuickAdd: async function (title) {
+        title = String(title||'').trim();
+        if (!title) return;
+        var todayS = (function(){ var d = new Date(); var pad=function(n){return (n<10?'0':'')+n;}; return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); })();
+        await ShadowDB.Tasks.create({
+          title: title,
+          status: 'Open',
+          priority: 'Normal',
+          group: 'Personal Task',
+          dueDate: todayS,
+          isMyDay: true
+        });
+        renderView();
+      }
+    };
+  }
   function renderBoardView() {
     const area = document.getElementById('boardArea');
     if (!area) return;
     const tasks = getFilteredTasks();
+    if (state.currentView === 'myday') {
+      // Delegate to ShadowMyDay module for the My Day view (board display).
+      if (window.ShadowMyDay && typeof ShadowMyDay.renderBoard === 'function') {
+        ShadowMyDay.renderBoard(area, tasks, buildMyDayCtx());
+        return;
+      }
+    }
     if (state.currentView === 'agenda') {
       // Delegate to ShadowAgenda module for the Agenda view (board display).
       if (window.ShadowAgenda && typeof ShadowAgenda.renderBoard === 'function') {
@@ -558,6 +615,14 @@
     const tasks = getFilteredTasks();
     let html = '';
 
+    if (state.currentView === 'myday') {
+      // Delegate to ShadowMyDay module for the My Day view (list display).
+      if (window.ShadowMyDay && typeof ShadowMyDay.renderList === 'function') {
+        if (lh) { lh.innerHTML = ''; lh.classList.add('compact-header'); }
+        ShadowMyDay.renderList(area, tasks, buildMyDayCtx());
+        return;
+      }
+    }
     if (state.currentView === 'agenda') {
       // Delegate to ShadowAgenda module for the Agenda view (list display).
       if (window.ShadowAgenda && typeof ShadowAgenda.renderList === 'function') {
@@ -644,7 +709,7 @@
 
     // View-level filtering
     if (v === 'myday') {
-      tasks = tasks.filter(function(t){ return t.dueDate === todayStr; });
+      tasks = tasks.filter(function(t){ return t.dueDate === todayStr || t.isMyDay === true; });
     } else if (v === 'createdbyme') {
       tasks = tasks.filter(function(t){ return t.createdBy === state.currentUserId || !t.createdBy; });
     } else if (v === 'assignedtome') {
