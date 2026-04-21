@@ -515,13 +515,13 @@
       }
     }
     if (state.currentView === 'createdbyme' && window.ShadowCreatedByMe) {
-      // Delegate to ShadowCreatedByMe module (board layout by status)
-      updateViewHeader();
-      const area = document.getElementById('contentArea') || document.querySelector('.content-area');
+      // Delegate to ShadowCreatedByMe module (board layout by status).
+      // Reuse the outer `area` (= boardArea) already acquired at the top of
+      // renderBoardView — mirrors the ShadowMyDay / ShadowAgenda pattern.
       if (area) {
         window.ShadowCreatedByMe.renderBoard(area, state.tasks, buildCreatedByMeCtx());
+        return;
       }
-      return;
     }
 
     if (state.currentView === 'agenda') {
@@ -695,12 +695,12 @@
       }
     }
     if (state.currentView === 'createdbyme' && window.ShadowCreatedByMe) {
-      updateViewHeader();
-      const area = document.getElementById('contentArea') || document.querySelector('.content-area');
-      if (area) {
-        window.ShadowCreatedByMe.renderList(area, state.tasks, buildCreatedByMeCtx());
+      // Reuse outer listArea/area acquired earlier in renderListView.
+      const listHost = document.getElementById('listArea') || document.querySelector('.list-body');
+      if (listHost) {
+        window.ShadowCreatedByMe.renderList(listHost, state.tasks, buildCreatedByMeCtx());
+        return;
       }
-      return;
     }
 
     if (state.currentView === 'agenda') {
