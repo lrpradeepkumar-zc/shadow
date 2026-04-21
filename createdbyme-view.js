@@ -121,8 +121,11 @@
   }
 
   // --- Board rendering ---
-  function renderBoard(container, ctx){
-    const baseTasks = filterCreatedByMe(ctx.tasks, ctx);
+  function renderBoard(container, tasksOrCtx, maybeCtx){
+    let ctx; let srcTasks;
+    if (Array.isArray(tasksOrCtx)) { srcTasks = tasksOrCtx; ctx = maybeCtx || {}; ctx.tasks = srcTasks; }
+    else { ctx = tasksOrCtx || {}; srcTasks = (ctx && ctx.tasks) || []; }
+    const baseTasks = filterCreatedByMe(srcTasks, ctx);
     const tasks = applySubFilter(baseTasks, ctx.sub||'all', ctx);
     const groups = groupByStatus(tasks);
     const subCounts = { all: baseTasks.length, me: applySubFilter(baseTasks,'me',ctx).length, delegated: applySubFilter(baseTasks,'delegated',ctx).length };
@@ -147,8 +150,11 @@
   }
 
   // --- List view (table-like with collapsible status groups) ---
-  function renderList(container, ctx){
-    const baseTasks = filterCreatedByMe(ctx.tasks, ctx);
+  function renderList(container, tasksOrCtx, maybeCtx){
+    let ctx; let srcTasks;
+    if (Array.isArray(tasksOrCtx)) { srcTasks = tasksOrCtx; ctx = maybeCtx || {}; ctx.tasks = srcTasks; }
+    else { ctx = tasksOrCtx || {}; srcTasks = (ctx && ctx.tasks) || []; }
+    const baseTasks = filterCreatedByMe(srcTasks, ctx);
     const tasks = applySubFilter(baseTasks, ctx.sub||'all', ctx);
     const groups = groupByStatus(tasks);
     const subCounts = { all: baseTasks.length, me: applySubFilter(baseTasks,'me',ctx).length, delegated: applySubFilter(baseTasks,'delegated',ctx).length };
