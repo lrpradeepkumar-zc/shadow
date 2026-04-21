@@ -233,9 +233,20 @@
  return out.join('');
 } 
 function emptyState(ctx){
-    const msg = (ctx.sub==='delegated') ? "You haven't delegated any tasks yet." : (ctx.sub==='me' ? "No tasks assigned to you from your own creations." : "You haven't created any tasks yet.");
-    return '<div class="cbm-empty"><i class="fa-regular fa-clipboard"></i><div>'+escapeHtml(msg)+'</div></div>';
-  }
+ var msg;
+ if (ctx.emptyMsg) { msg = ctx.emptyMsg; }
+ else if (ctx.viewName === 'agenda') msg = 'Nothing on your agenda yet.';
+ else if (ctx.viewName === 'myday')  msg = "Nothing for today. Add something to focus on.";
+ else if (ctx.viewName === 'assignedtome') msg = 'No tasks assigned to you.';
+ else if (ctx.viewName === 'sharedwithme') msg = 'Nothing shared with you yet.';
+ else if (ctx.viewName === 'personal') msg = 'No personal tasks yet.';
+ else if (ctx.viewName === 'unified')  msg = 'No tasks yet.';
+ else if (ctx.viewName === 'group')    msg = 'No tasks in this group yet.';
+ else if (ctx.sub === 'delegated') msg = "You haven't delegated any tasks yet.";
+ else if (ctx.sub === 'me') msg = 'No tasks assigned to you from your own creations.';
+ else msg = "You haven't created any tasks yet.";
+ return '<div class="cbm-empty"><i class="fa-regular fa-clipboard"></i><div>'+escapeHtml(msg)+'</div></div>';
+} 
 
   function wireHeader(container, ctx){
     container.querySelectorAll('.cbm-tab').forEach(btn=>{
