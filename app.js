@@ -499,6 +499,29 @@
           window.ShadowCreatedByMe.toast('Task Assigned to ' + who);
         }
       },
+      onMove: async function (opts) {
+        const { taskId, newStatus, beforeTaskId } = opts || {};
+        const t = state.tasks.find(function (x) { return x.id === taskId; });
+        if (!t) return;
+        // Permission placeholder: in a full RBAC model the creator may not be allowed
+        // to change status of a delegated task; for the demo we allow it.
+        if (newStatus && t.status !== newStatus) {
+          t.status = newStatus;
+          t.completedAt = (newStatus === 'Completed') ? new Date().toISOString() : null;
+        }
+        // Re-order within state.tasks to respect drop position.
+        const idxFrom = state.tasks.indexOf(t);
+        if (idxFrom >= 0) state.tasks.splice(idxFrom, 1);
+        let insertAt = state.tasks.length;
+        if (beforeTaskId) {
+          const idxBefore = state.tasks.findIndex(function (x) { return x.id === beforeTaskId; });
+          if (idxBefore >= 0) insertAt = idxBefore;
+        }
+        state.tasks.splice(insertAt, 0, t);
+        t.modifiedDate = new Date().toISOString();
+        await ShadowDB.Tasks.update(t);
+        renderView();
+      },
       onRerender: function () { renderView(); }
     };
   }
