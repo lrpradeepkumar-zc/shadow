@@ -59,7 +59,6 @@ ADMIN: {
 
   function clearSession() {
     localStorage.removeItem('shadow_session');
-    localStorage.removeItem('shadow_onboarded');
     currentUser = null;
   }
 
