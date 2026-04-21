@@ -125,8 +125,8 @@
     let ctx; let srcTasks;
     if (Array.isArray(tasksOrCtx)) { srcTasks = tasksOrCtx; ctx = maybeCtx || {}; ctx.tasks = srcTasks; }
     else { ctx = tasksOrCtx || {}; srcTasks = (ctx && ctx.tasks) || []; }
-    const baseTasks = filterCreatedByMe(srcTasks, ctx);
-    const tasks = applySubFilter(baseTasks, ctx.sub||'all', ctx);
+    const baseTasks = ctx.skipOwnerFilter ? srcTasks : filterCreatedByMe(srcTasks, ctx);
+    const tasks = ctx.hideSubFilters ? baseTasks : applySubFilter(baseTasks, ctx.sub||'all', ctx);
     const groups = groupByStatus(tasks);
     const subCounts = { all: baseTasks.length, me: applySubFilter(baseTasks,'me',ctx).length, delegated: applySubFilter(baseTasks,'delegated',ctx).length };
     const html = [];
@@ -154,8 +154,8 @@
     let ctx; let srcTasks;
     if (Array.isArray(tasksOrCtx)) { srcTasks = tasksOrCtx; ctx = maybeCtx || {}; ctx.tasks = srcTasks; }
     else { ctx = tasksOrCtx || {}; srcTasks = (ctx && ctx.tasks) || []; }
-    const baseTasks = filterCreatedByMe(srcTasks, ctx);
-    const tasks = applySubFilter(baseTasks, ctx.sub||'all', ctx);
+    const baseTasks = ctx.skipOwnerFilter ? srcTasks : filterCreatedByMe(srcTasks, ctx);
+    const tasks = ctx.hideSubFilters ? baseTasks : applySubFilter(baseTasks, ctx.sub||'all', ctx);
     const groups = groupByStatus(tasks);
     const subCounts = { all: baseTasks.length, me: applySubFilter(baseTasks,'me',ctx).length, delegated: applySubFilter(baseTasks,'delegated',ctx).length };
     const html = [];
@@ -216,23 +216,23 @@
 
   // --- Header (title + segmented tabs) ---
   function cbmHeader(ctx, counts){
-    const sub = ctx.sub||'all';
-    return [
-      '<div class="cbm-header">',
-        '<div class="cbm-title-block">',
-          '<h2>Created by me</h2>',
-          '<div class="cbm-sub">Tasks you originated &mdash; track delegated work</div>',
-        '</div>',
-        '<div class="cbm-tabs" role="tablist">',
-          '<button class="cbm-tab '+(sub==='all'?'active':'')+'" data-sub="all">All <span class="cbm-tab-count">'+counts.all+'</span></button>',
-          '<button class="cbm-tab '+(sub==='me'?'active':'')+'" data-sub="me">Assigned to me <span class="cbm-tab-count">'+counts.me+'</span></button>',
-          '<button class="cbm-tab '+(sub==='delegated'?'active':'')+'" data-sub="delegated">Delegated <span class="cbm-tab-count">'+counts.delegated+'</span></button>',
-        '</div>',
-      '</div>'
-    ].join('');
-  }
-
-  function emptyState(ctx){
+ const sub = ctx.sub||'all';
+ const title = ctx.title||'Created by me';
+ const subtitle = ctx.subtitle||'Tasks you originated \u2014 track delegated work';
+ const out = [];
+ out.push('<div class="cbm-header">');
+ out.push('<div class="cbm-title-block"><h2>'+escapeHtml(title)+'</h2><div class="cbm-sub">'+escapeHtml(subtitle)+'</div></div>');
+ if (!ctx.hideSubFilters){
+  out.push('<div class="cbm-tabs" role="tablist">');
+  out.push('<button class="cbm-tab '+(sub==='all'?'active':'')+'" data-sub="all">All <span class="cbm-tab-count">'+counts.all+'</span></button>');
+  out.push('<button class="cbm-tab '+(sub==='me'?'active':'')+'" data-sub="me">Assigned to me <span class="cbm-tab-count">'+counts.me+'</span></button>');
+  out.push('<button class="cbm-tab '+(sub==='delegated'?'active':'')+'" data-sub="delegated">Delegated <span class="cbm-tab-count">'+counts.delegated+'</span></button>');
+  out.push('</div>');
+ }
+ out.push('</div>');
+ return out.join('');
+} 
+function emptyState(ctx){
     const msg = (ctx.sub==='delegated') ? "You haven't delegated any tasks yet." : (ctx.sub==='me' ? "No tasks assigned to you from your own creations." : "You haven't created any tasks yet.");
     return '<div class="cbm-empty"><i class="fa-regular fa-clipboard"></i><div>'+escapeHtml(msg)+'</div></div>';
   }
@@ -417,7 +417,7 @@
   }
 
   // --- Public API ---
-  window.ShadowCreatedByMe = {
+  window.ShadowViewKit = window.ShadowCreatedByMe = {
     STATUS_BUCKETS, STATUS_COLORS,
     filterCreatedByMe, applySubFilter, groupByStatus, statusBucket,
     renderBoard, renderList, openDetail, closeDetail, toast
