@@ -695,8 +695,13 @@
       }
     }
     if (state.currentView === 'createdbyme' && window.ShadowCreatedByMe) {
-      // Reuse outer listArea/area acquired earlier in renderListView.
+      // Reuse outer listArea/area acquired earlier in renderListView. Also
+      // compact the legacy column-header strip (TASK TITLE | ASSIGNEE | ...)
+      // so the CBM custom rendering isn't visually duplicated — mirrors the
+      // My Day list-branch approach.
       const listHost = document.getElementById('listArea') || document.querySelector('.list-body');
+      const legacyListHeader = document.getElementById('listHeader');
+      if (legacyListHeader) { legacyListHeader.innerHTML = ''; legacyListHeader.classList.add('compact-header'); }
       if (listHost) {
         window.ShadowCreatedByMe.renderList(listHost, state.tasks, buildCreatedByMeCtx());
         return;
