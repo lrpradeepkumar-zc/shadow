@@ -117,6 +117,8 @@
           '<div class="grp-settings-tabs" style="display:flex;gap:4px;border-bottom:1px solid var(--border-color,#e5e7eb);padding:8px 12px 0;">' +
             '<button class="tab-btn active" data-tab="workflows"><i class="fa-solid fa-bolt"></i> Workflows &amp; Rules</button>' +
             '<button class="tab-btn" data-tab="general"><i class="fa-solid fa-gear"></i> General</button>' +
+                '<button class="tab-btn" data-tab="members"><i class="fa-solid fa-users"></i> Members</button>' +
+                '<button class="tab-btn" data-tab="preferences"><i class="fa-solid fa-sliders"></i> Preferences</button>' +
           '</div>' +
           '<div class="grp-settings-body" id="grpSettingsBody" style="padding:14px;overflow:auto;"></div>' +
         '</div>';
@@ -156,11 +158,13 @@
   }
 
   function renderTab(groupId, tab) {
-    var body = document.getElementById("grpSettingsBody");
-    if (!body) return;
-    if (tab === "workflows") return renderWorkflowsTab(body, groupId);
-    return renderGeneralTab(body, groupId);
-  }
+        var body = document.getElementById("grpSettingsBody");
+        if (!body) return;
+        if (tab === "workflows")   return renderWorkflowsTab(body, groupId);
+        if (tab === "members")     return renderMembersTab(body, groupId);
+        if (tab === "preferences") return renderPreferencesTab(body, groupId);
+        return renderGeneralTab(body, groupId);
+      }
 
   function renderGeneralTab(body, groupId) {
     var group = findGroup(groupId);
@@ -173,7 +177,137 @@
       '<div style="font-size:12px;color:var(--text-secondary,#64748b);">TODO: expose rename / members / personal toggle here.</div>';
   }
 
-  function renderWorkflowsTab(body, groupId) {
+  function renderMembersTab(body, groupId) {
+        var group = findGroup(groupId);
+        if (!group) { body.innerHTML = "<p>Group not found.</p>"; return; }
+        var rbac = window.RBAC;
+        var canManage = rbac ? rbac.canManageGroup(groupId) : true;
+        var mockUsers = (rbac && rbac.MockUsers) || [];
+        var adminIds = group.adminIds || [];
+        var memberIds = group.memberIds || [];
+        var allGroupUserIds = Array.from(new Set([].concat(adminIds, memberIds)));
+        var rows = allGroupUserIds.length === 0
+          ? '<div style="padding:16px;text-align:center;color:var(--text-secondary,#64748b);font-size:13px;">No members yet.</div>'
+          : allGroupUserIds.map(function(uid){
+              var u = mockUsers.find(function(x){ return x.id === uid; }) || { id: uid, name: uid, email: "—" };
+              var isAdmin = adminIds.indexOf(uid) >= 0;
+              var roleLabel = isAdmin ? "Group Admin" : "Group Member";
+              var roleColor = isAdmin ? "#f59e0b" : "#10b981";
+              var actions = "";
+              if (canManage) {
+                if (!isAdmin) {
+                  actions += '<button class="wf-btn gs-promote" data-uid="' + escapeAttr(uid) + '" title="Promote to Group Admin"><i class="fa-solid fa-arrow-up"></i></button> ';
+                }
+                actions += '<button class="wf-btn gs-remove" data-uid="' + escapeAttr(uid) + '" title="Remove from group"><i class="fa-solid fa-user-minus"></i></button>';
+              }
+              return '<div class="gs-member-row">' +
+                     '<div class="gs-member-info"><b>' + escapeHtml(u.name) + '</b><small>' + escapeHtml(u.email) + '</small></div>' +
+                     '<span class="rbac-badge" style="background:' + roleColor + '22;color:' + roleColor + ';border:1px solid ' + roleColor + '55">' + roleLabel + '</span>' +
+                     '<span>' + (canManage ? actions : '<span class="rbac-readonly-pill"><i class="fa-solid fa-lock"></i> read-only</span>') + '</span>' +
+                     '</div>';
+            }).join("");
+        var addBlock = canManage
+          ? '<div class="gs-members-toolbar">' +
+            '  <div style="font-size:12px;color:var(--text-secondary,#64748b);">' + allGroupUserIds.length + ' member(s)</div>' +
+            '  <div style="display:flex;gap:6px;">' +
+            '    <select id="gsAddMemberSelect" style="font-size:12px;padding:4px 6px;"><option value="">Add member…</option>' +
+                 mockUsers.filter(function(u){ return allGroupUserIds.indexOf(u.id) < 0; })
+                          .map(function(u){ return '<option value="' + escapeAttr(u.id) + '">' + escapeHtml(u.name) + '</option>'; }).join("") +
+            '    </select>' +
+            '    <button class="wf-btn primary" id="gsAddMemberBtn"><i class="fa-solid fa-plus"></i> Add</button>' +
+            '  </div>' +
+            '</div>'
+          : '<div class="gs-members-toolbar"><span class="rbac-readonly-pill"><i class="fa-solid fa-lock"></i> You need Group Admin or Org Admin permission to manage members.</span></div>';
+        body.innerHTML = addBlock + rows;
+        if (canManage) {
+          var addBtn = body.querySelector("#gsAddMemberBtn");
+          if (addBtn) addBtn.addEventListener("click", async function(){
+            var sel = body.querySelector("#gsAddMemberSelect");
+            var uid = sel && sel.value;
+            if (!uid) return;
+            group.memberIds = Array.from(new Set((group.memberIds || []).concat([uid])));
+            try {
+              if (window.ShadowDB && window.ShadowDB.Groups && window.ShadowDB.Groups.update) {
+                await window.ShadowDB.Groups.update(groupId, { memberIds: group.memberIds });
+              }
+            } catch(_) {}
+            renderMembersTab(body, groupId);
+          });
+          body.querySelectorAll(".gs-promote").forEach(function(btn){
+            btn.addEventListener("click", async function(){
+              var uid = btn.getAttribute("data-uid");
+              group.adminIds = Array.from(new Set((group.adminIds || []).concat([uid])));
+              group.memberIds = (group.memberIds || []).filter(function(x){ return x !== uid; });
+              try {
+                if (window.ShadowDB && window.ShadowDB.Groups && window.ShadowDB.Groups.update) {
+                  await window.ShadowDB.Groups.update(groupId, { adminIds: group.adminIds, memberIds: group.memberIds });
+                }
+              } catch(_) {}
+              renderMembersTab(body, groupId);
+            });
+          });
+          body.querySelectorAll(".gs-remove").forEach(function(btn){
+            btn.addEventListener("click", async function(){
+              var uid = btn.getAttribute("data-uid");
+              if (!confirm("Remove this member from the group?")) return;
+              group.adminIds  = (group.adminIds  || []).filter(function(x){ return x !== uid; });
+              group.memberIds = (group.memberIds || []).filter(function(x){ return x !== uid; });
+              try {
+                if (window.ShadowDB && window.ShadowDB.Groups && window.ShadowDB.Groups.update) {
+                  await window.ShadowDB.Groups.update(groupId, { adminIds: group.adminIds, memberIds: group.memberIds });
+                }
+              } catch(_) {}
+              renderMembersTab(body, groupId);
+            });
+          });
+        }
+      }
+
+      function renderPreferencesTab(body, groupId) {
+        var group = findGroup(groupId);
+        if (!group) { body.innerHTML = "<p>Group not found.</p>"; return; }
+        var rbac = window.RBAC;
+        var canManage = rbac ? rbac.canManageGroup(groupId) : true;
+        var disabled = canManage ? "" : " disabled";
+        body.innerHTML =
+          '<div style="display:flex;flex-direction:column;gap:14px;">' +
+          (canManage ? '' : '<div><span class="rbac-readonly-pill"><i class="fa-solid fa-lock"></i> read-only — Group Admin or Org Admin only</span></div>') +
+          '  <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;">' +
+          '    <span style="color:var(--text-secondary,#64748b);">Group name</span>' +
+          '    <input id="gsPrefName" type="text" value="' + escapeAttr(group.name || "") + '"' + disabled + ' style="padding:6px 8px;border:1px solid var(--border-color,#334155);background:var(--bg-secondary,#0f172a);color:inherit;border-radius:6px;">' +
+          '  </label>' +
+          '  <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;">' +
+          '    <span style="color:var(--text-secondary,#64748b);">Description</span>' +
+          '    <textarea id="gsPrefDesc" rows="3"' + disabled + ' style="padding:6px 8px;border:1px solid var(--border-color,#334155);background:var(--bg-secondary,#0f172a);color:inherit;border-radius:6px;">' + escapeHtml(group.description || "") + '</textarea>' +
+          '  </label>' +
+          '  <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;">' +
+          '    <span style="color:var(--text-secondary,#64748b);">Default task categories (comma-separated)</span>' +
+          '    <input id="gsPrefCats" type="text" value="' + escapeAttr((group.defaultCategories || []).join(", ")) + '"' + disabled + ' style="padding:6px 8px;border:1px solid var(--border-color,#334155);background:var(--bg-secondary,#0f172a);color:inherit;border-radius:6px;">' +
+          '  </label>' +
+          (canManage ? '<div><button class="wf-btn primary" id="gsPrefSave"><i class="fa-solid fa-save"></i> Save preferences</button></div>' : '') +
+          '</div>';
+        if (canManage) {
+          body.querySelector("#gsPrefSave").addEventListener("click", async function(){
+            var patch = {
+              name: body.querySelector("#gsPrefName").value.trim() || group.name,
+              description: body.querySelector("#gsPrefDesc").value,
+              defaultCategories: body.querySelector("#gsPrefCats").value.split(",").map(function(s){ return s.trim(); }).filter(Boolean)
+            };
+            Object.assign(group, patch);
+            try {
+              if (window.ShadowDB && window.ShadowDB.Groups && window.ShadowDB.Groups.update) {
+                await window.ShadowDB.Groups.update(groupId, patch);
+              }
+              if (typeof window.renderSidebar === "function") window.renderSidebar();
+            } catch(e) { alert("Could not save: " + e.message); return; }
+            var t = document.getElementById("grpSettingsTitle");
+            if (t) t.textContent = group.name + " — settings";
+            alert("Preferences saved.");
+          });
+        }
+      }
+
+      function renderWorkflowsTab(body, groupId) {
     var engine = window.WorkflowEngine;
     if (!engine || typeof engine.getRulesByGroup !== "function") {
       body.innerHTML = '<p>Workflow engine not available.</p>';
