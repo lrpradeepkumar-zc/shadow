@@ -1867,6 +1867,17 @@ function renderListView() {
     window.__shadowAppInit = () => init().catch(function(err){ console.error('Init error:', err); });
     if (window.ShadowDB && window.ShadowDB._sb) window.__shadowAppInit();
     else document.addEventListener('shadowdb:ready', window.__shadowAppInit, { once: true });
+
+    // --- Expose select internals for feature modules (invitee, notifications) ----
+    // These are intentionally added as window globals so separate IIFE modules
+    // appended to this file can access them without refactoring the whole app.
+    try {
+      window.state = state;
+      if (typeof openTaskDetail === 'function') window.openTaskDetail = openTaskDetail;
+      if (typeof addTimelineEntry === 'function') window.addTimelineEntry = addTimelineEntry;
+      if (typeof renderSidebar === 'function') window.renderSidebar = renderSidebar;
+      if (typeof renderCurrentView === 'function') window.renderCurrentView = renderCurrentView;
+    } catch (e) { /* no-op */ }
 })();
 
 
