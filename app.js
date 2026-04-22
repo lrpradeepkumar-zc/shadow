@@ -161,6 +161,20 @@
     const pcEl = document.getElementById('personalCount');
     if (pcEl) pcEl.textContent = personalCount;
 
+    // --- SHARED WITH ME COUNT ---------------------------------------------
+    // TODO: Replace with the central task-count selector once wired
+    //   e.g. useTaskStore(s => s.counts.sharedWithMe) or
+    //        queryClient.getQueryData(['taskCounts']).sharedWithMe
+    // For now derived from state.tasks (same source as personalCount).
+    const sharedWithMeCount = state.tasks.filter(function (t) {
+      return Array.isArray(t.sharedWith) && t.sharedWith.length > 0;
+    }).length;
+    const swmEl = document.getElementById('sharedWithMeCount');
+    if (swmEl) {
+      swmEl.textContent = sharedWithMeCount;
+      swmEl.style.display = sharedWithMeCount > 0 ? '' : 'none';
+    }
+
     // Rebind group clicks
     document.querySelectorAll('.group-item').forEach(function(el) {
       el.addEventListener('click', function() {
@@ -1853,4 +1867,311 @@ function renderListView() {
     window.__shadowAppInit = () => init().catch(function(err){ console.error('Init error:', err); });
     if (window.ShadowDB && window.ShadowDB._sb) window.__shadowAppInit();
     else document.addEventListener('shadowdb:ready', window.__shadowAppInit, { once: true });
+})();
+
+
+/* =========================================================================
+ * feature/shared-with-me  —  Invitee module
+ *   - Invite User modal (search + select mock users)
+ *   - "Enable invitee access" toggle is a setting only (does NOT touch sharedWith)
+ *   - Emits per-invitee notifications + task timeline entries
+ * ========================================================================= */
+(function InviteeModule() {
+
+  // MOCK directory — swap for ShadowDB.Members.list() when available.
+  var MOCK_USERS = [
+    { id: 'u1', name: 'Raghavan P',         email: 'raghavan.pk@zohocorp.com' },
+    { id: 'u2', name: 'Raghavan Anandan',   email: 'raghavan.av@zohocorp.com' },
+    { id: 'u3', name: 'Raghavan Balchand',  email: 'raghavan.balchand@zohocorp.com' },
+    { id: 'u4', name: 'Raghav Balaji V',    email: 'raghav.balaji@zohocorp.com' },
+    { id: 'u5', name: 'Raghav Iyer',        email: 'raghav.r@zohocorp.com' },
+    { id: 'u6', name: 'Raghav M B',         email: 'raghav.mb@zohocorp.com' },
+    { id: 'u7', name: 'Raghav S',           email: 'raghav.sr@zohocorp.com' },
+    { id: 'u8', name: 'Raghav Subramaniam', email: 'raghav.subramaniam@zohocorp.com' }
+  ];
+
+  function $id(id) { return document.getElementById(id); }
+  function overlay() { return $id('inviteModalOverlay'); }
+
+  var draftInvitees = [];
+  var draftAccessEnabled = true;
+
+  function currentTask() {
+    if (!window.state || !state.tasks) return null;
+    var id = state.currentTaskId || state.selectedTaskId;
+    return state.tasks.find(function (t) { return t.id === id; }) || null;
+  }
+
+  // TODO: replace with real notification store (ShadowDB.Notifications.create(...))
+  function pushNotification(n) {
+    state.notifications = state.notifications || [];
+    state.notifications.unshift({
+      id: 'n_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+      type: n.type,
+      taskId: n.taskId,
+      actor: n.actor,
+      target: n.target,
+      message: n.message,
+      time: new Date().toISOString(),
+      read: false
+    });
+    document.dispatchEvent(new CustomEvent('notifications:updated'));
+  }
+
+  function openModal() {
+    var task = currentTask();
+    if (!task) return;
+    draftInvitees = (task.sharedWith || []).slice();
+    draftAccessEnabled = task.inviteeAccessEnabled !== false;
+    var toggle = $id('inviteAccessToggle');
+    if (toggle) toggle.checked = draftAccessEnabled;
+    $id('inviteSearchInput').value = '';
+    $id('inviteSuggestions').hidden = true;
+    renderChips();
+    overlay().style.display = 'flex';
+  }
+
+  function closeModal() { if (overlay()) overlay().style.display = 'none'; }
+
+  function renderChips() {
+    $id('inviteChosen').innerHTML = draftInvitees.map(function (u) {
+      return '<span class="invite-chip" data-id="' + u.id + '">' + u.name +
+             ' <span class="x" data-rm="' + u.id + '" aria-label="Remove">&#10005;</span></span>';
+    }).join('');
+  }
+
+  function onSearch(e) {
+    var q = e.target.value.trim().toLowerCase();
+    var box = $id('inviteSuggestions');
+    if (!q) { box.hidden = true; return; }
+    var hits = MOCK_USERS.filter(function (u) {
+      return u.name.toLowerCase().indexOf(q) !== -1 ||
+             u.email.toLowerCase().indexOf(q) !== -1;
+    }).slice(0, 8);
+    box.innerHTML = hits.map(function (u) {
+      return '<li data-id="' + u.id + '">' +
+             '<div class="avatar-sm">' + u.name.charAt(0) + '</div>' +
+             '<div><div class="u-name">' + u.name + '</div>' +
+             '<div class="u-email">' + u.email + '</div></div></li>';
+    }).join('');
+    box.hidden = hits.length === 0;
+  }
+
+  function onPickSuggestion(e) {
+    var li = e.target.closest && e.target.closest('li[data-id]');
+    if (!li) return;
+    var user = MOCK_USERS.find(function (u) { return u.id === li.dataset.id; });
+    if (user && !draftInvitees.some(function (u) { return u.id === user.id; })) {
+      draftInvitees.push(user);
+      renderChips();
+    }
+    $id('inviteSearchInput').value = '';
+    $id('inviteSuggestions').hidden = true;
+  }
+
+  function onRemoveChip(e) {
+    var id = e.target.dataset && e.target.dataset.rm;
+    if (!id) return;
+    draftInvitees = draftInvitees.filter(function (u) { return u.id !== id; });
+    renderChips();
+  }
+
+  // Toggle is setting-only; never mutates task.sharedWith.
+  function onToggleAccess(e) { draftAccessEnabled = !!e.target.checked; }
+
+  function confirmInvite() {
+    var task = currentTask();
+    if (!task) return;
+    var previousIds = {};
+    (task.sharedWith || []).forEach(function (u) { previousIds[u.id] = true; });
+    var added = draftInvitees.filter(function (u) { return !previousIds[u.id]; });
+
+    task.sharedWith = draftInvitees.slice();
+    task.inviteeAccessEnabled = draftAccessEnabled;
+    // TODO: ShadowDB.Tasks.update(task.id, { sharedWith, inviteeAccessEnabled })
+
+    var actor = (state.currentUser && state.currentUser.name) || 'You';
+    added.forEach(function (u) {
+      if (typeof addTimelineEntry === 'function') {
+        addTimelineEntry(task, actor + ' invited ' + u.name + ' to this task');
+      }
+      pushNotification({
+        type: 'invite',
+        taskId: task.id,
+        actor: actor,
+        target: u,
+        message: actor + ' invited ' + u.name + ' (' + u.email + ') to "' + (task.title || 'task') + '"'
+      });
+    });
+
+    showToast(added.length ? 'Invitee(s) has been added successfully' : 'Invitee list updated');
+    closeModal();
+    if (typeof renderSidebar === 'function') renderSidebar();
+    if (typeof renderCurrentView === 'function') renderCurrentView();
+  }
+
+  function showToast(text) {
+    var t = $id('inviteToast');
+    if (!t) return;
+    var span = t.querySelector('span');
+    if (span) span.textContent = text;
+    else t.innerHTML = '<i class="fa-solid fa-circle-check"></i> <span>' + text + '</span>';
+    t.style.display = 'block';
+    clearTimeout(showToast._id);
+    showToast._id = setTimeout(function () { t.style.display = 'none'; }, 2200);
+  }
+
+  function init() {
+    var add = $id('inviteeAddBtn'); if (add) add.addEventListener('click', openModal);
+    var close = $id('inviteModalClose'); if (close) close.addEventListener('click', closeModal);
+    var search = $id('inviteSearchInput'); if (search) search.addEventListener('input', onSearch);
+    var sugg = $id('inviteSuggestions'); if (sugg) sugg.addEventListener('click', onPickSuggestion);
+    var chosen = $id('inviteChosen'); if (chosen) chosen.addEventListener('click', onRemoveChip);
+    var toggle = $id('inviteAccessToggle'); if (toggle) toggle.addEventListener('change', onToggleAccess);
+    var confirm = $id('inviteConfirmBtn'); if (confirm) confirm.addEventListener('click', confirmInvite);
+    var ov = overlay(); if (ov) ov.addEventListener('click', function (e) { if (e.target === ov) closeModal(); });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+
+
+/* =========================================================================
+ * feature/shared-with-me  —  Notifications dropdown module
+ *   Header bell bound to state.notifications; listens for
+ *   'notifications:updated' events from invitee flow (and future emitters).
+ * ========================================================================= */
+(function NotificationsModule() {
+  function $id(id) { return document.getElementById(id); }
+
+  // TODO: replace with real notification store (ShadowDB.Notifications.list/subscribe)
+  function list() { return (window.state && state.notifications) || []; }
+  function unreadCount() { return list().filter(function (n) { return !n.read; }).length; }
+
+  function timeAgo(iso) {
+    var diff = Math.max(0, Date.now() - new Date(iso).getTime());
+    var m = Math.floor(diff / 60000);
+    if (m < 1) return 'just now';
+    if (m < 60) return m + 'm ago';
+    var h = Math.floor(m / 60);
+    if (h < 24) return h + 'h ago';
+    return Math.floor(h / 24) + 'd ago';
+  }
+
+  function iconFor(type) {
+    switch (type) {
+      case 'invite':  return 'fa-user-plus';
+      case 'comment': return 'fa-comment';
+      case 'status':  return 'fa-circle-check';
+      default:        return 'fa-bell';
+    }
+  }
+
+  function escapeHtml(s) {
+    return String(s || '')
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function renderBadge() {
+    var badge = $id('notifBadge');
+    if (!badge) return;
+    var n = unreadCount();
+    badge.textContent = n;
+    badge.hidden = n === 0;
+  }
+
+  function renderPanel() {
+    var listEl = $id('notifList');
+    var emptyEl = $id('notifEmpty');
+    if (!listEl || !emptyEl) return;
+    var items = list();
+    if (!items.length) {
+      listEl.innerHTML = '';
+      emptyEl.style.display = 'block';
+      return;
+    }
+    emptyEl.style.display = 'none';
+    listEl.innerHTML = items.map(function (n) {
+      return '<li class="notif-item ' + (n.read ? '' : 'unread') + '" ' +
+             'data-id="' + n.id + '" data-task="' + (n.taskId || '') + '" role="menuitem">' +
+             '<div class="n-icon"><i class="fa-solid ' + iconFor(n.type) + '"></i></div>' +
+             '<div><div class="n-body">' + escapeHtml(n.message) + '</div>' +
+             '<div class="n-time">' + timeAgo(n.time) + '</div></div></li>';
+    }).join('');
+  }
+
+  function togglePanel(force) {
+    var panel = $id('notifPanel');
+    var btn = $id('notifBellBtn');
+    if (!panel || !btn) return;
+    var willOpen = typeof force === 'boolean' ? force : panel.hidden;
+    panel.hidden = !willOpen;
+    btn.setAttribute('aria-expanded', String(willOpen));
+    if (willOpen) renderPanel();
+  }
+
+  function onItemClick(e) {
+    var li = e.target.closest && e.target.closest('.notif-item');
+    if (!li) return;
+    var id = li.dataset.id;
+    var taskId = li.dataset.task;
+    var items = list();
+    var item = items.find(function (n) { return n.id === id; });
+    if (item) item.read = true;
+    renderBadge();
+    renderPanel();
+    if (taskId && typeof openTaskDetail === 'function') {
+      togglePanel(false);
+      openTaskDetail(taskId);
+    }
+  }
+
+  function markAllRead() {
+    list().forEach(function (n) { n.read = true; });
+    renderBadge();
+    renderPanel();
+  }
+
+  function clearAll() {
+    if (window.state) state.notifications = [];
+    renderBadge();
+    renderPanel();
+  }
+
+  function init() {
+    if (window.state) state.notifications = state.notifications || [];
+
+    var bell = $id('notifBellBtn');
+    if (bell) bell.addEventListener('click', function (e) { e.stopPropagation(); togglePanel(); });
+    var listEl = $id('notifList'); if (listEl) listEl.addEventListener('click', onItemClick);
+    var mark = $id('notifMarkAllRead'); if (mark) mark.addEventListener('click', markAllRead);
+    var clr = $id('notifClearAll'); if (clr) clr.addEventListener('click', clearAll);
+
+    document.addEventListener('click', function (e) {
+      var panel = $id('notifPanel');
+      if (!panel || panel.hidden) return;
+      if (!(e.target.closest && e.target.closest('.notif-wrap'))) togglePanel(false);
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') togglePanel(false);
+    });
+    document.addEventListener('notifications:updated', function () {
+      renderBadge();
+      var panel = $id('notifPanel');
+      if (panel && !panel.hidden) renderPanel();
+    });
+
+    renderBadge();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 })();
