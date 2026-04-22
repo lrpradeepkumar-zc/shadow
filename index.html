@@ -34,7 +34,20 @@
         <span>ToDo</span>
         <input type="text" placeholder="Search ( / )" id="searchInput">
       </div>
-      <button class="icon-btn" title="Notifications"><i class="fa-solid fa-bell"></i><span class="badge">1</span></button>
+      <div class="notif-wrap">
+              <button class="icon-btn" id="notifBellBtn" title="Notifications" aria-haspopup="true" aria-expanded="false"><i class="fa-solid fa-bell"></i><span class="badge" id="notifBadge" hidden>0</span></button>
+              <div class="notif-panel" id="notifPanel" hidden role="menu" aria-label="Notifications">
+                <div class="notif-header">
+                  <span>Notifications</span>
+                  <div class="notif-header-actions">
+                    <button class="link-btn" id="notifMarkAllRead">Mark all read</button>
+                    <button class="link-btn" id="notifClearAll">Clear</button>
+                  </div>
+                </div>
+                <ul class="notif-list" id="notifList"></ul>
+                <div class="notif-empty" id="notifEmpty">You're all caught up</div>
+              </div>
+            </div>
       <div class="avatar" title="Profile">P</div>
       <button class="icon-btn" title="Apps"><i class="fa-solid fa-grip"></i></button>
     </div>
@@ -48,7 +61,7 @@
         <div class="nav-item" data-view="myday"><i class="fa-solid fa-bolt"></i> My Day</div>
         <div class="nav-item" data-view="createdbyme"><i class="fa-regular fa-user"></i> Created by Me</div>
         <div class="nav-item" data-view="assignedtome"><i class="fa-regular fa-user"></i> Assigned to me</div>
-        <div class="nav-item" data-view="sharedwithme"><i class="fa-solid fa-share-nodes"></i> Shared with me</div>
+        <div class="nav-item has-count" data-view="sharedwithme"><i class="fa-solid fa-share-nodes"></i> Shared with me <span class="count" id="sharedWithMeCount">0</span></div>
         <div class="nav-item has-count" data-view="personal"><i class="fa-regular fa-user"></i> Personal tasks <span class="count" id="personalCount">0</span></div>
         <div class="nav-item" data-view="unified"><i class="fa-solid fa-layer-group"></i> Unified view</div>
       </div>
@@ -168,8 +181,15 @@
           <div class="section-label"><i class="fa-solid fa-timeline"></i> Timeline <i class="fa-regular fa-circle-check"></i></div>
           <div id="timelineList" class="timeline-list"></div>
         </div>
-        <div class="comment-section">
-          <div class="avatar-sm">P</div>
+        <div class="invitee-bar" id="invitees-bar">
+                  <button class="icon-btn invitee-like-btn" title="Like"><i class="fa-regular fa-heart"></i></button>
+                  <span class="invitee-dot">•</span>
+                  <button class="icon-btn invitee-refuse-btn" id="inviteeRefuseBtn" title="Click to refuse other invitees"><i class="fa-solid fa-user-slash"></i></button>
+                  <span class="invitee-dot">•</span>
+                  <button class="icon-btn invitee-add-btn" id="inviteeAddBtn" title="Add / View invitees"><i class="fa-solid fa-plus"></i></button>
+                </div>
+                <div class="comment-section">
+                  <div class="avatar-sm">P</div>
           <input type="text" placeholder="Write a Comment" id="commentInput" class="comment-input">
           <button class="icon-btn"><i class="fa-regular fa-face-smile"></i></button>
         </div>
@@ -306,5 +326,32 @@
     <script src="onboarding.js"></script>
       <script src="task-enhancements.js"></script>
   <script src="group-ui.js"></script>
+    <!-- Invite User Modal -->
+    <div class="invite-modal-overlay" id="inviteModalOverlay" style="display:none;">
+      <div class="invite-modal" role="dialog" aria-labelledby="inviteModalTitle">
+        <div class="invite-modal-header">
+          <h3 id="inviteModalTitle">Invite User</h3>
+          <button class="icon-btn" id="inviteModalClose" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <label class="invite-toggle">
+          <input type="checkbox" id="inviteAccessToggle" checked>
+          <span><strong>Enable invitee access</strong><small>Allow users to invite others to this post.</small></span>
+        </label>
+        <div class="invite-list-label">Invitee list</div>
+        <div class="invite-search-row">
+          <div class="invite-search-wrap">
+            <input type="text" id="inviteSearchInput" placeholder="Add Invitee" autocomplete="off">
+            <ul class="invite-suggestions" id="inviteSuggestions" hidden></ul>
+          </div>
+          <button class="primary-btn" id="inviteConfirmBtn">Invite</button>
+        </div>
+        <div class="invite-chosen" id="inviteChosen"></div>
+      </div>
+    </div>
+    <!-- Success Toast -->
+    <div class="toast-success" id="inviteToast" style="display:none;">
+      <i class="fa-solid fa-circle-check"></i>
+      <span>Invitee(s) has been added successfully</span>
+    </div>
 </body>
 </html>
