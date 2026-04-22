@@ -1881,6 +1881,151 @@ function renderListView() {
     } catch (e) { /* no-op */ }
 })();
 
+/* =========================================================================
+ * TagModule
+ * Wires up the "+" button next to the TAGS section in the sidebar so users
+ * can create a tag (name + color) and have it appear in state.tags /
+ * #tagsList. Also wires the Create / Cancel buttons on #tagModal and the
+ * color-dot picker.
+ *
+ * TODO: Persist state.tags through ShadowDB.Tags.create(...) once the
+ *       Tags store is wired up. For now we keep an in-memory append that
+ *       renderSidebar() already knows how to render.
+ * ========================================================================= */
+(function TagModule(){
+  "use strict";
+
+  function onReady(fn){
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", fn, { once: true });
+    } else {
+      fn();
+    }
+  }
+
+  function genTagId(){
+    return "tg_" + Math.random().toString(36).slice(2, 10);
+  }
+
+  function openTagModal(){
+    var modal = document.getElementById("tagModal");
+    var input = document.getElementById("tagNameInput");
+    if (!modal) return;
+    // Reset form state on open
+    if (input) { input.value = ""; }
+    resetColorPicker();
+    modal.style.display = "flex";
+    if (input) { setTimeout(function(){ input.focus(); }, 0); }
+  }
+
+  function closeTagModal(){
+    var modal = document.getElementById("tagModal");
+    if (modal) modal.style.display = "none";
+  }
+
+  function resetColorPicker(){
+    var dots = document.querySelectorAll("#tagModal .color-dot");
+    dots.forEach(function(d, i){
+      d.classList.toggle("selected", i === 0);
+    });
+  }
+
+  function getSelectedColor(){
+    var sel = document.querySelector("#tagModal .color-dot.selected");
+    if (sel) return sel.getAttribute("data-color") || "#e67e22";
+    var first = document.querySelector("#tagModal .color-dot");
+    return first ? (first.getAttribute("data-color") || "#e67e22") : "#e67e22";
+  }
+
+  function wireColorDots(){
+    var dots = document.querySelectorAll("#tagModal .color-dot");
+    dots.forEach(function(dot){
+      if (dot.__wired) return;
+      dot.__wired = true;
+      dot.addEventListener("click", function(){
+        dots.forEach(function(d){ d.classList.remove("selected"); });
+        dot.classList.add("selected");
+      });
+    });
+  }
+
+  function saveTag(){
+    var input = document.getElementById("tagNameInput");
+    if (!input) return;
+    var name = (input.value || "").trim();
+    if (!name) { input.focus(); return; }
+
+    var state = window.state;
+    if (!state) { closeTagModal(); return; }
+    if (!Array.isArray(state.tags)) state.tags = [];
+
+    // Prevent duplicates (case-insensitive match on name)
+    var exists = state.tags.some(function(t){
+      return t && typeof t.name === "string" &&
+        t.name.toLowerCase() === name.toLowerCase();
+    });
+    if (exists) {
+      // Silently close for now; could show a toast later
+      closeTagModal();
+      return;
+    }
+
+    var tag = { id: genTagId(), name: name, color: getSelectedColor() };
+    state.tags.push(tag);
+
+    // TODO: Persist through ShadowDB.Tags.create(tag) once the backend is wired.
+    try {
+      if (window.ShadowDB && window.ShadowDB.Tags && typeof window.ShadowDB.Tags.create === "function") {
+        window.ShadowDB.Tags.create(tag);
+      }
+    } catch (_) { /* no-op */ }
+
+    closeTagModal();
+    if (typeof window.renderSidebar === "function") window.renderSidebar();
+  }
+
+  function wire(){
+    var addBtn = document.getElementById("addTagBtn");
+    var saveBtn = document.getElementById("saveTagBtn");
+    var cancelBtn = document.getElementById("cancelTagBtn");
+    var input = document.getElementById("tagNameInput");
+    var modal = document.getElementById("tagModal");
+
+    if (addBtn && !addBtn.__wired) {
+      addBtn.__wired = true;
+      addBtn.addEventListener("click", function(e){
+        e.stopPropagation();
+        openTagModal();
+      });
+    }
+    if (saveBtn && !saveBtn.__wired) {
+      saveBtn.__wired = true;
+      saveBtn.addEventListener("click", saveTag);
+    }
+    if (cancelBtn && !cancelBtn.__wired) {
+      cancelBtn.__wired = true;
+      cancelBtn.addEventListener("click", closeTagModal);
+    }
+    if (input && !input.__wired) {
+      input.__wired = true;
+      input.addEventListener("keydown", function(ev){
+        if (ev.key === "Enter") { ev.preventDefault(); saveTag(); }
+        else if (ev.key === "Escape") { closeTagModal(); }
+      });
+    }
+    if (modal && !modal.__wired) {
+      modal.__wired = true;
+      // Click on overlay (not inner content) closes modal
+      modal.addEventListener("click", function(ev){
+        if (ev.target === modal) closeTagModal();
+      });
+    }
+    wireColorDots();
+  }
+
+  onReady(wire);
+})();
+
 
 /* =========================================================================
  * feature/shared-with-me  —  Invitee module

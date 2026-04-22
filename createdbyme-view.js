@@ -414,18 +414,27 @@ function emptyState(ctx){
   }
 
   function openDetail(taskId, ctx, source){
-    const task = (ctx.tasks||[]).find(t=>t.id===taskId);
-    if (!task) return;
-    const kind = (source==='board') ? 'modal' : 'panel';
-    const shell = ensureDetailShell(kind);
-    const inner = (kind==='modal') ? shell.querySelector('.cbm-modal') : shell.querySelector('.cbm-panel-inner');
-    inner.innerHTML = detailHtml(task, ctx);
-    // wire
-    const close = inner.querySelector('.cbm-d-close'); if (close) close.addEventListener('click', closeDetail);
-    const titleEl = inner.querySelector('[data-field="title"]');
-    if (titleEl){ titleEl.addEventListener('blur', ()=>{ if (ctx.onRename) ctx.onRename(taskId, titleEl.textContent.trim()); }); }
-    shell.classList.add('open');
-  }
+      // FIX: Delegate to the full task detail panel wired in app.js when available.
+      // The full panel renders Description, Notes, Attachments, Priority, Tags,
+      // Reminder, Invitee bar, etc. Our minimal shell below is kept as a fallback.
+      try {
+        if (typeof window.showTaskDetail === "function") {
+          window.showTaskDetail(taskId, source || "board");
+          return;
+        }
+      } catch (_) { /* fall through to minimal shell */ }
+      const task = (ctx.tasks||[]).find(t=>t.id===taskId);
+      if (!task) return;
+      const kind = (source==="board") ? "modal" : "panel";
+      const shell = ensureDetailShell(kind);
+      const inner = (kind==="modal") ? shell.querySelector(".cbm-modal") : shell.querySelector(".cbm-panel-inner");
+      inner.innerHTML = detailHtml(task, ctx);
+      const close = inner.querySelector(".cbm-d-close");
+      if (close) close.addEventListener("click", closeDetail);
+      const titleEl = inner.querySelector('[data-field="title"]');
+      if (titleEl){ titleEl.addEventListener("blur", ()=>{ if (ctx.onRename) ctx.onRename(taskId, titleEl.textContent.trim()); }); }
+      shell.classList.add("open");
+    }
 
   // --- Public API ---
   window.ShadowViewKit = window.ShadowCreatedByMe = {
