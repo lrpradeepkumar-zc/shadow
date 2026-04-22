@@ -1874,6 +1874,7 @@ function renderListView() {
     try {
       window.state = state;
       if (typeof openTaskDetail === 'function') window.openTaskDetail = openTaskDetail;
+      if (typeof showTaskDetail === 'function') window.showTaskDetail = showTaskDetail;
       if (typeof addTimelineEntry === 'function') window.addTimelineEntry = addTimelineEntry;
       if (typeof renderSidebar === 'function') window.renderSidebar = renderSidebar;
       if (typeof renderCurrentView === 'function') window.renderCurrentView = renderCurrentView;
@@ -1909,7 +1910,7 @@ function renderListView() {
 
   function currentTask() {
     if (!window.state || !state.tasks) return null;
-    var id = state.currentTaskId || state.selectedTaskId;
+    var id = state.selectedTaskId || state.currentTaskId;
     return state.tasks.find(function (t) { return t.id === id; }) || null;
   }
 
@@ -2136,9 +2137,10 @@ function renderListView() {
     if (item) item.read = true;
     renderBadge();
     renderPanel();
-    if (taskId && typeof openTaskDetail === 'function') {
-      togglePanel(false);
-      openTaskDetail(taskId);
+    if (taskId) {
+      var opener = (typeof window.openTaskDetail === 'function' && window.openTaskDetail) ||
+                   (typeof window.showTaskDetail === 'function' && window.showTaskDetail);
+      if (opener) { togglePanel(false); opener(taskId, 'notification'); }
     }
   }
 
@@ -2160,8 +2162,8 @@ function renderListView() {
     var bell = $id('notifBellBtn');
     if (bell) bell.addEventListener('click', function (e) { e.stopPropagation(); togglePanel(); });
     var listEl = $id('notifList'); if (listEl) listEl.addEventListener('click', onItemClick);
-    var mark = $id('notifMarkAllRead'); if (mark) mark.addEventListener('click', markAllRead);
-    var clr = $id('notifClearAll'); if (clr) clr.addEventListener('click', clearAll);
+    var mark = $id('notifMarkAllRead'); if (mark) mark.addEventListener('click', function (e) { e.stopPropagation(); markAllRead(); });
+    var clr = $id('notifClearAll'); if (clr) clr.addEventListener('click', function (e) { e.stopPropagation(); clearAll(); });
 
     document.addEventListener('click', function (e) {
       var panel = $id('notifPanel');
