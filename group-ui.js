@@ -28,6 +28,26 @@
                                        } catch (err) { alert('Could not create task: ' + err.message); }
                          });
                          row.appendChild(add);
+    
+          // --- Settings gear: opens the Group Settings modal (Workflows tab) ---
+          if (!row.querySelector(".group-settings-gear")) {
+            const gear = document.createElement("i");
+            gear.className = "fa-solid fa-gear group-settings-gear";
+            gear.title = "Group settings (Workflows & Rules)";
+            gear.style.cssText = "margin-left:6px;cursor:pointer;opacity:.6;";
+            gear.addEventListener("mouseenter", () => gear.style.opacity = "1");
+            gear.addEventListener("mouseleave", () => gear.style.opacity = ".6");
+            gear.addEventListener("click", (ev) => {
+              ev.stopPropagation();
+              if (typeof window.openGroupSettings === "function") {
+                window.openGroupSettings(gid, "workflows");
+              } else {
+                // Fallback: go straight to the workflow page scoped by query param
+                window.location.href = "workflow.html?groupId=" + encodeURIComponent(gid);
+              }
+            });
+            row.appendChild(gear);
+          }
              });
    }
 
@@ -69,4 +89,155 @@
    }
         if (ready()) boot();
         else document.addEventListener('shadowdb:ready', boot, { once: true });
+
+
+  // ---------------------------------------------------------------------------
+  // Group Settings modal — opens a lightweight modal with tabs. Currently wires
+  // the "Workflows & Rules" tab: lists rules mapped to the group (via
+  // WorkflowEngine.getRulesByGroup) and offers a "+ New Rule" button that
+  // launches the builder pre-bound to this group.
+  //
+  // Exposed as window.openGroupSettings(groupId, initialTab).
+  // ---------------------------------------------------------------------------
+  function openGroupSettings(groupId, initialTab) {
+    initialTab = initialTab || "workflows";
+    // Reuse an existing modal if already in DOM
+    var overlay = document.getElementById("grpSettingsOverlay");
+    if (!overlay) {
+      overlay = document.createElement("div");
+      overlay.id = "grpSettingsOverlay";
+      overlay.className = "modal-overlay grp-settings-modal";
+      overlay.style.cssText = "display:flex;align-items:center;justify-content:center;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9998;";
+      overlay.innerHTML =
+        '<div class="modal-content" style="width:560px;max-width:92vw;max-height:82vh;display:flex;flex-direction:column;">' +
+          '<div class="modal-header" style="display:flex;align-items:center;justify-content:space-between;">' +
+            '<h3 id="grpSettingsTitle" style="margin:0;">Group settings</h3>' +
+            '<button class="icon-btn" id="grpSettingsClose" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>' +
+          '</div>' +
+          '<div class="grp-settings-tabs" style="display:flex;gap:4px;border-bottom:1px solid var(--border-color,#e5e7eb);padding:8px 12px 0;">' +
+            '<button class="tab-btn active" data-tab="workflows"><i class="fa-solid fa-bolt"></i> Workflows &amp; Rules</button>' +
+            '<button class="tab-btn" data-tab="general"><i class="fa-solid fa-gear"></i> General</button>' +
+          '</div>' +
+          '<div class="grp-settings-body" id="grpSettingsBody" style="padding:14px;overflow:auto;"></div>' +
+        '</div>';
+      document.body.appendChild(overlay);
+      overlay.addEventListener("click", function (e) {
+        if (e.target === overlay) closeGroupSettings();
+      });
+      overlay.querySelector("#grpSettingsClose").addEventListener("click", closeGroupSettings);
+      overlay.querySelectorAll(".tab-btn").forEach(function (b) {
+        b.addEventListener("click", function () {
+          overlay.querySelectorAll(".tab-btn").forEach(function (x) { x.classList.remove("active"); });
+          b.classList.add("active");
+          renderTab(groupId, b.getAttribute("data-tab"));
+        });
+      });
+    }
+    // Update title
+    var group = findGroup(groupId);
+    var title = overlay.querySelector("#grpSettingsTitle");
+    if (title) title.textContent = (group ? group.name : "Group") + " — settings";
+    // Activate the requested tab
+    var tabBtn = overlay.querySelector('.tab-btn[data-tab="' + initialTab + '"]');
+    overlay.querySelectorAll(".tab-btn").forEach(function (x) { x.classList.remove("active"); });
+    if (tabBtn) tabBtn.classList.add("active");
+    renderTab(groupId, initialTab);
+    overlay.style.display = "flex";
+  }
+
+  function closeGroupSettings() {
+    var overlay = document.getElementById("grpSettingsOverlay");
+    if (overlay) overlay.style.display = "none";
+  }
+
+  function findGroup(gid) {
+    if (!window.state || !Array.isArray(window.state.groups)) return null;
+    return window.state.groups.find(function (g) { return g.id === gid; }) || null;
+  }
+
+  function renderTab(groupId, tab) {
+    var body = document.getElementById("grpSettingsBody");
+    if (!body) return;
+    if (tab === "workflows") return renderWorkflowsTab(body, groupId);
+    return renderGeneralTab(body, groupId);
+  }
+
+  function renderGeneralTab(body, groupId) {
+    var group = findGroup(groupId);
+    if (!group) { body.innerHTML = "<p>Group not found.</p>"; return; }
+    body.innerHTML =
+      '<div style="font-size:13px;color:var(--text-secondary,#64748b);">Group Id</div>' +
+      '<div style="font-family:monospace;margin-bottom:10px;">' + escapeHtml(group.id) + '</div>' +
+      '<div style="font-size:13px;color:var(--text-secondary,#64748b);">Group name</div>' +
+      '<div style="font-weight:500;margin-bottom:10px;">' + escapeHtml(group.name) + '</div>' +
+      '<div style="font-size:12px;color:var(--text-secondary,#64748b);">TODO: expose rename / members / personal toggle here.</div>';
+  }
+
+  function renderWorkflowsTab(body, groupId) {
+    var engine = window.WorkflowEngine;
+    if (!engine || typeof engine.getRulesByGroup !== "function") {
+      body.innerHTML = '<p>Workflow engine not available.</p>';
+      return;
+    }
+    var rules = engine.getRulesByGroup(groupId) || [];
+    var canManage = engine.canManage && engine.canManage(groupId);
+
+    var header = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">' +
+      '<div style="font-size:12px;color:var(--text-secondary,#64748b);">' +
+      rules.length + ' rule(s) mapped to this group' +
+      (canManage ? "" : ' <span class="wf-rule-lock"><i class="fa-solid fa-lock"></i> read-only</span>') +
+      '</div>' +
+      (canManage ?
+        '<button class="wf-btn primary" id="grpAddRuleBtn"><i class="fa-solid fa-plus"></i> New Rule</button>' +
+        ' <a class="wf-btn" href="workflow.html?groupId=' + encodeURIComponent(groupId) + '"><i class="fa-solid fa-up-right-from-square"></i> Open Workflow Window</a>'
+        : '') +
+      '</div>';
+
+    var list = rules.length === 0
+      ? '<div style="padding:20px;text-align:center;color:var(--text-secondary,#64748b);font-size:13px;">No rules yet for this group.</div>'
+      : '<div class="wf-group-rules-list">' + rules.map(function (r) {
+          var st = (r.state || "draft").toLowerCase();
+          return '<div class="wf-mini-rule" data-rule-id="' + escapeAttr(r.id) + '">' +
+            '<i class="fa-solid fa-bolt" style="color:#4285f4;"></i>' +
+            '<span class="wf-mini-name">' + escapeHtml(r.name || "Untitled rule") + '</span>' +
+            '<span class="state-chip ' + st + '">' + st + '</span>' +
+            (canManage
+              ? '<button class="icon-btn grp-rule-edit" title="Edit"><i class="fa-solid fa-pen"></i></button>'
+              : '') +
+          '</div>';
+        }).join("") + '</div>';
+
+    body.innerHTML = header + list;
+
+    var addBtn = body.querySelector("#grpAddRuleBtn");
+    if (addBtn) addBtn.addEventListener("click", function () {
+      if (window.ShadowWorkflowBuilder && window.ShadowWorkflowBuilder.openBuilder) {
+        window.ShadowWorkflowBuilder.openBuilder({ groupId: groupId, lockGroup: true });
+        closeGroupSettings();
+      } else {
+        window.location.href = "workflow.html?groupId=" + encodeURIComponent(groupId) + "&new=1";
+      }
+    });
+    // Edit handlers
+    body.querySelectorAll(".grp-rule-edit").forEach(function (btn) {
+      btn.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        var id = btn.closest(".wf-mini-rule").getAttribute("data-rule-id");
+        window.location.href = "workflow.html?groupId=" + encodeURIComponent(groupId) +
+                               "&ruleId=" + encodeURIComponent(id);
+      });
+    });
+  }
+
+  function escapeHtml(s) {
+    if (s == null) return "";
+    return String(s).replace(/[&<>"\']/g, function (c) {
+      return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "\'": "&#39;" })[c];
+    });
+  }
+  function escapeAttr(s) { return escapeHtml(s).replace(/"/g, "&quot;"); }
+
+  // Expose entry point
+  window.openGroupSettings = openGroupSettings;
+
 })();

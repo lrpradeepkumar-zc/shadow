@@ -203,3 +203,152 @@ body.light-theme .wf-ai-input input::placeholder {
 body.light-theme .wf-canvas-title input::placeholder {
     color: var(--text-muted);
 }
+
+
+/* ============================================================
+   Workflow Builder — drag-and-drop palette, canvas, group row
+   ============================================================ */
+.wf-builder-wrap {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+@media (max-width: 1100px) { .wf-builder-wrap { grid-template-columns: 1fr; } }
+
+.wf-palette {
+  background: var(--bg-card, #fff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 10px;
+  padding: 12px;
+  position: sticky;
+  top: 16px;
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+}
+.wf-palette.wf-readonly { opacity: 0.55; pointer-events: none; }
+.wf-palette-section + .wf-palette-section { margin-top: 14px; }
+.wf-palette-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary, #64748b);
+  margin-bottom: 6px;
+  display: flex; align-items: center; gap: 6px;
+}
+.wf-palette-list { display: flex; flex-direction: column; gap: 6px; }
+
+.wf-pal-tile {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 6px;
+  background: var(--bg-hover, #f8fafc);
+  font-size: 13px;
+  color: var(--text-primary, #0f172a);
+  cursor: grab;
+  user-select: none;
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+.wf-pal-tile:hover  { box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
+.wf-pal-tile:active { cursor: grabbing; }
+.wf-pal-tile.wf-dragging { opacity: 0.5; transform: scale(0.98); }
+.wf-pal-tile i { width: 16px; text-align: center; color: #4285f4; }
+
+/* Drop zones live on #triggerStep / #conditionsStep / #actionsStep */
+.wf-step.wf-drop-target {
+  outline: 2px dashed #4285f4;
+  outline-offset: 4px;
+  background: rgba(66, 133, 244, 0.04);
+}
+.wf-step.wf-drop-error { animation: wfShake 0.32s linear; }
+.wf-step.wf-filled .wf-step-header { color: #1f7a3a; }
+
+@keyframes wfShake {
+  0%, 100% { transform: translateX(0); }
+  25%      { transform: translateX(-4px); }
+  75%      { transform: translateX(4px); }
+}
+
+/* Group selector row in the builder header */
+.wf-group-row {
+  display: flex; align-items: center; gap: 8px;
+  margin-top: 6px;
+  font-size: 13px;
+}
+.wf-group-row label { color: var(--text-secondary, #64748b); font-weight: 600; }
+.wf-group-row select {
+  padding: 4px 8px; border-radius: 4px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  background: var(--bg-card, #fff);
+  color: var(--text-primary, #0f172a);
+  min-width: 180px;
+}
+.wf-group-lock { color: #e67e22; font-size: 12px; }
+
+/* AI preview */
+.wf-ai-preview {
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-top: 10px;
+  background: var(--bg-hover, #f8fafc);
+}
+.wf-ai-preview h4 { margin: 0 0 8px; font-size: 14px; }
+.wf-ai-row { display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; }
+.wf-ai-row b { color: var(--text-secondary, #64748b); font-weight: 600; }
+.wf-ai-error { color: #c0392b; font-size: 13px; padding: 8px; }
+.wf-ai-loading { color: var(--text-secondary, #64748b); font-size: 13px; padding: 8px; }
+
+/* Small toast used by the builder */
+.wf-toast {
+  position: fixed; bottom: 24px; right: 24px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  background: #0f172a; color: #fff; font-size: 13px;
+  opacity: 0; transform: translateY(6px);
+  transition: opacity 0.2s, transform 0.2s;
+  z-index: 9999;
+}
+.wf-toast.show { opacity: 1; transform: translateY(0); }
+
+/* RBAC pill on rule cards (read-only indicator) */
+.wf-rule-lock {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; color: #6b7280;
+  padding: 2px 6px; border-radius: 10px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  background: var(--bg-hover, #f8fafc);
+  margin-left: 6px;
+}
+
+/* Group scope pill on rule cards */
+.wf-rule-scope {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; font-weight: 600;
+  padding: 2px 8px; border-radius: 10px;
+  background: #eef2ff; color: #3730a3;
+  margin-left: 6px;
+}
+
+/* Group Settings modal — Workflows tab */
+.grp-settings-modal .wf-group-rules-list { display: flex; flex-direction: column; gap: 8px; }
+.grp-settings-modal .wf-mini-rule {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 6px;
+  font-size: 13px;
+  background: var(--bg-card, #fff);
+}
+.grp-settings-modal .wf-mini-rule .wf-mini-name { flex: 1; font-weight: 500; }
+.grp-settings-modal .wf-mini-rule .state-chip {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 2px 8px; border-radius: 10px;
+}
+.state-chip.draft     { background: #f3f4f6; color: #6b7280; }
+.state-chip.testing   { background: #fef3c7; color: #92400e; }
+.state-chip.published { background: #d1fae5; color: #065f46; }
+.state-chip.disabled  { background: #fee2e2; color: #991b1b; }
