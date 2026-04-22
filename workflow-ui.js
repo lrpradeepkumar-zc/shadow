@@ -130,15 +130,44 @@
 
   // ===== RULE BUILDER =====
   function openRuleBuilder(ruleData, ruleId) {
-    editingRuleId = ruleId || null;
+    // Normalize: accept both legacy shape (trigger.type, cond.field, action.type)
+    // and builder shape (trigger.typeId, cond.fieldId, action.typeId) from AI / drag-builder.
+    var rd = ruleData || null;
+    var normTrigger = { type: null, config: {} };
+    var normConditions = [];
+    var normActions = [];
+    var normLogic = 'AND';
+    var normName = '';
+    if (rd) {
+      if (rd.trigger) {
+        normTrigger.type = rd.trigger.type || rd.trigger.typeId || null;
+        normTrigger.config = rd.trigger.config || {};
+      }
+      (rd.conditions || []).forEach(function(c){
+        normConditions.push({
+          field: c.field || c.fieldId || 'status',
+          operator: c.operator || 'equals',
+          value: c.value != null ? c.value : ''
+        });
+      });
+      (rd.actions || []).forEach(function(a){
+        normActions.push({
+          type: a.type || a.typeId,
+          params: a.params || getDefaultParams(a.type || a.typeId)
+        });
+      });
+      normLogic = rd.conditionLogic || 'AND';
+      normName = rd.name || '';
+    }
+    editingRuleId = ruleId || (rd && rd.id) || null;
     currentRule = {
-      trigger: (ruleData && ruleData.trigger) || { type: null, config: {} },
-      conditions: (ruleData && ruleData.conditions) || [],
-      conditionLogic: (ruleData && ruleData.conditionLogic) || 'AND',
-      actions: (ruleData && ruleData.actions) || []
+      trigger: normTrigger,
+      conditions: normConditions,
+      conditionLogic: normLogic,
+      actions: normActions
     };
 
-    document.getElementById('ruleName').value = (ruleData && ruleData.name) || '';
+    document.getElementById('ruleName').value = normName;
     document.getElementById('triggerType').value = currentRule.trigger.type || '';
     renderTriggerConfig();
     renderConditions();
@@ -503,4 +532,11 @@
   } else {
     init();
   }
+
+  // ===== Public API for cross-module calls (used by workflow-builder.js AI prompt) =====
+  window.ShadowWorkflowUI = {
+    showBuilder: openRuleBuilder,
+    openRuleBuilder: openRuleBuilder,
+    showTab: showTab
+  };
 })();
