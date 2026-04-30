@@ -447,81 +447,117 @@
     window.__spLoginObserver = observer; // expose for debugging
   }
 
- /* =========================================================================
-     MAIN INIT SEQUENCE
-     ========================================================================= */
 
-  /**
-   * Core init: load profiles → sync RBAC → patch DB → expose helpers.
-   * Called once the Supabase anonymous session is confirmed active.
-   * Retries once after 800 ms if the first query returns 0 profiles
-   * (guards against the race where shadowdb:ready fires before the
-   * anonymous sign-in cookie reaches the Supabase JS client).
-   */
-  function runPatch(attempt) {
-    loadProfilesFromDB().then(function (profiles) {
-      if (!profiles && attempt < 2) {
-        // First result was empty — session not ready yet. Retry once.
-        setTimeout(function () { runPatch(attempt + 1); }, 800);
-        return;
-      }
-      syncRBACUsers(profiles);
-      patchShadowDB();
-      exposeHelpers(profiles);
-      console.log(
-        '[ShadowPatch] Initialised (attempt ' + attempt + '). ' +
-        (profiles ? profiles.length : 0) + ' profiles loaded.'
-      );
+  /* ======================================================================
+     MAIN INIT SEQUENCE
+     Uses a polling loop so we don't rely on whenDBReady which fires before
+     the Supabase anon session resolves. Retries up to 5x, 800ms apart.
+     ====================================================================== */
+
+  async function loadProfilesFromDB() {
+    var sb = window.ShadowDB && window.ShadowDB._sb;
+    if (!sb) return 0;
+    var _a = await sb.from('settings').select('key,value').like('key', 'profile:%'),
+        rows = _a.data, err = _a.error;
+    if (err || !rows || rows.length === 0) return 0;
+    var profiles = {};
+    rows.forEach(function(row) {
+      try {
+        var p = (typeof row.value === 'string') ? JSON.parse(row.value) : row.value;
+        profiles[p.uid] = p;
+      } catch(e) {}
     });
+    return profiles;
   }
 
-  // ── A) On DOMContentLoaded: install the login interceptor
-  //       Only activates when the user is NOT already logged in.
-  document.addEventListener('DOMContentLoaded', function () {
-    var rawSession = localStorage.getItem('shadow_session');
-    var isLoggedIn = false;
-    if (rawSession) {
-      try { isLoggedIn = !!JSON.parse(rawSession); } catch (e) {}
-    }
-    if (isLoggedIn) return; // app will mount normally — no interception needed
+  async function runPatch(attempt) {
+    attempt = attempt || 1;
+    var profiles = await loadProfilesFromDB();
+    var count = (profiles && typeof profiles === 'object') ? Object.keys(profiles).length : 0;
 
-    // Not logged in. Wait for DB then fetch profiles for the login screen.
-    whenDBReady(function () {
-      loadProfilesFromDB().then(function (profiles) {
-        if (profiles) {
-          installLoginInterceptor(profiles);
-        } else {
-          // Retry via auth state change (fires once the anon session settles)
-          var sb = window.ShadowDB && window.ShadowDB._sb;
-          if (sb && sb.auth && sb.auth.onAuthStateChange) {
-            sb.auth.onAuthStateChange(function (_event, _session) {
-              loadProfilesFromDB().then(function (p) {
-                if (p) installLoginInterceptor(p);
-              });
-            });
+    if (count === 0 && attempt < 6) {
+      // Not ready yet — retry after 800ms
+      setTimeout(function() { runPatch(attempt + 1); }, 800);
+      console.log('[ShadowPatch] No profiles yet (attempt ' + attempt + '), retrying in 800ms...');
+      return;
+    }
+
+    if (count > 0) {
+      // Update RBAC.MockUsers
+      var roleMap = {
+        org_admin:    (window.RBAC && window.RBAC.Roles && window.RBAC.Roles.ORG_ADMIN)    || 'ORG_ADMIN',
+        admin:        (window.RBAC && window.RBAC.Roles && window.RBAC.Roles.GROUP_ADMIN)   || 'GROUP_ADMIN',
+        group_admin:  (window.RBAC && window.RBAC.Roles && window.RBAC.Roles.GROUP_ADMIN)   || 'GROUP_ADMIN',
+        member:       (window.RBAC && window.RBAC.Roles && window.RBAC.Roles.GROUP_MEMBER)  || 'GROUP_MEMBER',
+        group_member: (window.RBAC && window.RBAC.Roles && window.RBAC.Roles.GROUP_MEMBER)  || 'GROUP_MEMBER',
+        user:         (window.RBAC && window.RBAC.Roles && window.RBAC.Roles.USER)          || 'USER',
+        viewer:       (window.RBAC && window.RBAC.Roles && window.RBAC.Roles.VIEWER)        || 'VIEWER'
+      };
+      var mockUsers = Object.values(profiles).map(function(p) {
+        return {
+          id:         p.uid,
+          name:       p.name,
+          email:      p.email,
+          globalRole: p.role,
+          role:       roleMap[p.role] || (window.RBAC && window.RBAC.Roles && window.RBAC.Roles.USER) || 'USER',
+          avatar:     p.avatar,
+          color:      p.color
+        };
+      });
+      if (window.RBAC && mockUsers.length > 0) {
+        window.RBAC.MockUsers = mockUsers;
+      }
+    }
+
+    console.log('[ShadowPatch] Initialised (attempt ' + attempt + '). ' + count + ' profiles loaded.');
+    window.__shadowPatchReady = true;
+    window.__shadowProfiles = profiles || {};
+
+    // Install login screen interceptor now that profiles are ready
+    installLoginInterceptor();
+  }
+
+  function installLoginInterceptor() {
+    // If already showing the app (not auth screen), do nothing
+    if (document.querySelector('.app-shell') || document.querySelector('#main-layout')) return;
+
+    // Check if auth.js login is already rendered
+    var existing = document.querySelector('.auth-container, #auth-root, .login-container');
+    if (existing) {
+      injectLoginScreen(existing.parentElement || document.body);
+      return;
+    }
+
+    // Watch for auth.js to inject its login screen
+    var observer = new MutationObserver(function(mutations) {
+      for (var i = 0; i < mutations.length; i++) {
+        var added = Array.from(mutations[i].addedNodes);
+        for (var j = 0; j < added.length; j++) {
+          var node = added[j];
+          if (node.nodeType === 1) {
+            if (node.classList && (node.classList.contains('auth-container') || node.id === 'auth-root' || node.classList.contains('login-container'))) {
+              observer.disconnect();
+              injectLoginScreen(node.parentElement || document.body);
+              return;
+            }
+            var inner = node.querySelector && node.querySelector('.auth-container, #auth-root, .login-container');
+            if (inner) {
+              observer.disconnect();
+              injectLoginScreen(inner.parentElement || document.body);
+              return;
+            }
           }
         }
-      });
+      }
     });
-  });
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
 
-  // ── B) On shadowdb:ready: run the RBAC + DB patch
-  //       Uses the retry mechanism to handle the timing race.
-  whenDBReady(function () { runPatch(1); });
+  // Kick off immediately — don't wait for any event
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() { runPatch(1); });
+  } else {
+    runPatch(1);
+  }
 
-  // ── C) Also hook Supabase auth state change as a belt-and-suspenders trigger.
-  //       If the session resolves after shadowdb:ready, this fires runPatch again.
-  //       patchShadowDB() is idempotent (_shadowPatchApplied flag), so no double-patching.
-  document.addEventListener('DOMContentLoaded', function () {
-    whenDBReady(function () {
-      var sb = window.ShadowDB && window.ShadowDB._sb;
-      if (!sb || !sb.auth || !sb.auth.onAuthStateChange) return;
-      sb.auth.onAuthStateChange(function (event) {
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          runPatch(1);
-        }
-      });
-    });
-  });
-
-})(); // end ShadowDBPatch IIFE
+})(); // End ShadowDBPatch IIFE
