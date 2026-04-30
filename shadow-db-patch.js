@@ -447,44 +447,81 @@
     window.__spLoginObserver = observer; // expose for debugging
   }
 
-  /* =========================================================================
+ /* =========================================================================
      MAIN INIT SEQUENCE
      ========================================================================= */
 
-  // ── A) On DOMContentLoaded: install the login interceptor synchronously
-  //       (profiles will be fetched async; if DB is already ready, we use it
-  //        immediately — otherwise the interceptor activates once the DB is up)
+  /**
+   * Core init: load profiles → sync RBAC → patch DB → expose helpers.
+   * Called once the Supabase anonymous session is confirmed active.
+   * Retries once after 800 ms if the first query returns 0 profiles
+   * (guards against the race where shadowdb:ready fires before the
+   * anonymous sign-in cookie reaches the Supabase JS client).
+   */
+  function runPatch(attempt) {
+    loadProfilesFromDB().then(function (profiles) {
+      if (!profiles && attempt < 2) {
+        // First result was empty — session not ready yet. Retry once.
+        setTimeout(function () { runPatch(attempt + 1); }, 800);
+        return;
+      }
+      syncRBACUsers(profiles);
+      patchShadowDB();
+      exposeHelpers(profiles);
+      console.log(
+        '[ShadowPatch] Initialised (attempt ' + attempt + '). ' +
+        (profiles ? profiles.length : 0) + ' profiles loaded.'
+      );
+    });
+  }
+
+  // ── A) On DOMContentLoaded: install the login interceptor
+  //       Only activates when the user is NOT already logged in.
   document.addEventListener('DOMContentLoaded', function () {
-    // If user is already logged in, skip the interceptor entirely
     var rawSession = localStorage.getItem('shadow_session');
     var isLoggedIn = false;
     if (rawSession) {
       try { isLoggedIn = !!JSON.parse(rawSession); } catch (e) {}
     }
-    if (isLoggedIn) return;
+    if (isLoggedIn) return; // app will mount normally — no interception needed
 
-    // Not logged in — set up the interceptor.
-    // We need the profiles to build the screen. Two cases:
-    // 1. DB already ready (page reload path): fetch immediately.
-    // 2. DB not yet ready: wait, then fetch. The observer is already watching.
-
-    function activateInterceptor() {
+    // Not logged in. Wait for DB then fetch profiles for the login screen.
+    whenDBReady(function () {
       loadProfilesFromDB().then(function (profiles) {
-        installLoginInterceptor(profiles);
+        if (profiles) {
+          installLoginInterceptor(profiles);
+        } else {
+          // Retry via auth state change (fires once the anon session settles)
+          var sb = window.ShadowDB && window.ShadowDB._sb;
+          if (sb && sb.auth && sb.auth.onAuthStateChange) {
+            sb.auth.onAuthStateChange(function (_event, _session) {
+              loadProfilesFromDB().then(function (p) {
+                if (p) installLoginInterceptor(p);
+              });
+            });
+          }
+        }
       });
-    }
-
-    whenDBReady(activateInterceptor);
-  });
-
-  // ── B) On shadowdb:ready: sync RBAC + patch DB layer + expose helpers
-  whenDBReady(function onDBReady() {
-    loadProfilesFromDB().then(function (profiles) {
-      syncRBACUsers(profiles);
-      patchShadowDB();
-      exposeHelpers(profiles);
-      console.log('[ShadowPatch] Initialised. DB connected. ' + (profiles ? profiles.length : 0) + ' profiles loaded.');
     });
   });
 
-})();
+  // ── B) On shadowdb:ready: run the RBAC + DB patch
+  //       Uses the retry mechanism to handle the timing race.
+  whenDBReady(function () { runPatch(1); });
+
+  // ── C) Also hook Supabase auth state change as a belt-and-suspenders trigger.
+  //       If the session resolves after shadowdb:ready, this fires runPatch again.
+  //       patchShadowDB() is idempotent (_shadowPatchApplied flag), so no double-patching.
+  document.addEventListener('DOMContentLoaded', function () {
+    whenDBReady(function () {
+      var sb = window.ShadowDB && window.ShadowDB._sb;
+      if (!sb || !sb.auth || !sb.auth.onAuthStateChange) return;
+      sb.auth.onAuthStateChange(function (event) {
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          runPatch(1);
+        }
+      });
+    });
+  });
+
+})(); // end ShadowDBPatch IIFE
