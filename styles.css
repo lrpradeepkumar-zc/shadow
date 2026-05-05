@@ -1,5 +1,7 @@
-/* Shadow ToDo - Dark Theme CSS */
-:root{--bg-primary:#1a1d23;--bg-secondary:#22252b;--bg-tertiary:#2a2d35;--bg-card:#2a2d35;--bg-hover:#32363e;--text-primary:#e0e0e0;--text-secondary:#a0a0a0;--text-muted:#6b7280;--border-color:#3a3d45;--accent-blue:#4285f4;--accent-green:#34a853;--accent-red:#ea4335;--accent-orange:#e67e22;--status-open:#ea4335;--status-progress:#e67e22;--status-fixed:#2ecc71;--status-closed:#6b7280;--priority-high:#ea4335;--priority-medium:#e67e22;--priority-low:#3498db;--column-green:#34a853;--column-red:#ea4335;--column-blue:#4285f4;--column-pink:#e91e63}
+/* Shadow ToDo - Zoho Design System - Light Theme Default */
+:root{--bg-primary:#f5f6f8;--bg-secondary:#ffffff;--bg-tertiary:#f0f2f5;--bg-card:#ffffff;--bg-hover:#f0f2f5;--text-primary:#1f2937;--text-secondary:#4b5563;--text-muted:#9ca3af;--border-color:#e2e5ea;--accent-blue:#1a73e8;--accent-green:#34a853;--accent-red:#ea4335;--accent-orange:#f59f00;--accent-yellow:#fbbc04;--status-open:#ea4335;--status-progress:#f59f00;--status-fixed:#34a853;--status-closed:#9ca3af;--priority-high:#ea4335;--priority-medium:#f59f00;--priority-low:#1a73e8;--column-green:#34a853;--column-red:#e91e63;--column-blue:#1a73e8;--column-pink:#e91e63;--sidebar-width:240px;}
+body.dark-theme{--bg-primary:#1a1d23;--bg-secondary:#22252b;--bg-tertiary:#2a2d35;--bg-card:#2a2d35;--bg-hover:#32363e;--text-primary:#e0e0e0;--text-secondary:#a0a0a0;--text-muted:#6b7280;--border-color:#3a3d45;}
+
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg-primary);color:var(--text-primary);height:100vh;overflow:hidden}
 .top-header{display:flex;align-items:center;justify-content:space-between;height:48px;background:var(--bg-secondary);border-bottom:1px solid var(--border-color);padding:0 16px;z-index:100}
@@ -15,10 +17,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .avatar-sm{width:28px;height:28px;border-radius:50%;background:var(--accent-blue);color:white;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0}
 .app-container{display:flex;height:calc(100vh - 48px)}
 .sidebar{width:260px;background:var(--bg-secondary);border-right:1px solid var(--border-color);overflow-y:auto;padding:12px 0;flex-shrink:0}
-.new-task-btn{width:calc(100% - 24px);margin:0 12px 16px;padding:10px;background:var(--accent-blue);color:white;border:none;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.new-task-btn{width:calc(100% - 24px);margin:8px 12px 16px;padding:10px;background:#1a1f36;color:white;border:none;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;letter-spacing:.2px}
 .new-task-btn:hover{background:#3b78e7}
 .sidebar-section{margin-bottom:8px}
-.section-title{padding:8px 16px 4px;font-size:11px;font-weight:600;color:var(--accent-blue);text-transform:uppercase;display:flex;align-items:center;justify-content:space-between}
+.section-title{padding:8px 16px 4px;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;letter-spacing:.5px}
 .section-actions{display:flex;gap:8px;cursor:pointer}.section-actions i{font-size:12px;color:var(--text-muted)}
 .nav-item{padding:8px 16px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:10px;color:var(--text-secondary);border-left:3px solid transparent}
 .nav-item:hover{background:var(--bg-hover)}
@@ -31,17 +33,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .tag-item:hover{background:var(--bg-hover)}
 .tag-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
 .main-content{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
-.toolbar{display:flex;align-items:center;justify-content:space-between;padding:12px 20px 8px}
+.toolbar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px 6px;background:var(--bg-secondary);border-bottom:1px solid var(--border-color)}
 .toolbar-left{display:flex;align-items:center;gap:10px}
 .view-title{font-size:18px;font-weight:600}
 .sort-info{display:flex;align-items:center;gap:8px;font-size:12px}
-.sort-badge{background:var(--accent-blue);color:white;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:600}
+.sort-badge{background:#e8f0fe;color:#1a73e8;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:600}
 .sort-direction{color:var(--text-muted)}
 .toolbar-right{display:flex;align-items:center;gap:4px}
 .toolbar-btn{background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:13px;padding:6px 10px;border-radius:4px;display:flex;align-items:center;gap:6px}
 .toolbar-btn:hover{background:var(--bg-hover);color:var(--text-primary)}
-.view-tabs{display:flex;align-items:center;padding:0 20px 8px;gap:4px;border-bottom:1px solid var(--border-color)}
-.view-tab{background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:13px;padding:8px 14px;border-radius:4px;display:flex;align-items:center;gap:6px}
+.view-tabs{display:flex;align-items:center;padding:0 16px;gap:0;border-bottom:1px solid var(--border-color);background:var(--bg-secondary)}
+.view-tab{background:none;border:none;border-bottom:2px solid transparent;color:var(--text-secondary);cursor:pointer;font-size:13px;padding:8px 14px;border-radius:0;display:flex;align-items:center;gap:6px;margin-bottom:-1px}
 .view-tab:hover{color:var(--text-primary)}
 .view-tab.active{color:var(--accent-blue);border-bottom:2px solid var(--accent-blue)}
 .board-view{flex:1;overflow-x:auto;overflow-y:hidden;padding:0 8px}
@@ -51,7 +53,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .column-header.delayed{border-top-color:var(--column-green)}.column-header.today{border-top-color:var(--column-red)}.column-header.thisweek{border-top-color:var(--column-pink)}.column-header.thismonth{border-top-color:var(--column-blue)}
 .column-count{background:var(--bg-tertiary);padding:1px 8px;border-radius:4px;font-size:12px;color:var(--text-muted)}
 .column-body{flex:1;overflow-y:auto;padding:8px 12px}
-.task-card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:8px;padding:12px;margin-bottom:8px;cursor:pointer;transition:border-color .2s}
+.task-card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:8px;padding:12px;margin-bottom:8px;cursor:pointer;transition:border-color .2s,box-shadow .2s;box-shadow:0 1px 3px rgba(0,0,0,.06)}
 .task-card:hover{border-color:var(--accent-blue)}
 .task-card-title{font-size:14px;font-weight:500;margin-bottom:8px;display:flex;align-items:flex-start;gap:6px}
 .task-card-meta{display:flex;align-items:center;justify-content:space-between;font-size:12px}
@@ -64,10 +66,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .task-card-date{color:var(--accent-red);font-size:12px;display:flex;align-items:center;gap:4px;margin-top:6px}
 .subtask-count{display:flex;align-items:center;gap:4px;color:var(--text-muted);font-size:12px;margin-top:4px}
 .priority-indicator{font-weight:bold;font-size:16px;color:var(--accent-red)}
-/* ═══════════════════════════════════════════
+/* âââââââââââââââââââââââââââââââââââââââââââ
    LIST VIEW - Exact column alignment
    Matching reference screenshot layout
-   ═══════════════════════════════════════════ */
+   âââââââââââââââââââââââââââââââââââââââââââ */
 .list-view{flex:1;overflow-y:auto;overflow-x:hidden}
 
 /* Header row */
@@ -84,7 +86,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .list-header.compact-header .created-date-col,
 .list-header.compact-header .category-col{display:none}
 
-/* Column sizing — percentage based for precise alignment */
+/* Column sizing â percentage based for precise alignment */
 .list-col{padding:0 8px;flex-shrink:0}
 .list-col.title-col{width:35%;min-width:200px;display:flex;align-items:center;gap:8px}
 .list-col.assignee-col{width:14%;min-width:110px;display:flex;align-items:center;gap:6px}
@@ -239,17 +241,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;color:var(--text-muted);text-align:center}
 .empty-state i{font-size:48px;margin-bottom:16px;opacity:.3}
 /* Light Theme */
-body.light-theme{--bg-primary:#f5f6f8;--bg-secondary:#ffffff;--bg-tertiary:#e8eaed;--bg-card:#ffffff;--bg-hover:#e2e4e8;--text-primary:#1f2937;--text-secondary:#4b5563;--text-muted:#9ca3af;--border-color:#d1d5db}
-body.light-theme .modal-overlay{background:rgba(0,0,0,0.4)}
-body.light-theme .task-detail-modal-overlay{background:rgba(0,0,0,0.35)}
-body.light-theme .modal-content{box-shadow:0 20px 60px rgba(0,0,0,0.15)}
-body.light-theme .task-detail-panel.modal-mode{box-shadow:0 20px 60px rgba(0,0,0,0.2)}
-body.light-theme .dropdown-menu{box-shadow:0 8px 24px rgba(0,0,0,0.12)}
-body.light-theme .task-card{box-shadow:0 1px 3px rgba(0,0,0,0.08)}
-body.light-theme .avatar,body.light-theme .avatar-sm{box-shadow:0 1px 2px rgba(0,0,0,0.1)}
-body.light-theme ::-webkit-scrollbar-thumb{background:#c1c5cc}
-body.light-theme .color-dot.selected{border-color:#1f2937}
-body.light-theme .new-task-btn{box-shadow:0 1px 3px rgba(66,133,244,0.3)}
+
+.modal-overlay{background:rgba(0,0,0,0.4)}
+.task-detail-modal-overlay{background:rgba(0,0,0,0.35)}
+.modal-content{box-shadow:0 20px 60px rgba(0,0,0,0.15)}
+.task-detail-panel.modal-mode{box-shadow:0 20px 60px rgba(0,0,0,0.2)}
+.dropdown-menu{box-shadow:0 8px 24px rgba(0,0,0,0.12)}
+.task-card{box-shadow:0 1px 3px rgba(0,0,0,0.08)}
+.avatar,.avatar-sm{box-shadow:0 1px 2px rgba(0,0,0,0.1)}
+::-webkit-scrollbar-thumb{background:#c1c5cc}
+.color-dot.selected{border-color:#1f2937}
+.new-task-btn{box-shadow:0 1px 3px rgba(66,133,244,0.3)}
 ::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--bg-hover);border-radius:3px}
 /* Responsive */
 @media(max-width:1400px){.task-detail-panel.panel-mode{max-width:500px}}
@@ -381,9 +383,9 @@ body.light-theme .new-task-btn{box-shadow:0 1px 3px rgba(66,133,244,0.3)}
 }
 
 
-/* ═══════════════════════════════════════════
+/* âââââââââââââââââââââââââââââââââââââââââââ
    NEW BOARD COLUMN CLASSES (polished)
-   ═══════════════════════════════════════════ */
+   âââââââââââââââââââââââââââââââââââââââââââ */
 
 /* New board column classes matching app.js */
 .board-col-header {
@@ -448,9 +450,9 @@ body.light-theme .new-task-btn{box-shadow:0 1px 3px rgba(66,133,244,0.3)}
   font-size: 12px;
 }
 
-/* ═══════════════════════════════════════════
+/* âââââââââââââââââââââââââââââââââââââââââââ
    IMPROVED TASK CARD
-   ═══════════════════════════════════════════ */
+   âââââââââââââââââââââââââââââââââââââââââââ */
 
 .task-card-header {
   display: flex;
@@ -530,9 +532,9 @@ body.light-theme .new-task-btn{box-shadow:0 1px 3px rgba(66,133,244,0.3)}
   margin-top: 4px;
 }
 
-/* ═══════════════════════════════════════════
+/* âââââââââââââââââââââââââââââââââââââââââââ
    IMPROVED LIST SECTION HEADERS
-   ═══════════════════════════════════════════ */
+   âââââââââââââââââââââââââââââââââââââââââââ */
 
 .list-section {
   margin-bottom: 2px;
@@ -570,9 +572,9 @@ body.light-theme .new-task-btn{box-shadow:0 1px 3px rgba(66,133,244,0.3)}
   font-size: 12px;
 }
 
-/* ═══════════════════════════════════════════
+/* âââââââââââââââââââââââââââââââââââââââââââ
    ASSIGNEE AVATAR in list view
-   ═══════════════════════════════════════════ */
+   âââââââââââââââââââââââââââââââââââââââââââ */
 
 .list-row .assignee-col .avatar-sm {
   display: inline-flex;
@@ -617,9 +619,9 @@ body.light-theme .new-task-btn{box-shadow:0 1px 3px rgba(66,133,244,0.3)}
   color: var(--text-secondary);
 }
 
-/* ═══════════════════════════════════════════
+/* âââââââââââââââââââââââââââââââââââââââââââ
    TOOLBAR IMPROVEMENTS
-   ═══════════════════════════════════════════ */
+   âââââââââââââââââââââââââââââââââââââââââââ */
 
 #groupByChip {
   display: inline-flex;
@@ -635,9 +637,9 @@ body.light-theme .new-task-btn{box-shadow:0 1px 3px rgba(66,133,244,0.3)}
   cursor: pointer;
 }
 
-/* ═══════════════════════════════════════════
+/* âââââââââââââââââââââââââââââââââââââââââââ
    TIMELINE IN DETAIL PANEL
-   ═══════════════════════════════════════════ */
+   âââââââââââââââââââââââââââââââââââââââââââ */
 
 .timeline-entry {
   display: flex;
@@ -657,9 +659,9 @@ body.light-theme .new-task-btn{box-shadow:0 1px 3px rgba(66,133,244,0.3)}
 .timeline-time { color: var(--text-muted); font-size: 11px; }
 .timeline-empty { color: var(--text-muted); font-size: 12px; padding: 8px 0; }
 
-/* ═══════════════════════════════════════════
+/* âââââââââââââââââââââââââââââââââââââââââââ
    SUBTASK ITEMS IN DETAIL PANEL
-   ═══════════════════════════════════════════ */
+   âââââââââââââââââââââââââââââââââââââââââââ */
 
 .subtask-item {
   display: flex;
@@ -675,9 +677,9 @@ body.light-theme .new-task-btn{box-shadow:0 1px 3px rgba(66,133,244,0.3)}
 .subtask-title { flex: 1; }
 .subtask-del { color: var(--text-muted); }
 
-/* ═══════════════════════════════════════════
+/* âââââââââââââââââââââââââââââââââââââââââââ
    ACTIVE CARD STATE
-   ═══════════════════════════════════════════ */
+   âââââââââââââââââââââââââââââââââââââââââââ */
 
 .task-card.active-card {
   border-color: var(--accent-blue) !important;
@@ -688,9 +690,9 @@ body.light-theme .new-task-btn{box-shadow:0 1px 3px rgba(66,133,244,0.3)}
   border-left: 3px solid var(--accent-blue);
 }
 
-/* ═══════════════════════════════════════════
+/* âââââââââââââââââââââââââââââââââââââââââââ
    BULK CHECKBOX WRAPPER
-   ═══════════════════════════════════════════ */
+   âââââââââââââââââââââââââââââââââââââââââââ */
 
 .bulk-checkbox-wrap {
   display: inline-flex;
@@ -700,7 +702,7 @@ body.light-theme .new-task-btn{box-shadow:0 1px 3px rgba(66,133,244,0.3)}
 }
 
 
-/* ── Task Detail Panel Visibility ─────────────── */
+/* ââ Task Detail Panel Visibility âââââââââââââââ */
 #taskDetailPanel {
   display: none;
 }
@@ -708,7 +710,7 @@ body.light-theme .new-task-btn{box-shadow:0 1px 3px rgba(66,133,244,0.3)}
   display: flex !important;
 }
 
-/* ── App Layout with Panel Open ──────────────── */
+/* ââ App Layout with Panel Open ââââââââââââââââ */
 .app-container.panel-open {
   gap: 0;
 }
@@ -1116,7 +1118,7 @@ body.light-theme .new-task-btn{box-shadow:0 1px 3px rgba(66,133,244,0.3)}
 /* ============================================================ */
 
 /* ============================================================
-   Created by Me — Zoho-style Board/List + detail panel/modal
+   Created by Me â Zoho-style Board/List + detail panel/modal
    ============================================================ */
 .cbm-wrap { padding: 0 28px 24px; }
 .cbm-header { display: flex; align-items: flex-end; justify-content: space-between; margin: 6px 0 14px; flex-wrap: wrap; gap: 12px; }
