@@ -193,34 +193,54 @@
   // ---- TOP-LEVEL RENDER ---------------------------------------
   function renderList(container, tasks, ctx) {
     if (!container) return;
-    var buckets = getBuckets(tasks, ctx);
+    var gb = ctx && ctx.groupBy;
     var html = '' +
       '<div class="agenda-view agenda-view--list">' +
-        '<h2 class="agenda-view__header">Agenda</h2>' +
-        BUCKETS.map(function (sec) {
-          return renderListSection(sec, sortBucket(buckets[sec.key]), ctx);
-        }).join('') +
+        ((!gb || gb === 'dueDate') ? (function() {
+          var buckets = getBuckets(tasks, ctx);
+          return BUCKETS.map(function(sec) {
+            return renderListSection(sec, sortBucket(buckets[sec.key]), ctx);
+          }).join('');
+        })() : (function() {
+          var grouped = ctx.applyGroupBy ? ctx.applyGroupBy(tasks) : {};
+          if (!grouped) return BUCKETS.map(function(sec) {
+            return renderListSection(sec, [], ctx);
+          }).join('');
+          return Object.keys(grouped).sort().map(function(k) {
+            var sec = { key: k, label: k, color: 'var(--accent-blue)', emptyMsg: 'No tasks' };
+            return renderListSection(sec, sortBucket(grouped[k]), ctx);
+          }).join('');
+        })()) +
       '</div>';
     container.innerHTML = html;
     bindInteractions(container, ctx);
   }
-
   function renderBoard(container, tasks, ctx) {
     if (!container) return;
-    var buckets = getBuckets(tasks, ctx);
+    var gb = ctx && ctx.groupBy;
     var html = '' +
       '<div class="agenda-view agenda-view--board">' +
-        '<h2 class="agenda-view__header">Agenda</h2>' +
         '<div class="agenda-board">' +
-          BUCKETS.map(function (sec) {
-            return renderBoardColumn(sec, sortBucket(buckets[sec.key]), ctx);
-          }).join('') +
+          ((!gb || gb === 'dueDate') ? (function() {
+            var buckets = getBuckets(tasks, ctx);
+            return BUCKETS.map(function(sec) {
+              return renderBoardColumn(sec, sortBucket(buckets[sec.key]), ctx);
+            }).join('');
+          })() : (function() {
+            var grouped = ctx.applyGroupBy ? ctx.applyGroupBy(tasks) : {};
+            if (!grouped) return BUCKETS.map(function(sec) {
+              return renderBoardColumn(sec, [], ctx);
+            }).join('');
+            return Object.keys(grouped).sort().map(function(k) {
+              var sec = { key: k, label: k, color: 'var(--accent-blue)', emptyMsg: 'No tasks' };
+              return renderBoardColumn(sec, sortBucket(grouped[k]), ctx);
+            }).join('');
+          })()) +
         '</div>' +
       '</div>';
     container.innerHTML = html;
     bindInteractions(container, ctx);
   }
-
   // ---- INTERACTIONS -------------------------------------------
   function bindInteractions(root, ctx) {
     root.querySelectorAll('.agenda-check').forEach(function (cb) {
