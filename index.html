@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Shadow ToDo</title>
+  <title>ToDo</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="approval.css">
     <link rel="stylesheet" href="auth.css">
@@ -14,9 +14,8 @@
   <script>
     (function() {
       var t = localStorage.getItem('shadow-theme');
-      if (t === 'light') document.body.classList.add('light-theme');
-      else if (t === 'system' && window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches)
-        document.body.classList.add('light-theme');
+      if (t === 'dark') document.body.classList.add('dark-theme');
+      else if (!t) localStorage.setItem('shadow-theme', 'light');
     })();
   </script>
   <header class="top-header">
@@ -184,9 +183,9 @@
         </div>
         <div class="invitee-bar" id="invitees-bar">
                   <button class="icon-btn invitee-like-btn" title="Like"><i class="fa-regular fa-heart"></i></button>
-                  <span class="invitee-dot">•</span>
+                  <span class="invitee-dot">â¢</span>
                   <button class="icon-btn invitee-refuse-btn" id="inviteeRefuseBtn" title="Click to refuse other invitees"><i class="fa-solid fa-user-slash"></i></button>
-                  <span class="invitee-dot">•</span>
+                  <span class="invitee-dot">â¢</span>
                   <button class="icon-btn invitee-add-btn" id="inviteeAddBtn" title="Add / View invitees"><i class="fa-solid fa-plus"></i></button>
                 </div>
                 <div class="comment-section">
@@ -203,7 +202,7 @@
       <button class="icon-btn" title="Workflow" id="workflowBtn"><i class="fa-solid fa-diagram-project"></i></button>
       <button class="icon-btn" title="Playground" id="playgroundBtn"><i class="fa-solid fa-flask"></i></button>
       <div class="sidebar-spacer"></div>
-      <button class="icon-btn theme-toggle" id="themeToggle" title="Toggle theme"><i class="fa-solid fa-circle-half-stroke"></i></button>
+      <button class="icon-btn theme-toggle" id="themeToggle" id="themeToggleBtn" title="Toggle theme"><i class="fa-solid fa-moon"></i></button>
       <button class="icon-btn" title="Feedback"><i class="fa-regular fa-comment-dots"></i></button>
     </aside>
   </div>
