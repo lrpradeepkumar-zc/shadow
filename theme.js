@@ -1,27 +1,31 @@
-(function () {
-  function init() {
-    const btn = document.getElementById('themeToggle');
-    if (!btn) return;
-
-    const saved = localStorage.getItem('shadow_theme');
-    let isLight;
-    if (saved === 'light' || saved === 'dark') {
-      isLight = saved === 'light';
-    } else {
-      isLight = window.matchMedia &&
-                window.matchMedia('(prefers-color-scheme: light)').matches;
-    }
-    document.body.classList.toggle('light-theme', isLight);
-
-    btn.addEventListener('click', () => {
-      const nowLight = document.body.classList.toggle('light-theme');
-      localStorage.setItem('shadow_theme', nowLight ? 'light' : 'dark');
-    });
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+// Theme management - Light theme is default (Zoho Design)
+function init() {
+  const btn = document.getElementById('themeToggle');
+  if (!btn) return;
+  
+  const saved = localStorage.getItem('shadow-theme');
+  const isDark = saved === 'dark';
+  
+  if (isDark) {
+    document.body.classList.add('dark-theme');
+    const icon = btn.querySelector('i');
+    if (icon) icon.className = 'fa-solid fa-sun';
   } else {
-    init();
+    document.body.classList.remove('dark-theme');
+    const icon = btn.querySelector('i');
+    if (icon) icon.className = 'fa-solid fa-moon';
   }
-})();
+  
+  btn.addEventListener('click', function() {
+    const nowDark = document.body.classList.toggle('dark-theme');
+    localStorage.setItem('shadow-theme', nowDark ? 'dark' : 'light');
+    const icon = btn.querySelector('i');
+    if (icon) icon.className = nowDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+  });
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
