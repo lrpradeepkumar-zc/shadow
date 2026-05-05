@@ -1,5 +1,5 @@
 // ============================================================
-// Shadow ToDo — app.js  (Zoho-spec + UI/UX polish)
+// Shadow ToDo â app.js  (Zoho-spec + UI/UX polish)
 // ============================================================
 (function () {
   'use strict';
@@ -573,7 +573,7 @@ function renderBoardView() {
   var area = document.getElementById('boardArea');
   if (!area) return;
   var tasks = getFilteredTasks();
-  var kit = window.ShadowViewKit || window.ShadowCreatedByMe;
+  var kit = window.ShadowAgenda || window.ShadowViewKit || window.ShadowCreatedByMe;
   if (kit && typeof kit.renderBoard === 'function') {
     kit.renderBoard(area, tasks, buildUnifiedCtx(state.currentView));
     return;
@@ -587,10 +587,10 @@ function renderListView() {
   var area = document.getElementById('listArea');
   var lh = document.getElementById('listHeader');
   if (!area) return;
-  // Hide the legacy column strip — ShadowViewKit renders its own columnar table.
+  // Hide the legacy column strip â ShadowViewKit renders its own columnar table.
   if (lh) { lh.innerHTML = ''; lh.classList.add('compact-header'); }
   var tasks = getFilteredTasks();
-  var kit = window.ShadowViewKit || window.ShadowCreatedByMe;
+  var kit = window.ShadowAgenda || window.ShadowViewKit || window.ShadowCreatedByMe;
   if (kit && typeof kit.renderList === 'function') {
     kit.renderList(area, tasks, buildUnifiedCtx(state.currentView));
     return;
@@ -806,7 +806,7 @@ function renderListView() {
         const color = tag ? tag.color : '#888';
         const name  = tag ? tag.name  : tid;
         return '<span class="task-tag" style="background:'+color+'">'+name+
-          '<span class="tag-remove" data-tag="'+tid+'" data-taskid="'+taskId+'">×</span></span>';
+          '<span class="tag-remove" data-tag="'+tid+'" data-taskid="'+taskId+'">Ã</span></span>';
       }).join('');
       tagsContainer.querySelectorAll('.tag-remove').forEach(function(btn){
         btn.addEventListener('click', function(){
@@ -1332,7 +1332,7 @@ function renderListView() {
       return '<div class="subtask-item" data-idx="'+i+'">' +
         '<input type="checkbox" class="subtask-check"'+(st.completed?' checked':'')+' data-idx="'+i+'">' +
         '<span class="subtask-title'+(st.completed?' completed-text':'')+'">'+st.title+'</span>' +
-        '<button class="subtask-del" data-idx="'+i+'" style="background:none;border:none;cursor:pointer;color:var(--text-muted);padding:0 4px;font-size:12px">×</button>' +
+        '<button class="subtask-del" data-idx="'+i+'" style="background:none;border:none;cursor:pointer;color:var(--text-muted);padding:0 4px;font-size:12px">Ã</button>' +
         '</div>';
     }).join('');
 
@@ -1808,7 +1808,7 @@ function renderListView() {
     state.members  = await ShadowDB.Members.getAll();
     state.categories = await ShadowDB.Categories.getAll();
 
-    // ── Auto-dedup: remove duplicate tasks (same title + group name + dueDate) ──
+    // ââ Auto-dedup: remove duplicate tasks (same title + group name + dueDate) ââ
     const seenTaskKeys = new Set();
     for (const t of state.tasks.slice()) {
       const g = state.groups.find(function(gr){return gr.id===(t.group||t.groupId);});
@@ -1816,7 +1816,7 @@ function renderListView() {
       if (seenTaskKeys.has(key)) { await ShadowDB.Tasks.delete(t.id); }
       else seenTaskKeys.add(key);
     }
-    // ── Auto-dedup: remove duplicate groups, tags, members by name ──
+    // ââ Auto-dedup: remove duplicate groups, tags, members by name ââ
     const seenGroupNames = new Set();
     for (const g of state.groups.slice()) {
       if (seenGroupNames.has(g.name)) { await ShadowDB.Groups.delete(g.id); }
@@ -2028,14 +2028,14 @@ function renderListView() {
 
 
 /* =========================================================================
- * feature/shared-with-me  —  Invitee module
+ * feature/shared-with-me  â  Invitee module
  *   - Invite User modal (search + select mock users)
  *   - "Enable invitee access" toggle is a setting only (does NOT touch sharedWith)
  *   - Emits per-invitee notifications + task timeline entries
  * ========================================================================= */
 (function InviteeModule() {
 
-  // MOCK directory — swap for ShadowDB.Members.list() when available.
+  // MOCK directory â swap for ShadowDB.Members.list() when available.
   var MOCK_USERS = [
     { id: 'u1', name: 'Raghavan P',         email: 'raghavan.pk@zohocorp.com' },
     { id: 'u2', name: 'Raghavan Anandan',   email: 'raghavan.av@zohocorp.com' },
@@ -2198,7 +2198,7 @@ function renderListView() {
 
 
 /* =========================================================================
- * feature/shared-with-me  —  Notifications dropdown module
+ * feature/shared-with-me  â  Notifications dropdown module
  *   Header bell bound to state.notifications; listens for
  *   'notifications:updated' events from invitee flow (and future emitters).
  * ========================================================================= */
