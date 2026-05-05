@@ -8,11 +8,11 @@
 
   // ---- BUCKETS (section metadata) -----------------------------
   var BUCKETS = [
-    { key:'overdue',   label:'Overdue',    color:'var(--accent-red, #ea4335)',    emptyMsg:'No overdue tasks' },
-    { key:'today',     label:'Today',      color:'var(--accent-orange, #f59f00)', emptyMsg:'No tasks for today' },
+    { key:'overdue',   label:'Delayed',    color:'#e91e63',                       emptyMsg:'No delayed tasks' },
+    { key:'today',     label:'Today',      color:'#f59f00',                       emptyMsg:'No tasks for today' },
     { key:'tomorrow',  label:'Tomorrow',   color:'var(--accent-yellow, #fbbc04)', emptyMsg:'No tasks for tomorrow' },
-    { key:'thisWeek',  label:'This Week',  color:'var(--column-blue, #4285f4)',   emptyMsg:'No tasks this week' },
-    { key:'thisMonth', label:'This Month', color:'var(--accent-blue, #1967d2)',   emptyMsg:'No tasks this month' },
+    { key:'thisWeek',  label:'This week',  color:'#1a73e8',                       emptyMsg:'No tasks this week' },
+    { key:'thisMonth', label:'This month', color:'#34a853',                       emptyMsg:'No tasks this month' },
     { key:'upcoming',  label:'Upcoming',   color:'var(--accent-green, #34a853)',  emptyMsg:'No upcoming tasks' }
   ];
 
