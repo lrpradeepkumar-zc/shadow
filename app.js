@@ -1410,11 +1410,12 @@ function renderListView() {
       state.filterGroup = null;
       // Reset groupBy when switching views if not applicable
       const validGb = getGroupByOptions().map(function(o){return o.key;});
-      // Set view-specific default groupBy
+      // Set view-specific default groupBy when switching views
       const newView = state.currentView;
-      if (!state.groupBy || !validGb.includes(state.groupBy)) {
-        if (newView === 'agenda') state.groupBy = 'dueDate';
-        else state.groupBy = 'createdDay';
+      if (newView === 'agenda') {
+        state.groupBy = 'dueDate';
+      } else if (!state.groupBy || state.groupBy === 'dueDate' || !validGb.includes(state.groupBy)) {
+        state.groupBy = 'createdDay';
       }
       // Reset sort to valid option for view
       const validSort = getSortOptions().map(function(o){return o.key;});
