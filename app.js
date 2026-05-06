@@ -1824,7 +1824,7 @@ function renderListView() {
     state.tasks    = await ShadowDB.Tasks.getAll();
     state.groups   = await ShadowDB.Groups.getAll();
     state.tags     = await ShadowDB.Tags.getAll();
-    state.members  = [];  // no mock users
+    state.members  = (typeof ShadowAuth !== 'undefined' && ShadowAuth.getOrgMembers) ? ShadowAuth.getOrgMembers() : [];
     state.categories = await ShadowDB.Categories.getAll();
 
     // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Auto-dedup: remove duplicate tasks (same title + group name + dueDate) ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
@@ -1856,7 +1856,7 @@ function renderListView() {
     state.tasks    = await ShadowDB.Tasks.getAll();
     state.groups   = await ShadowDB.Groups.getAll();
     state.tags     = await ShadowDB.Tags.getAll();
-    state.members  = [];  // no mock users
+    state.members  = (typeof ShadowAuth !== 'undefined' && ShadowAuth.getOrgMembers) ? ShadowAuth.getOrgMembers() : [];
     state.categories = await ShadowDB.Categories.getAll();
 
     // Set currentUserId to first member (owner)
