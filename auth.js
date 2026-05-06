@@ -106,25 +106,8 @@ ADMIN: {
                 '<div class="user-card-name">' + u.name + '</div>' +
                 '<div class="user-card-email">' + u.email + '</div>' +
               '</div>' +
-              '<div class="user-card-role">' +
-                '<span class="role-badge" style="background:' + role.color + '20;color:' + role.color + '">' +
-                  '<i class="fas ' + role.icon + '"></i> ' + role.label +
-                '</span>' +
-              '</div>' +
             '</div>';
           }).join('') +
-        '</div>' +
-        '<div class="login-roles-info">' +
-          '<h3>User Roles</h3>' +
-          '<div class="roles-grid">' +
-            Object.values(ROLES).map(r =>
-              '<div class="role-info-card">' +
-                '<div class="role-info-icon" style="color:' + r.color + '"><i class="fas ' + r.icon + '"></i></div>' +
-                '<div class="role-info-label">' + r.label + '</div>' +
-                '<div class="role-info-desc">' + r.description + '</div>' +
-              '</div>'
-            ).join('') +
-          '</div>' +
         '</div>' +
       '</div>' +
       '<div class="login-footer"><p>Shadow ToDo &copy; 2026</p></div>' +
@@ -158,11 +141,9 @@ ADMIN: {
           if (typeof ShadowOnboarding !== 'undefined') {
             ShadowOnboarding.start();
           } else {
-            applyRoleRestrictions();
             updateUserUI();
           }
         } else {
-          applyRoleRestrictions();
           updateUserUI();
         }
       }, 400);
@@ -171,48 +152,6 @@ ADMIN: {
 
   function logout() { clearSession(); location.reload(); }
 
-  function applyRoleRestrictions() {
-    const user = getCurrentUser();
-    if (!user) return;
-    const role = getRole(user.role);
-    const perms = role.permissions;
-    document.body.setAttribute('data-user-role', user.role);
-
-    // Hide new task button for viewers
-    const newTaskBtns = document.querySelectorAll('.new-task-btn, #new-task-btn');
-    newTaskBtns.forEach(btn => {
-      if (!perms.createTask) btn.style.display = 'none';
-    });
-
-    // Viewer: full read-only
-    if (user.role === 'viewer') {
-      const style = document.createElement('style');
-      style.id = 'viewer-restrictions';
-      style.textContent = '[data-user-role="viewer"] .new-task-btn,' +
-        '[data-user-role="viewer"] .inline-add-task,' +
-        '[data-user-role="viewer"] .add-task-row,' +
-        '[data-user-role="viewer"] .board-add-btn,' +
-        '[data-user-role="viewer"] .task-delete-btn,' +
-        '[data-user-role="viewer"] .subtask-add,' +
-        '[data-user-role="viewer"] [data-action="delete"],' +
-        '[data-user-role="viewer"] .column-add-btn,' +
-        '[data-user-role="viewer"] .task-edit-actions { display:none!important; }' +
-        '[data-user-role="viewer"] .task-status-select,' +
-        '[data-user-role="viewer"] .task-priority-select,' +
-        '[data-user-role="viewer"] .task-assignee-select { pointer-events:none; opacity:0.7; }';
-      document.head.appendChild(style);
-    }
-
-    // Member: no delete
-    if (user.role === 'member') {
-      const style = document.createElement('style');
-      style.id = 'member-restrictions';
-      style.textContent = '[data-user-role="member"] .task-delete-btn,' +
-        '[data-user-role="member"] [data-action="delete"],' +
-        '[data-user-role="member"] .group-delete-btn { display:none!important; }';
-      document.head.appendChild(style);
-    }
-  }
 
   function updateUserUI() {
     const user = getCurrentUser();
@@ -234,9 +173,6 @@ ADMIN: {
       '<div class="user-bar-left">' +
         '<div class="user-bar-avatar" style="background:' + user.color + '">' + user.avatar + '</div>' +
         '<span class="user-bar-name">' + user.name + '</span>' +
-        '<span class="user-bar-role" style="background:' + role.color + '20;color:' + role.color + '">' +
-          '<i class="fas ' + role.icon + '"></i> ' + role.label +
-        '</span>' +
       '</div>' +
       '<div class="user-bar-right">' +
         '<button class="user-bar-logout" onclick="ShadowAuth.logout()" title="Sign Out">' +
@@ -251,7 +187,6 @@ ADMIN: {
       renderLoginScreen();
       return false;
     }
-    applyRoleRestrictions();
     updateUserUI();
     return true;
   }
@@ -259,7 +194,7 @@ ADMIN: {
   return {
     ROLES, DEFAULT_USERS, checkAuth, isLoggedIn, getCurrentUser,
     getRole, hasPermission, login, logout, renderLoginScreen,
-    applyRoleRestrictions, updateUserUI, getSession, setSession, clearSession
+    updateUserUI, getSession, setSession, clearSession
   };
 })();
 
