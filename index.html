@@ -327,34 +327,6 @@
       <script src="task-enhancements.js"></script>
   <script src="workflow-engine.js"></script>
   <script src="workflow-builder.js"></script>
-  <script src="group-ui.js"></script>
-    <!-- Invite User Modal -->
-    <div class="invite-modal-overlay" id="inviteModalOverlay" style="display:none;">
-      <div class="invite-modal" role="dialog" aria-labelledby="inviteModalTitle">
-        <div class="invite-modal-header">
-          <h3 id="inviteModalTitle">Invite User</h3>
-          <button class="icon-btn" id="inviteModalClose" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-        <label class="invite-toggle">
-          <input type="checkbox" id="inviteAccessToggle" checked>
-          <span><strong>Enable invitee access</strong><small>Allow users to invite others to this post.</small></span>
-        </label>
-        <div class="invite-list-label">Invitee list</div>
-        <div class="invite-search-row">
-          <div class="invite-search-wrap">
-            <input type="text" id="inviteSearchInput" placeholder="Add Invitee" autocomplete="off">
-            <ul class="invite-suggestions" id="inviteSuggestions" hidden></ul>
-          </div>
-          <button class="primary-btn" id="inviteConfirmBtn">Invite</button>
-        </div>
-        <div class="invite-chosen" id="inviteChosen"></div>
-      </div>
-    </div>
-    <!-- Success Toast -->
-    <div class="toast-success" id="inviteToast" style="display:none;">
-      <i class="fa-solid fa-circle-check"></i>
-      <span>Invitee(s) has been added successfully</span>
-    </div>
  <script src="rbac.js"></script>
 <script src="shadow-db-patch.js"></script>
   <script src="theme.js"></script>
