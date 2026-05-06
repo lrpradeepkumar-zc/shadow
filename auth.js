@@ -99,7 +99,7 @@ const ShadowAuth = (() => {
     return { ok: true, user };
   }
 
-  function register(name, email, password) {
+  function register(name, email, password, noLogin) {
     if (!name.trim()) return { ok: false, error: 'Name is required' };
     if (!email.trim() || !email.includes('@')) return { ok: false, error: 'Valid email required' };
     if (!password || password.length < 6) return { ok: false, error: 'Password must be 6+ characters' };
@@ -114,7 +114,7 @@ const ShadowAuth = (() => {
     };
     users.push(newUser);
     saveUsers(users);
-    setSession(newUser);
+    if (!noLogin) setSession(newUser);
     return { ok: true, user: newUser };
   }
 
