@@ -524,7 +524,7 @@
     // Check if auth.js login is already rendered
     var existing = document.querySelector('.auth-container, #auth-root, .login-container');
     if (existing) {
-      injectLoginScreen(existing.parentElement || document.body);
+      ShadowAuth.renderLoginScreen(); // (existing.parentElement || document.body);
       return;
     }
 
@@ -537,13 +537,13 @@
           if (node.nodeType === 1) {
             if (node.classList && (node.classList.contains('auth-container') || node.id === 'auth-root' || node.classList.contains('login-container'))) {
               observer.disconnect();
-              injectLoginScreen(node.parentElement || document.body);
+              ShadowAuth.renderLoginScreen(); // (node.parentElement || document.body);
               return;
             }
             var inner = node.querySelector && node.querySelector('.auth-container, #auth-root, .login-container');
             if (inner) {
               observer.disconnect();
-              injectLoginScreen(inner.parentElement || document.body);
+              ShadowAuth.renderLoginScreen(); // (inner.parentElement || document.body);
               return;
             }
           }
