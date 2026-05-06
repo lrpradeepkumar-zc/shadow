@@ -36,7 +36,7 @@
 .user-card:hover { border-color: #e74c3c; background: #fdf2f2; transform: translateX(4px); }
 .user-card:focus { outline: none; border-color: #e74c3c; box-shadow: 0 0 0 3px rgba(231,76,60,0.2); }
 .user-card.selected { border-color: #e74c3c; background: #e74c3c; color: #fff; }
-.user-card.selected .user-card-email, .user-card.selected .role-badge { color: #fff !important; background: rgba(255,255,255,0.2) !important; }
+.user-card.selected .user-card-email { color: #fff !important; background: rgba(255,255,255,0.2) !important; }
 .user-card-avatar {
   width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center;
   justify-content: center; color: #fff; font-weight: 700; font-size: 18px; flex-shrink: 0;
@@ -45,18 +45,6 @@
 .user-card-name { font-weight: 600; font-size: 15px; color: #2c3e50; }
 .user-card.selected .user-card-name { color: #fff; }
 .user-card-email { font-size: 12px; color: #95a5a6; margin-top: 2px; }
-.user-card-role { flex-shrink: 0; }
-.role-badge {
-  display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px;
-  border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap;
-}
-.login-roles-info { border-top: 1px solid #ecf0f1; padding-top: 20px; }
-.login-roles-info h3 { margin: 0 0 14px; font-size: 14px; color: #7f8c8d; text-transform: uppercase; letter-spacing: 0.5px; }
-.roles-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.role-info-card { padding: 12px; background: #f8f9fa; border-radius: 10px; text-align: center; }
-.role-info-icon { font-size: 20px; margin-bottom: 6px; }
-.role-info-label { font-weight: 600; font-size: 13px; color: #2c3e50; margin-bottom: 4px; }
-.role-info-desc { font-size: 11px; color: #7f8c8d; line-height: 1.4; }
 .login-footer { text-align: center; padding: 16px; border-top: 1px solid #ecf0f1; }
 .login-footer p { margin: 0; font-size: 12px; color: #bdc3c7; }
 /* User Bar */
@@ -65,7 +53,6 @@
 .user-bar-left { display: flex; align-items: center; gap: 10px; }
 .user-bar-avatar { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 12px; }
 .user-bar-name { font-weight: 600; font-size: 13px; }
-.user-bar-role { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
 .user-bar-right { display: flex; align-items: center; gap: 10px; }
 .user-bar-logout { background: none; border: 1px solid rgba(255,255,255,0.3); color: #fff; padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; transition: all 0.2s; display: flex; align-items: center; gap: 5px; }
 .user-bar-logout:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.5); }
@@ -95,5 +82,3 @@
 .onboarding-btn.secondary:hover { background: #dfe6e9; }
 .onboarding-btn.primary { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; }
 .onboarding-btn.primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(102,126,234,0.4); }
-.perm-denied-tooltip { position: fixed; background: #e74c3c; color: #fff; padding: 8px 14px; border-radius: 8px; font-size: 13px; z-index: 99999; animation: tooltipIn 0.2s ease; pointer-events: none; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
-@keyframes tooltipIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
