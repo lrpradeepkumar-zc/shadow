@@ -323,10 +323,11 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.title = 'Admin Dashboard';
       btn.innerHTML = '<i class="fa-solid fa-shield-halved"></i>';
       btn.onclick = () => ShadowAdmin.open();
-      // Insert before the grip icon
-      const gripBtn = headerRight.querySelector('button[title="Apps"]');
-      if (gripBtn) headerRight.insertBefore(btn, gripBtn);
-      else headerRight.appendChild(btn);
+      btn.style.cssText = 'flex-shrink:0';
+      // Insert before the avatar
+      const avatar = headerRight.querySelector('.avatar');
+      if (avatar) headerRight.insertBefore(btn, avatar);
+      else headerRight.prepend(btn);
     }
   }, 500);
 });
