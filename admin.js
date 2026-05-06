@@ -280,7 +280,7 @@ const ShadowAdmin = (() => {
       // Create
       if (!email || !email.includes('@')) { errEl.textContent = 'Valid email required'; return; }
       if (!pass || pass.length < 6) { errEl.textContent = 'Password must be 6+ characters'; return; }
-      const res = ShadowAuth.register(name, email, pass);
+      const res = ShadowAuth.register(name, email, pass, true); // noLogin=true so admin stays logged in
       if (!res.ok) { errEl.textContent = res.error; return; }
       // Override role set by register
       ShadowAuth.adminUpdateUser(res.user.id, { role });
