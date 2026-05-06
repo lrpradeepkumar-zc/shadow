@@ -5,7 +5,7 @@
 
 const ShadowOnboarding = (() => {
   let currentStep = 0;
-  const totalSteps = 3;
+  const totalSteps = 2;
 
   function start() {
     currentStep = 0;
@@ -104,11 +104,6 @@ const ShadowOnboarding = (() => {
         '</ul>' +
       '</div>',
 
-      // Step 2: Your Role
-      '<div class="onboarding-step active">' +
-        '<h3>Your Role & Permissions</h3>' +
-        getRoleStepContent() +
-      '</div>',
 
       // Step 3: Get Started
       '<div class="onboarding-step active">' +
@@ -138,53 +133,6 @@ const ShadowOnboarding = (() => {
     if (nextBtn) nextBtn.textContent = currentStep === totalSteps - 1 ? 'Get Started' : 'Next';
   }
 
-  function getRoleStepContent() {
-    const user = typeof ShadowAuth !== 'undefined' ? ShadowAuth.getCurrentUser() : null;
-    if (!user) return '<p>You are signed in.</p>';
-    
-    const role = ShadowAuth.getRole(user.role);
-    const perms = role.permissions;
-    
-    const permLabels = {
-      createTask: 'Create tasks',
-      editTask: 'Edit tasks',
-      deleteTask: 'Delete tasks',
-      completeTask: 'Complete tasks',
-      assignTask: 'Assign tasks to others',
-      createGroup: 'Create groups',
-      editGroup: 'Edit group settings',
-      deleteGroup: 'Delete groups',
-      manageMembers: 'Manage group members',
-      manageSettings: 'Manage settings',
-      manageCustomFields: 'Manage custom fields',
-      viewTasks: 'View all tasks',
-      commentOnTask: 'Comment on tasks',
-      manageApprovals: 'Manage approvals', manageOrg: 'Manage organization', manageUsers: 'Manage all users', manageBilling: 'Manage billing'
-    };
-
-    let permHtml = '<div style="margin:16px 0">' +
-      '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding:14px;background:' + role.color + '15;border-radius:12px">' +
-        '<div style="width:48px;height:48px;border-radius:50%;background:' + role.color + ';display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px">' +
-          '<i class="fas ' + role.icon + '"></i>' +
-        '</div>' +
-        '<div>' +
-          '<div style="font-weight:700;font-size:16px;color:#2c3e50">' + role.label + '</div>' +
-          '<div style="font-size:13px;color:#7f8c8d">' + role.description + '</div>' +
-        '</div>' +
-      '</div>' +
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">';
-
-    for (const [key, label] of Object.entries(permLabels)) {
-      const allowed = perms[key];
-      permHtml += '<div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:6px;background:' + (allowed ? '#2ecc7110' : '#e74c3c10') + '">' +
-        '<i class="fas ' + (allowed ? 'fa-check-circle' : 'fa-times-circle') + '" style="color:' + (allowed ? '#2ecc71' : '#e74c3c') + ';font-size:14px"></i>' +
-        '<span style="font-size:12px;color:' + (allowed ? '#2c3e50' : '#95a5a6') + '">' + label + '</span>' +
-      '</div>';
-    }
-
-    permHtml += '</div></div>';
-    return permHtml;
-  }
 
   function bindActions() {
     const backBtn = document.getElementById('ob-back');
@@ -220,7 +168,6 @@ const ShadowOnboarding = (() => {
         overlay.remove();
         // Apply role restrictions and update UI
         if (typeof ShadowAuth !== 'undefined') {
-          ShadowAuth.applyRoleRestrictions();
           ShadowAuth.updateUserUI();
         }
         // Reload to show clean state
