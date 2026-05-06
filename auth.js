@@ -200,7 +200,7 @@ const ShadowAuth = (() => {
         </div>
 
         <!-- Login form -->
-        <form class="sa-form" id="sa-form-login" onsubmit="ShadowAuth._submitLogin(event)">
+        <form class="sa-form" id="sa-form-login">
           <div class="sa-field">
             <label>Email</label>
             <input type="email" id="sa-login-email" placeholder="Enter your email" required autocomplete="email">
@@ -210,11 +210,11 @@ const ShadowAuth = (() => {
             <input type="password" id="sa-login-pass" placeholder="Enter your password" required autocomplete="current-password">
           </div>
           <p class="sa-error" id="sa-login-error"></p>
-          <button type="submit" class="sa-btn-primary">Sign In</button>
+          <button type="button" class="sa-btn-primary" onclick="ShadowAuth._submitLogin(event)">Sign In</button>
         </form>
 
         <!-- Register form -->
-        <form class="sa-form" id="sa-form-register" style="display:none" onsubmit="ShadowAuth._submitRegister(event)">
+        <form class="sa-form" id="sa-form-register" style="display:none">
           <div class="sa-field">
             <label>Full Name</label>
             <input type="text" id="sa-reg-name" placeholder="Your full name" required>
@@ -228,7 +228,7 @@ const ShadowAuth = (() => {
             <input type="password" id="sa-reg-pass" placeholder="Min. 6 characters" required>
           </div>
           <p class="sa-error" id="sa-reg-error"></p>
-          <button type="submit" class="sa-btn-primary">Create Account</button>
+          <button type="button" class="sa-btn-primary" onclick="ShadowAuth._submitRegister(event)">Create Account</button>
         </form>
 
         <p class="sa-hint" id="sa-hint">Default admin: admin@todo.app / admin123</p>
