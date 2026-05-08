@@ -585,7 +585,6 @@ js
             }
             updateRow();
           });
-        }
       });
     }
     updateRow();
