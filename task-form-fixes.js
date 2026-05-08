@@ -1,4 +1,96 @@
-// task-form-fixes.js
+// task-form-fixes.
+
+  // --- INLINE REMINDER MODAL ---
+  function showReminderModalInline(current, callback) {
+    document.querySelectorAll('.tfx-rem-modal').forEach(function(m){ m.remove(); });
+    var curVal = '';
+    if (current && current.date) {
+      curVal = current.date + (current.time ? 'T' + current.time : '');
+    }
+    var modal = document.createElement('div');
+    modal.className = 'tfx-rem-modal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100000;' +
+      'display:flex;align-items:center;justify-content:center;';
+    modal.innerHTML =
+      '<div style="background:#1e293b;border-radius:12px;padding:24px;min-width:320px;box-shadow:0 20px 60px rgba(0,0,0,.5);">' +
+        '<h3 style="margin:0 0 16px;color:#f1f5f9;font-size:16px;"><i class="fa-regular fa-bell" style="color:#f59e0b;"></i> Set Reminder</h3>' +
+        '<label style="font-size:12px;color:#94a3b8;display:block;margin-bottom:6px;">Date & Time</label>' +
+        '<input id="tfxRemInp" type="datetime-local" value="'+curVal+'" style="width:100%;padding:8px 12px;' +
+          'background:#0f172a;border:1px solid #334155;border-radius:6px;color:#f1f5f9;font-size:14px;' +
+          'box-sizing:border-box;outline:none;color-scheme:dark;">' +
+        '<div style="display:flex;gap:8px;margin-top:16px;justify-content:space-between;">' +
+          '<button id="tfxRemClrBtn" style="padding:7px 16px;border-radius:6px;border:1px solid #ef4444;' +
+            'background:transparent;color:#ef4444;cursor:pointer;font-size:13px;">Clear</button>' +
+          '<div style="display:flex;gap:8px;">' +
+            '<button id="tfxRemCnl" style="padding:7px 16px;border-radius:6px;border:1px solid #334155;' +
+              'background:transparent;color:#94a3b8;cursor:pointer;font-size:13px;">Cancel</button>' +
+            '<button id="tfxRemSv" style="padding:7px 16px;border-radius:6px;border:none;' +
+              'background:#3b82f6;color:#fff;cursor:pointer;font-size:13px;font-weight:600;">Set</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(modal);
+    modal.querySelector('#tfxRemClrBtn').addEventListener('click', function(){ modal.remove(); callback(null); });
+    modal.querySelector('#tfxRemCnl').addEventListener('click', function(){ modal.remove(); });
+    modal.querySelector('#tfxRemSv').addEventListener('click', function(){
+      var val = modal.querySelector('#tfxRemInp').value;
+      if (!val) { callback(null); modal.remove(); return; }
+      var dt = new Date(val);
+      var date = dt.toISOString().split('T')[0];
+      var time = val.includes('T') ? val.split('T')[1].substring(0,5) : '';
+      modal.remove();
+      callback({date: date, time: time});
+    });
+    modal.querySelector('#tfxRemInp').addEventListener('keydown', function(e){
+      if (e.key === 'Enter') modal.querySelector('#tfxRemSv').click();
+    });
+    setTimeout(function(){ modal.querySelector('#tfxRemInp').focus(); }, 50);
+  }
+
+  // --- INLINE RECURRENCE MODAL ---
+  function showRecurrenceModalInline(callback) {
+    document.querySelectorAll('.tfx-rec-modal').forEach(function(m){ m.remove(); });
+    var modal = document.createElement('div');
+    modal.className = 'tfx-rec-modal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100000;' +
+      'display:flex;align-items:center;justify-content:center;';
+    var opts = [
+      {val:'Daily', icon:'fa-calendar-day', desc:'Every day'},
+      {val:'Weekly', icon:'fa-calendar-week', desc:'Every week'},
+      {val:'Monthly', icon:'fa-calendar', desc:'Every month'},
+      {val:'Weekdays', icon:'fa-briefcase', desc:'Mon - Fri'},
+    ];
+    modal.innerHTML =
+      '<div style="background:#1e293b;border-radius:12px;padding:24px;min-width:320px;box-shadow:0 20px 60px rgba(0,0,0,.5);">' +
+        '<h3 style="margin:0 0 16px;color:#f1f5f9;font-size:16px;"><i class="fa-solid fa-repeat" style="color:#3b82f6;"></i> Repeat Task</h3>' +
+        '<div style="display:grid;gap:8px;">' +
+          opts.map(function(o){
+            return '<button class="tfx-rec-opt" data-val="'+o.val+'" style="display:flex;align-items:center;gap:12px;' +
+              'padding:12px 16px;background:#0f172a;border:1px solid #334155;border-radius:8px;' +
+              'color:#e2e8f0;cursor:pointer;text-align:left;transition:border-color .2s;">' +
+              '<i class="fa-solid '+o.icon+'" style="color:#3b82f6;font-size:16px;width:20px;"></i>' +
+              '<div><div style="font-weight:600;font-size:14px;">'+o.val+'</div>' +
+              '<div style="font-size:12px;color:#64748b;">'+o.desc+'</div></div>' +
+            '</button>';
+          }).join('') +
+        '</div>' +
+        '<div style="display:flex;gap:8px;margin-top:16px;justify-content:space-between;">' +
+          '<button id="tfxRecNone" style="padding:7px 16px;border-radius:6px;border:1px solid #334155;' +
+            'background:transparent;color:#94a3b8;cursor:pointer;font-size:13px;">No Repeat</button>' +
+          '<button id="tfxRecCnl" style="padding:7px 16px;border-radius:6px;border:1px solid #334155;' +
+            'background:transparent;color:#94a3b8;cursor:pointer;font-size:13px;">Cancel</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(modal);
+    modal.querySelectorAll('.tfx-rec-opt').forEach(function(btn){
+      btn.addEventListener('mouseenter', function(){ btn.style.borderColor='#3b82f6'; });
+      btn.addEventListener('mouseleave', function(){ btn.style.borderColor='#334155'; });
+      btn.addEventListener('click', function(){ modal.remove(); callback(btn.getAttribute('data-val')); });
+    });
+    modal.querySelector('#tfxRecNone').addEventListener('click', function(){ modal.remove(); callback(null); });
+    modal.querySelector('#tfxRecCnl').addEventListener('click', function(){ modal.remove(); });
+  }
+js
 // Comprehensive fixes for create/edit task form
 // Fixes: 1.Status dropdown from group settings, 2.Assignee from admin users,
 // 3.Repeat task, 4.Attachment, 5.Tags with create prompt, 6.Category from group,
@@ -345,8 +437,7 @@
 
     btn.addEventListener('click', function(e){
       e.preventDefault(); e.stopPropagation();
-      if (typeof showRecurrenceModal === 'function') {
-        showRecurrenceModal(function(rec){
+      showRecurrenceModalInline(function(rec){
           if (typeof state !== 'undefined') state.modalRecurrence = rec;
           updateIndicator();
           var disp = document.getElementById('modalRecurrenceDisplay');
@@ -497,8 +588,7 @@
       newBtn._tfxRemWired = true;
       newBtn.addEventListener('click', function(e){
         e.preventDefault(); e.stopPropagation();
-        if (typeof showReminderModal === 'function') {
-          showReminderModal(typeof state!=='undefined'?state.modalReminder:null, function(rem){
+        showReminderModalInline(typeof state!=='undefined'?state.modalReminder:null, function(rem){
             if (typeof state!=='undefined') state.modalReminder=rem;
             if (rem && rem.date) {
               var ds = new Date(rem.date).toLocaleDateString();
