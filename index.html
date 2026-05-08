@@ -184,9 +184,9 @@
         </div>
         <div class="invitee-bar" id="invitees-bar">
                   <button class="icon-btn invitee-like-btn" title="Like"><i class="fa-regular fa-heart"></i></button>
-                  <span class="invitee-dot">â¢</span>
+                  <span class="invitee-dot">Ã¢ÂÂ¢</span>
                   <button class="icon-btn invitee-refuse-btn" id="inviteeRefuseBtn" title="Click to refuse other invitees"><i class="fa-solid fa-user-slash"></i></button>
-                  <span class="invitee-dot">â¢</span>
+                  <span class="invitee-dot">Ã¢ÂÂ¢</span>
                   <button class="icon-btn invitee-add-btn" id="inviteeAddBtn" title="Add / View invitees"><i class="fa-solid fa-plus"></i></button>
                 </div>
                 <div class="comment-section">
@@ -198,7 +198,7 @@
     </div>
     <aside class="right-sidebar">
       <button class="icon-btn" title="Ask Zia"><i class="fa-solid fa-robot"></i></button>
-      <button class="icon-btn" title="Settings"><i class="fa-solid fa-gear"></i></button>
+      <button class="icon-btn" id="settingsBtn" title="Settings"><i class="fa-solid fa-gear"></i></button>
       <button class="icon-btn" title="Calendar"><i class="fa-regular fa-calendar"></i></button>
       <button class="icon-btn" title="Workflow" id="workflowBtn"><i class="fa-solid fa-diagram-project"></i></button>
       <button class="icon-btn" title="Playground" id="playgroundBtn"><i class="fa-solid fa-flask"></i></button>
@@ -333,5 +333,139 @@
 <script src="shadow-db-patch.js"></script>
   <script src="theme.js"></script>
   <script src="admin.js"></script>
+
+  <!-- Settings Panel -->
+  <div class="modal-overlay" id="settingsModal" style="display:none;">
+    <div class="modal-content" style="max-width:520px; padding:0; border-radius:12px; overflow:hidden;">
+      <div class="modal-header" style="padding:20px 24px; border-bottom:1px solid var(--border-color,#e5e7eb);">
+        <div class="modal-header-left">
+          <i class="fa-solid fa-gear" style="margin-right:8px; color:var(--primary,#4f46e5);"></i>
+          <h3 style="margin:0; font-size:1.1rem; font-weight:600;">Settings</h3>
+        </div>
+        <div class="modal-header-right">
+          <button class="icon-btn" id="settingsCloseBtn" title="Close settings"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+      </div>
+      <div class="modal-body" style="padding:24px;">
+        <div style="margin-bottom:20px;">
+          <h4 style="margin:0 0 12px; font-size:0.85rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted,#6b7280);">General</h4>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border-color,#e5e7eb);">
+            <span style="font-size:0.95rem;">Dark Mode</span>
+            <button id="settingsThemeToggle" class="icon-btn" style="font-size:0.85rem; padding:4px 12px; border-radius:6px;" title="Toggle theme">
+              <i class="fa-solid fa-moon"></i>
+            </button>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border-color,#e5e7eb);">
+            <span style="font-size:0.95rem;">Default View</span>
+            <select id="settingsDefaultView" style="border:1px solid var(--border-color,#e5e7eb); border-radius:6px; padding:4px 8px; background:var(--bg,#fff); color:var(--text,#111); font-size:0.9rem;">
+              <option value="agenda">Agenda</option>
+              <option value="myday">My Day</option>
+              <option value="personal">Personal Tasks</option>
+            </select>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 0;">
+            <span style="font-size:0.95rem;">Default Sort</span>
+            <select id="settingsDefaultSort" style="border:1px solid var(--border-color,#e5e7eb); border-radius:6px; padding:4px 8px; background:var(--bg,#fff); color:var(--text,#111); font-size:0.9rem;">
+              <option value="dueDate">Due Date</option>
+              <option value="createdTime">Created Time</option>
+              <option value="priority">Priority</option>
+              <option value="title">Title</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-bottom:20px;">
+          <h4 style="margin:0 0 12px; font-size:0.85rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted,#6b7280);">Notifications</h4>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border-color,#e5e7eb);">
+            <span style="font-size:0.95rem;">Enable Notifications</span>
+            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+              <input type="checkbox" id="settingsNotifToggle" checked style="width:16px; height:16px; cursor:pointer;">
+            </label>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 0;">
+            <span style="font-size:0.95rem;">Due Date Reminders</span>
+            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+              <input type="checkbox" id="settingsReminderToggle" checked style="width:16px; height:16px; cursor:pointer;">
+            </label>
+          </div>
+        </div>
+        <div>
+          <h4 style="margin:0 0 12px; font-size:0.85rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted,#6b7280);">Profile</h4>
+          <div style="display:flex; align-items:center; gap:12px; padding:10px 0;">
+            <div class="avatar-sm" style="width:40px; height:40px; font-size:1.1rem; flex-shrink:0;">A</div>
+            <div>
+              <div style="font-weight:600; font-size:0.95rem;">Admin</div>
+              <div style="font-size:0.82rem; color:var(--text-muted,#6b7280);">admin@example.com</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="padding:16px 24px; border-top:1px solid var(--border-color,#e5e7eb); display:flex; justify-content:flex-end; gap:8px;">
+        <button class="btn btn-secondary" id="settingsCancelBtn">Cancel</button>
+        <button class="btn btn-primary" id="settingsSaveBtn">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      function initSettings() {
+        var settingsBtn = document.getElementById('settingsBtn');
+        var settingsModal = document.getElementById('settingsModal');
+        var settingsCloseBtn = document.getElementById('settingsCloseBtn');
+        var settingsCancelBtn = document.getElementById('settingsCancelBtn');
+        var settingsSaveBtn = document.getElementById('settingsSaveBtn');
+        var settingsThemeToggle = document.getElementById('settingsThemeToggle');
+
+        if (!settingsBtn || !settingsModal) return;
+
+        function openSettings() {
+          settingsModal.style.display = 'flex';
+          settingsModal.classList.add('active');
+        }
+        function closeSettings() {
+          settingsModal.style.display = 'none';
+          settingsModal.classList.remove('active');
+        }
+
+        settingsBtn.addEventListener('click', openSettings);
+        settingsCloseBtn && settingsCloseBtn.addEventListener('click', closeSettings);
+        settingsCancelBtn && settingsCancelBtn.addEventListener('click', closeSettings);
+
+        settingsModal.addEventListener('click', function(e) {
+          if (e.target === settingsModal) closeSettings();
+        });
+
+        if (settingsThemeToggle) {
+          settingsThemeToggle.addEventListener('click', function() {
+            var themeToggle = document.getElementById('themeToggle');
+            if (themeToggle) themeToggle.click();
+          });
+        }
+
+        if (settingsSaveBtn) {
+          settingsSaveBtn.addEventListener('click', function() {
+            var defaultView = document.getElementById('settingsDefaultView');
+            var defaultSort = document.getElementById('settingsDefaultSort');
+            if (defaultView) localStorage.setItem('todo_defaultView', defaultView.value);
+            if (defaultSort) localStorage.setItem('todo_defaultSort', defaultSort.value);
+            closeSettings();
+          });
+        }
+
+        var savedView = localStorage.getItem('todo_defaultView');
+        var savedSort = localStorage.getItem('todo_defaultSort');
+        var defaultViewEl = document.getElementById('settingsDefaultView');
+        var defaultSortEl = document.getElementById('settingsDefaultSort');
+        if (savedView && defaultViewEl) defaultViewEl.value = savedView;
+        if (savedSort && defaultSortEl) defaultSortEl.value = savedSort;
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initSettings);
+      } else {
+        initSettings();
+      }
+    })();
+  </script>
 </body>
 </html>
