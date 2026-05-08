@@ -164,292 +164,270 @@ function setupShortcutsToggle() {
     }
 }
 
-// ============ GROUPS DATA ============
-const groupsData = [
-    {
-        id: 1, name: 'Development Team', role: 'moderator', type: 'org-email',
-        streams: true, memberCount: 24,
-        members: [
-            { name: 'Alex Johnson', email: 'alex.j@company.com', role: 'Moderator' },
-            { name: 'Sarah Chen', email: 'sarah.c@company.com', role: 'Moderator' },
-            { name: 'Mike Peters', email: 'mike.p@company.com', role: 'Member' },
-            { name: 'Lisa Wang', email: 'lisa.w@company.com', role: 'Member' },
-            { name: 'Tom Brown', email: 'tom.b@company.com', role: 'Member' },
-            { name: 'Emily Davis', email: 'emily.d@company.com', role: 'Member' }
-        ],
-        categories: [
-            { name: 'General', color: '#db4437' },
-            { name: 'Frontend', color: '#4285f4' },
-            { name: 'Backend', color: '#0f9d58' },
-            { name: 'DevOps', color: '#f4b400' },
-            { name: 'Testing', color: '#9c27b0' }
-        ],
-        statuses: [
-            { name: 'Open', color: '#db4437' },
-            { name: 'In Progress', color: '#4285f4' },
-            { name: 'In Review', color: '#f4b400' },
-            { name: 'Completed', color: '#0f9d58' },
-            { name: 'On Hold', color: '#9e9e9e' }
-        ],
-        tags: [
-            { name: 'P1 Items', color: '#f4b400' },
-            { name: 'Bug Fix', color: '#db4437' },
-            { name: 'Feature', color: '#4285f4' },
-            { name: 'Enhancement', color: '#0f9d58' }
-        ],
-        customFields: [
-            { type: 'Dropdown', name: 'Sprint' },
-            { type: 'Multi Choice', name: 'Components' },
-            { type: 'Dropdown', name: 'Release Plan' }
-        ]
-    },
-    {
-        id: 2, name: 'Design Team', role: 'moderator', type: 'personal',
-        streams: true, memberCount: 12,
-        members: [
-            { name: 'Rachel Kim', email: 'rachel.k@company.com', role: 'Moderator' },
-            { name: 'David Lee', email: 'david.l@company.com', role: 'Member' },
-            { name: 'Sophie Turner', email: 'sophie.t@company.com', role: 'Member' }
-        ],
-        categories: [
-            { name: 'General', color: '#db4437' },
-            { name: 'UI Design', color: '#4285f4' },
-            { name: 'UX Research', color: '#9c27b0' },
-            { name: 'Branding', color: '#f4b400' }
-        ],
-        statuses: [
-            { name: 'Open', color: '#db4437' },
-            { name: 'In Design', color: '#4285f4' },
-            { name: 'Review', color: '#f4b400' },
-            { name: 'Done', color: '#0f9d58' }
-        ],
-        tags: [
-            { name: 'Urgent', color: '#db4437' },
-            { name: 'Redesign', color: '#9c27b0' }
-        ],
-        customFields: [
-            { type: 'Dropdown', name: 'Design System' }
-        ]
-    },
-    {
-        id: 3, name: 'Marketing', role: 'member', type: 'org-email',
-        streams: true, memberCount: 45,
-        members: [
-            { name: 'John Smith', email: 'john.s@company.com', role: 'Moderator' },
-            { name: 'Anna Wilson', email: 'anna.w@company.com', role: 'Member' },
-            { name: 'Chris Taylor', email: 'chris.t@company.com', role: 'Member' }
-        ],
-        categories: [
-            { name: 'General', color: '#db4437' },
-            { name: 'Campaigns', color: '#4285f4' },
-            { name: 'Content', color: '#0f9d58' },
-            { name: 'Social Media', color: '#9c27b0' }
-        ],
-        statuses: [
-            { name: 'Open', color: '#db4437' },
-            { name: 'Active', color: '#4285f4' },
-            { name: 'Completed', color: '#0f9d58' }
-        ],
-        tags: [
-            { name: 'Q1 Campaign', color: '#f4b400' },
-            { name: 'Blog Post', color: '#4285f4' }
-        ],
-        customFields: []
-    },
-    {
-        id: 4, name: 'Product Team', role: 'moderator', type: 'org-no-email',
-        streams: false, memberCount: 18,
-        members: [
-            { name: 'Diana Prince', email: 'diana.p@company.com', role: 'Moderator' },
-            { name: 'Bruce Wayne', email: 'bruce.w@company.com', role: 'Member' }
-        ],
-        categories: [
-            { name: 'General', color: '#db4437' },
-            { name: 'Roadmap', color: '#4285f4' },
-            { name: 'Customer Feedback', color: '#f4b400' }
-        ],
-        statuses: [
-            { name: 'Backlog', color: '#9e9e9e' },
-            { name: 'Planned', color: '#4285f4' },
-            { name: 'In Development', color: '#f4b400' },
-            { name: 'Released', color: '#0f9d58' }
-        ],
-        tags: [
-            { name: 'Feature Request', color: '#4285f4' },
-            { name: 'Customer Issue', color: '#db4437' }
-        ],
-        customFields: [
-            { type: 'Dropdown', name: 'Priority Level' },
-            { type: 'Dropdown', name: 'Quarter' }
-        ]
-    },
-    {
-        id: 5, name: 'Support', role: 'member', type: 'org-email',
-        streams: true, memberCount: 156,
-        members: [
-            { name: 'Karen White', email: 'karen.w@company.com', role: 'Moderator' },
-            { name: 'James Bond', email: 'james.b@company.com', role: 'Member' }
-        ],
-        categories: [
-            { name: 'General', color: '#db4437' },
-            { name: 'Tickets', color: '#4285f4' },
-            { name: 'Escalations', color: '#f4b400' }
-        ],
-        statuses: [
-            { name: 'New', color: '#db4437' },
-            { name: 'In Progress', color: '#4285f4' },
-            { name: 'Resolved', color: '#0f9d58' },
-            { name: 'Closed', color: '#9e9e9e' }
-        ],
-        tags: [
-            { name: 'Critical', color: '#db4437' },
-            { name: 'Bug', color: '#f4b400' }
-        ],
-        customFields: [
-            { type: 'Dropdown', name: 'Severity' }
-        ]
-    },
-    {
-        id: 6, name: 'Personal Tasks', role: 'owner', type: 'personal',
-        streams: false, memberCount: 1,
-        members: [
-            { name: 'You', email: 'user@company.com', role: 'Owner' }
-        ],
-        categories: [
-            { name: 'General', color: '#db4437' },
-            { name: 'My Tasks', color: '#4285f4' },
-            { name: 'Calendar', color: '#0f9d58' }
-        ],
-        statuses: [
-            { name: 'Open', color: '#db4437' },
-            { name: 'In Progress', color: '#4285f4' },
-            { name: 'Done', color: '#0f9d58' }
-        ],
-        tags: [
-            { name: 'Important', color: '#db4437' },
-            { name: 'Personal', color: '#0f9d58' }
-        ],
-        customFields: []
-    }
+
+// ============ GROUPS - REAL DATA FROM ShadowDB ============
+let groupsData = [];
+let currentGroupId = null;
+const DEFAULT_STATUSES = [
+  { id:'Open', name:'Open', color:'#e53e3e' },
+  { id:'In Progress', name:'In Progress', color:'#d69e2e' },
+  { id:'Fixed', name:'Fixed', color:'#3182ce' },
+  { id:'Completed', name:'Completed', color:'#38a169' },
+  { id:'Closed', name:'Closed', color:'#718096' }
 ];
+const GROUP_COLORS = ['#4285f4','#0f9d58','#f4b400','#db4437','#9c27b0','#00bcd4','#ff5722','#607d8b','#795548','#009688'];
+function groupColor(id){ const n=String(id).split('').reduce((a,c)=>a+c.charCodeAt(0),0); return GROUP_COLORS[n%GROUP_COLORS.length]; }
+function groupInitials(name){ return (name||'').split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase()||'?'; }
 
-// ============ GROUPS SETUP ============
-function setupGroups() {
+async function loadGroupsFromDB(){
+  const db=window.ShadowDB; if(!db) return [];
+  const [rawGroups,allTasks,allCats,allMembers,allFields,allTags]=await Promise.all([
+    db.Groups.getAll(),db.Tasks.getAll(),db.Categories.getAll(),
+    db.Members.getAll(),db.CustomFields.getAll(),db.Tags.getAll()
+  ]);
+  const users=JSON.parse(localStorage.getItem('shadow_users')||'[]');
+  return rawGroups.map(g=>{
+    const gTasks=allTasks.filter(t=>t.group===g.id);
+    const gCats=allCats.filter(c=>c.groupId===g.id);
+    const gFields=allFields.filter(f=>f.groupId===g.id);
+    const gTags=allTags.filter(t=>t.groupId===g.id||!t.groupId);
+    const assignees=users.map(u=>({id:u.id,name:u.name,email:u.email,role:u.role||'member',color:u.color||'#667eea',avatar:u.avatar||u.name.charAt(0)}));
+    [...new Set(gTasks.map(t=>t.assignee).filter(Boolean))].forEach(name=>{
+      if(!assignees.find(a=>a.name===name)) assignees.push({id:name,name,email:'',role:'member',color:'#667eea',avatar:name.charAt(0)});
+    });
+    return {id:g.id,name:g.name,role:g.role||'owner',type:g.type||'personal',
+      streams:g.streamsEnabled!==false,hidden:g.hidden||false,
+      memberCount:assignees.length,taskCount:gTasks.length,
+      initials:groupInitials(g.name),bgColor:groupColor(g.id),
+      members:assignees,categories:gCats,statuses:DEFAULT_STATUSES,tags:gTags,
+      customFields:gFields,taskSLA:g.taskSLA||'none',
+      sendOverdueNotif:g.sendOverdueNotif||false,showAllSubtasks:g.showAllSubtasks||false,_raw:g};
+  });
+}
+
+async function saveGroupSetting(groupId,patch){
+  const db=window.ShadowDB; if(!db) return;
+  const e=await db.Groups.getById(groupId);
+  if(e) await db.Groups.update(groupId,Object.assign({},e,patch));
+}
+
+function setupGroups(){
+  const countEl=document.querySelector('.groups-count');
+  loadGroupsFromDB().then(groups=>{
+    groupsData=groups;
+    if(countEl) countEl.textContent=groups.length+' Group'+(groups.length!==1?'s':'');
     renderGroupCards(groupsData);
-    
-    // Search
-    const searchInput = document.getElementById('groupsSearch');
-    if (searchInput) {
-        searchInput.addEventListener('input', () => {
-            const query = searchInput.value.toLowerCase();
-            const filtered = groupsData.filter(g => g.name.toLowerCase().includes(query));
-            renderGroupCards(filtered);
-        });
-    }
-    
-    // Type filter
-    document.querySelectorAll('input[name="groupType"]').forEach(radio => {
-        radio.addEventListener('change', () => filterGroups());
+  });
+  const si=document.getElementById('groupsSearch')||document.querySelector('.groups-search-wrap input');
+  if(si) si.addEventListener('input',()=>{ const q=si.value.toLowerCase(); renderGroupCards(groupsData.filter(g=>g.name.toLowerCase().includes(q))); });
+  document.querySelectorAll('input[name="groupType"]').forEach(r=>r.addEventListener('change',filterGroups));
+  document.querySelectorAll('input[name="groupRole"]').forEach(r=>r.addEventListener('change',filterGroups));
+  const cb=document.querySelector('.btn-create-group');
+  if(cb) cb.addEventListener('click',async()=>{
+    const name=prompt('New group name:'); if(!name||!name.trim()) return;
+    const db=window.ShadowDB; if(!db) return;
+    await db.Groups.create({id:'g_'+Date.now(),name:name.trim(),createdAt:new Date().toISOString(),modifiedDate:new Date().toISOString()});
+    const groups=await loadGroupsFromDB(); groupsData=groups;
+    if(countEl) countEl.textContent=groups.length+' Group'+(groups.length!==1?'s':'');
+    renderGroupCards(groupsData);
+  });
+}
+
+function filterGroups(){
+  const tp=document.querySelector('input[name="groupType"]:checked')?.value||'all';
+  const rl=document.querySelector('input[name="groupRole"]:checked')?.value||'all';
+  let f=[...groupsData];
+  if(tp!=='all') f=f.filter(g=>g.type===tp);
+  if(rl!=='all') f=f.filter(g=>g.role===rl);
+  renderGroupCards(f);
+}
+
+function renderGroupCards(groups){
+  const grid=document.getElementById('groupsGrid'); if(!grid) return;
+  if(groups.length===0){ grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px;color:#999">No groups found</div>'; return; }
+  grid.innerHTML=groups.map(g=>{
+    const ex=g.memberCount>4?'<div class="member-extra">+'+(g.memberCount-4)+'</div>':'';
+    const av=(g.members||[]).slice(0,4).map(m=>'<div class="member-avatar" style="background:'+(m.color||'#667eea')+'">'+(m.avatar||m.name.charAt(0))+'</div>').join('');
+    return '<div class="group-card" data-group-id="'+g.id+'">' +
+      '<div class="group-card-icon colored" style="background:'+g.bgColor+'">'+g.initials+'</div>' +
+      '<div class="group-card-name">'+g.name+'</div>' +
+      '<div class="group-card-role '+g.role+'">'+capitalize(g.role)+'</div>' +
+      '<div class="group-card-members">'+av+ex+'</div>' +
+      '<div style="font-size:0.78rem;color:#999;margin-top:4px">'+g.taskCount+' task'+(g.taskCount!==1?'s':'')+'</div>' +
+      '</div>';
+  }).join('');
+  grid.querySelectorAll('.group-card').forEach(card=>{ card.addEventListener('click',()=>openGroupDetail(card.dataset.groupId)); });
+}
+
+function capitalize(str){ return str?str.charAt(0).toUpperCase()+str.slice(1):''; }
+
+function openGroupDetail(groupId){
+  const group=groupsData.find(g=>g.id===groupId); if(!group) return;
+  currentGroupId=groupId;
+  document.getElementById('groupsListView').classList.add('hidden');
+  document.getElementById('groupDetailView').classList.remove('hidden');
+  const t=document.querySelector('.group-detail-title'); if(t) t.textContent=group.name;
+  document.querySelectorAll('.group-tab').forEach(t=>t.classList.remove('active'));
+  const ft=document.querySelector('.group-tab[data-tab="general"]'); if(ft) ft.classList.add('active');
+  document.querySelectorAll('.group-tab-content').forEach(c=>c.classList.remove('active'));
+  const gc=document.getElementById('tab-general'); if(gc) gc.classList.add('active');
+  renderGeneralSettings(group);
+  renderMembers(group.members,group.memberCount);
+  renderCategories(group.categories);
+  renderStatuses(group.statuses);
+  renderAssignees(group.members);
+  renderTags(group.tags);
+  renderCustomFields(group.customFields);
+  renderOtherSettings(group);
+  setupTaskSettingsActions();
+}
+
+function renderGeneralSettings(group){
+  const ne=document.getElementById('groupDetailName'); if(ne) ne.textContent=group.name;
+  const se=document.getElementById('groupStreamsEnabled'); if(se) se.textContent=group.streams?'Yes':'No';
+  const he=document.getElementById('groupHidden');
+  if(he){ he.checked=group.hidden||false; he.onchange=()=>saveGroupSetting(group.id,{hidden:he.checked}); }
+}
+
+function memberCard(m){
+  const bg=m.color||'#667eea'; const av=m.avatar||m.name.charAt(0).toUpperCase();
+  return '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f0f0f0">' +
+    '<div style="background:'+bg+';width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:0.9rem;flex-shrink:0">'+av+'</div>' +
+    '<div style="flex:1"><div style="font-weight:500;font-size:0.92rem">'+m.name+'</div><div style="color:#999;font-size:0.8rem">'+(m.email||'')+'</div></div>' +
+    '<div style="font-size:0.8rem;color:#667eea;background:#f0f4ff;padding:2px 8px;border-radius:10px">'+capitalize(m.role||'member')+'</div>' +
+    '</div>';
+}
+
+function renderMembers(members){
+  const list=document.getElementById('membersList'); if(!list) return;
+  if(!members||members.length===0){ list.innerHTML='<div style="text-align:center;padding:24px;color:#999">No members yet.</div>'; return; }
+  const ar=['admin','moderator','owner'];
+  const own=members.filter(m=>ar.includes(m.role)); const reg=members.filter(m=>!ar.includes(m.role));
+  let h='';
+  if(own.length){ h+='<div style="font-size:0.78rem;font-weight:600;color:#999;text-transform:uppercase;padding:8px 0 4px">Admins</div>'; own.forEach(m=>{h+=memberCard(m);}); }
+  if(reg.length){ h+='<div style="font-size:0.78rem;font-weight:600;color:#999;text-transform:uppercase;padding:8px 0 4px">Members</div>'; reg.forEach(m=>{h+=memberCard(m);}); }
+  list.innerHTML=h;
+}
+
+function listItemHtml(item, delFn){
+  return '<div style="display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid #f5f5f5">' +
+    (item.color?'<div style="background:'+(item.color)+';width:14px;height:14px;border-radius:3px;flex-shrink:0"></div>':'') +
+    '<span style="flex:1;font-size:0.9rem">'+item.name+'</span>' +
+    '<button onclick="'+delFn+'(\''+item.id+'\',\''+currentGroupId+'\')" style="background:none;border:none;cursor:pointer;color:#e53e3e;font-size:1rem;padding:2px 6px">&#10005;</button>' +
+    '</div>';
+}
+
+function renderCategories(categories){
+  const list=document.getElementById('categoriesList'); if(!list) return;
+  if(!categories||categories.length===0){ list.innerHTML='<div style="color:#999;padding:16px 0;font-size:0.9rem">No categories yet. Type above and press Enter.</div>'; return; }
+  list.innerHTML=categories.map(c=>
+    '<div style="display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid #f5f5f5">' +
+    '<div style="background:'+(c.color||'#667eea')+';width:14px;height:14px;border-radius:3px;flex-shrink:0"></div>' +
+    '<span style="flex:1;font-size:0.9rem">'+c.name+'</span>' +
+    '<button data-del-cat="'+c.id+'" style="background:none;border:none;cursor:pointer;color:#e53e3e;font-size:1rem;padding:2px 6px">&#10005;</button>' +
+    '</div>'
+  ).join('');
+  list.querySelectorAll('[data-del-cat]').forEach(btn=>btn.addEventListener('click',async()=>{
+    if(!confirm('Delete?')) return;
+    await window.ShadowDB.Categories.delete(btn.dataset.delCat);
+    const g=groupsData.find(g=>g.id===currentGroupId); if(g){ g.categories=g.categories.filter(c=>c.id!==btn.dataset.delCat); renderCategories(g.categories); }
+  }));
+}
+
+function renderStatuses(statuses){
+  const list=document.getElementById('statusesList'); if(!list) return;
+  list.innerHTML=(statuses||DEFAULT_STATUSES).map(s=>
+    '<div style="display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid #f5f5f5">' +
+    '<div style="background:'+(s.color||'#667eea')+';width:14px;height:14px;border-radius:3px;flex-shrink:0"></div>' +
+    '<span style="flex:1;font-size:0.9rem">'+s.name+'</span></div>'
+  ).join('');
+}
+
+function renderAssignees(members){
+  const list=document.getElementById('assigneesList'); if(!list) return;
+  if(!members||members.length===0){ list.innerHTML='<div style="color:#999;padding:16px 0;font-size:0.9rem">No assignees.</div>'; return; }
+  list.innerHTML=members.map(m=>
+    '<div style="display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid #f5f5f5">' +
+    '<div style="background:'+(m.color||'#667eea')+';width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:0.78rem;font-weight:600;flex-shrink:0">'+(m.avatar||m.name.charAt(0))+'</div>' +
+    '<span style="flex:1;font-size:0.9rem">'+m.name+'</span>' +
+    '<span style="font-size:0.78rem;color:#999">'+(m.email||'')+'</span></div>'
+  ).join('');
+}
+
+function renderTags(tags){
+  const list=document.getElementById('tagsList'); if(!list) return;
+  if(!tags||tags.length===0){ list.innerHTML='<div style="color:#999;padding:16px 0;font-size:0.9rem">No tags yet. Type above and press Enter.</div>'; return; }
+  list.innerHTML=tags.map(t=>
+    '<div style="display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid #f5f5f5">' +
+    '<div style="background:'+(t.color||'#667eea')+';width:14px;height:14px;border-radius:3px;flex-shrink:0"></div>' +
+    '<span style="flex:1;font-size:0.9rem">'+t.name+'</span>' +
+    '<button data-del-tag="'+t.id+'" style="background:none;border:none;cursor:pointer;color:#e53e3e;font-size:1rem;padding:2px 6px">&#10005;</button>' +
+    '</div>'
+  ).join('');
+  list.querySelectorAll('[data-del-tag]').forEach(btn=>btn.addEventListener('click',async()=>{
+    if(!confirm('Delete?')) return;
+    await window.ShadowDB.Tags.delete(btn.dataset.delTag);
+    const g=groupsData.find(g=>g.id===currentGroupId); if(g){ g.tags=g.tags.filter(t=>t.id!==btn.dataset.delTag); renderTags(g.tags); }
+  }));
+}
+
+function renderCustomFields(fields){
+  const list=document.getElementById('customFieldsList'); if(!list) return;
+  if(!fields||fields.length===0){ list.innerHTML='<div style="color:#999;padding:16px 0;font-size:0.9rem">No custom fields yet.</div>'; return; }
+  list.innerHTML=fields.map(f=>
+    '<div style="display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid #f5f5f5">' +
+    '<span style="flex:1;font-size:0.9rem">'+f.name+'</span>' +
+    '<span style="font-size:0.78rem;color:#999;background:#f5f5f5;padding:2px 8px;border-radius:8px">'+(f.type||'text')+'</span>' +
+    '<button data-del-cf="'+f.id+'" style="background:none;border:none;cursor:pointer;color:#e53e3e;font-size:1rem;padding:2px 6px">&#10005;</button>' +
+    '</div>'
+  ).join('');
+  list.querySelectorAll('[data-del-cf]').forEach(btn=>btn.addEventListener('click',async()=>{
+    if(!confirm('Delete?')) return;
+    await window.ShadowDB.CustomFields.delete(btn.dataset.delCf);
+    const g=groupsData.find(g=>g.id===currentGroupId); if(g){ g.customFields=g.customFields.filter(f=>f.id!==btn.dataset.delCf); renderCustomFields(g.customFields); }
+  }));
+}
+
+function renderOtherSettings(group){
+  const sla=document.getElementById('taskSLASelect');
+  const od=document.getElementById('sendOverdueNotif');
+  const st=document.getElementById('showAllSubtasks');
+  if(sla){ sla.value=group.taskSLA||'none'; sla.onchange=()=>saveGroupSetting(group.id,{taskSLA:sla.value}); }
+  if(od){ od.checked=group.sendOverdueNotif||false; od.onchange=()=>saveGroupSetting(group.id,{sendOverdueNotif:od.checked}); }
+  if(st){ st.checked=group.showAllSubtasks||false; st.onchange=()=>saveGroupSetting(group.id,{showAllSubtasks:st.checked}); }
+}
+
+function setupTaskSettingsActions(){
+  const ci=document.getElementById('categorySearchInput')||document.querySelector('#tsection-category input[type="text"]');
+  if(ci&&!ci._wired){ ci._wired=true; ci.placeholder='Type name + Enter to add...';
+    ci.addEventListener('keydown',async(e)=>{ if(e.key!=='Enter'||!ci.value.trim()||!currentGroupId) return;
+      const db=window.ShadowDB; if(!db) return;
+      const C=['#e53e3e','#3182ce','#38a169','#d69e2e','#805ad5','#ed8936'];
+      const nc={id:'cat_'+Date.now(),name:ci.value.trim(),groupId:currentGroupId,color:C[Math.floor(Math.random()*C.length)]};
+      await db.Categories.create(nc); const g=groupsData.find(g=>g.id===currentGroupId); if(g){g.categories.push(nc);renderCategories(g.categories);} ci.value='';
     });
-    
-    // Role filter
-    document.querySelectorAll('input[name="groupRole"]').forEach(radio => {
-        radio.addEventListener('change', () => filterGroups());
+  }
+  const ti=document.getElementById('tagSearchInput')||document.querySelector('#tsection-tags input[type="text"]');
+  if(ti&&!ti._wired){ ti._wired=true; ti.placeholder='Type name + Enter to add...';
+    ti.addEventListener('keydown',async(e)=>{ if(e.key!=='Enter'||!ti.value.trim()||!currentGroupId) return;
+      const db=window.ShadowDB; if(!db) return;
+      const C=['#e53e3e','#3182ce','#38a169','#d69e2e','#805ad5'];
+      const nt={id:'tag_'+Date.now(),name:ti.value.trim(),groupId:currentGroupId,color:C[Math.floor(Math.random()*C.length)]};
+      await db.Tags.create(nt); const g=groupsData.find(g=>g.id===currentGroupId); if(g){g.tags.push(nt);renderTags(g.tags);} ti.value='';
     });
-}
-
-function filterGroups() {
-    const typeFilter = document.querySelector('input[name="groupType"]:checked').value;
-    const roleFilter = document.querySelector('input[name="groupRole"]:checked').value;
-    
-    let filtered = groupsData;
-    
-    if (typeFilter !== 'all') {
-        filtered = filtered.filter(g => g.type === typeFilter);
-    }
-    if (roleFilter !== 'all') {
-        filtered = filtered.filter(g => g.role === roleFilter);
-    }
-    
-    renderGroupCards(filtered);
-}
-
-function renderGroupCards(groups) {
-    const grid = document.getElementById('groupsGrid');
-    const countEl = document.getElementById('groupsCount');
-    if (!grid) return;
-    
-    if (countEl) countEl.textContent = groups.length + ' Groups';
-    
-    grid.innerHTML = groups.map(group => {
-        const initials = group.name.split(' ').map(w => w[0]).join('').substring(0, 2);
-        const colors = ['#4285f4', '#0f9d58', '#f4b400', '#db4437', '#9c27b0', '#00bcd4'];
-        const bgColor = colors[group.id % colors.length];
-        
-        const memberAvatars = group.members.slice(0, 4).map(m => {
-            const mi = m.name.split(' ').map(w => w[0]).join('');
-            return '<div class="member-avatar" style="background:' + colors[(m.name.length) % colors.length] + '">' + mi + '</div>';
-        }).join('');
-        
-        const extraCount = group.memberCount > 4 ? '<span class="member-count-badge">+' + (group.memberCount - 4) + '</span>' : '';
-        
-        return '<div class="group-card" data-group-id="' + group.id + '">' +
-            '<div class="group-card-icon colored" style="background:' + bgColor + '">' + initials + '</div>' +
-            '<div class="group-card-name">' + group.name + '</div>' +
-            '<div class="group-card-role ' + group.role + '">' + capitalize(group.role) + '</div>' +
-            '<div class="group-card-members">' + memberAvatars + extraCount + '</div>' +
-            '</div>';
-    }).join('');
-    
-    // Add click handlers
-    grid.querySelectorAll('.group-card').forEach(card => {
-        card.addEventListener('click', () => {
-            const groupId = parseInt(card.dataset.groupId);
-            openGroupDetail(groupId);
-        });
+  }
+  const cfb=document.getElementById('addCustomFieldBtn')||document.querySelector('#tsection-customFields .btn-add');
+  if(cfb&&!cfb._wired){ cfb._wired=true;
+    cfb.addEventListener('click',async()=>{
+      const name=prompt('Custom field name:'); if(!name||!name.trim()||!currentGroupId) return;
+      const type=prompt('Field type (text/number/date/dropdown):','text')||'text';
+      const db=window.ShadowDB; if(!db) return;
+      const nf={id:'cf_'+Date.now(),name:name.trim(),type:type.trim(),groupId:currentGroupId};
+      await db.CustomFields.create(nf); const g=groupsData.find(g=>g.id===currentGroupId); if(g){g.customFields.push(nf);renderCustomFields(g.customFields);}
     });
+  }
 }
 
-function capitalize(str) {
-    return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
-// ============ GROUP DETAIL ============
-let currentGroup = null;
-
-function openGroupDetail(groupId) {
-    currentGroup = groupsData.find(g => g.id === groupId);
-    if (!currentGroup) return;
-    
-    document.getElementById('groupsListView').classList.add('hidden');
-    document.getElementById('groupDetailView').classList.remove('hidden');
-    
-    document.getElementById('groupDetailName').textContent = currentGroup.name;
-    document.getElementById('groupNameValue').textContent = currentGroup.name;
-    document.getElementById('groupStreamsValue').textContent = currentGroup.streams ? 'Yes' : 'No';
-    
-    // Reset to General tab
-    document.querySelectorAll('.group-tab').forEach(t => t.classList.remove('active'));
-    document.querySelector('.group-tab[data-tab="general"]').classList.add('active');
-    document.querySelectorAll('.group-tab-content').forEach(c => c.classList.remove('active'));
-    document.getElementById('tab-general').classList.add('active');
-    
-    // Populate members
-    renderMembers(currentGroup.members, currentGroup.memberCount);
-    
-    // Populate task settings
-    renderCategories(currentGroup.categories);
-    renderStatuses(currentGroup.statuses);
-    renderAssignees(currentGroup.members);
-    renderTags(currentGroup.tags);
-    renderCustomFields(currentGroup.customFields);
-    
-    // Reset task settings nav
-    document.querySelectorAll('.task-settings-nav-item').forEach(n => n.classList.remove('active'));
-    document.querySelector('.task-settings-nav-item[data-tsection="category"]').classList.add('active');
-    document.querySelectorAll('.task-settings-section').forEach(s => s.classList.remove('active'));
-    document.getElementById('tsection-category').classList.add('active');
-}
 
 function setupGroupDetail() {
     // Back button
@@ -488,130 +466,6 @@ function setupTaskSettingsNav() {
 }
 
 // ============ RENDER FUNCTIONS ============
-function renderMembers(members, totalCount) {
-    const list = document.getElementById('membersList');
-    const countEl = document.getElementById('membersCount');
-    if (!list) return;
-    
-    if (countEl) countEl.textContent = totalCount + ' Members';
-    
-    // Group by role
-    const moderators = members.filter(m => m.role === 'Moderator' || m.role === 'Owner');
-    const regularMembers = members.filter(m => m.role === 'Member');
-    
-    let html = '';
-    
-    if (moderators.length > 0) {
-        html += '<div class="members-role-header">Moderator (' + moderators.length + ')</div>';
-        moderators.forEach(m => {
-            const initials = m.name.split(' ').map(w => w[0]).join('');
-            const colors = ['#4285f4', '#0f9d58', '#f4b400', '#db4437', '#9c27b0'];
-            const bg = colors[m.name.length % colors.length];
-            html += '<div class="member-item">' +
-                '<div class="member-item-avatar" style="background:' + bg + '">' + initials + '</div>' +
-                '<div class="member-item-info">' +
-                '<div class="member-item-name">' + m.name + '</div>' +
-                '<div class="member-item-email">' + m.email + '</div>' +
-                '</div></div>';
-        });
-    }
-    
-    if (regularMembers.length > 0) {
-        html += '<div class="members-role-header">Member (' + regularMembers.length + ')</div>';
-        regularMembers.forEach(m => {
-            const initials = m.name.split(' ').map(w => w[0]).join('');
-            const colors = ['#4285f4', '#0f9d58', '#f4b400', '#db4437', '#9c27b0'];
-            const bg = colors[m.name.length % colors.length];
-            html += '<div class="member-item">' +
-                '<div class="member-item-avatar" style="background:' + bg + '">' + initials + '</div>' +
-                '<div class="member-item-info">' +
-                '<div class="member-item-name">' + m.name + '</div>' +
-                '<div class="member-item-email">' + m.email + '</div>' +
-                '</div></div>';
-        });
-    }
-    
-    list.innerHTML = html;
-}
-
-function renderCategories(categories) {
-    const list = document.getElementById('categoryList');
-    if (!list) return;
-    list.innerHTML = categories.map(c =>
-        '<div class="settings-list-item"><div class="item-color" style="background:' + c.color + '"></div><span>' + c.name + '</span></div>'
-    ).join('');
-}
-
-function renderStatuses(statuses) {
-    const list = document.getElementById('statusList');
-    if (!list) return;
-    list.innerHTML = statuses.map(s =>
-        '<div class="settings-list-item"><div class="item-color" style="background:' + s.color + '"></div><span>' + s.name + '</span></div>'
-    ).join('');
-}
-
-function renderAssignees(members) {
-    const list = document.getElementById('assigneeList');
-    if (!list) return;
-    const colors = ['#4285f4', '#0f9d58', '#f4b400', '#db4437', '#9c27b0'];
-    list.innerHTML = members.map(m => {
-        const initials = m.name.split(' ').map(w => w[0]).join('');
-        const bg = colors[m.name.length % colors.length];
-        return '<div class="settings-list-item">' +
-            '<div class="member-item-avatar" style="background:' + bg + ';width:24px;height:24px;font-size:10px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white">' + initials + '</div>' +
-            '<span>' + m.name + '</span></div>';
-    }).join('');
-}
-
-function renderTags(tags) {
-    const list = document.getElementById('tagsList');
-    if (!list) return;
-    list.innerHTML = tags.map(t =>
-        '<div class="settings-list-item"><div class="item-color" style="background:' + t.color + '"></div><span>' + t.name + '</span></div>'
-    ).join('');
-}
-
-function renderCustomFields(fields) {
-    const list = document.getElementById('customFieldsList');
-    if (!list) return;
-    if (fields.length === 0) {
-        list.innerHTML = '<div class="settings-list-item" style="color:var(--text-muted);justify-content:center">No custom fields configured</div>';
-        return;
-    }
-    list.innerHTML = fields.map(f =>
-        '<div class="settings-list-item"><svg class="item-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><polyline points="9 11 12 14 22 4"/></svg>' +
-        '<div class="custom-field-item"><div class="custom-field-type">' + f.type + '</div><div class="custom-field-name">' + f.name + '</div></div></div>'
-    ).join('');
-}
-
-// ============ CREATE GROUP MODAL (placeholder) ============
-const createGroupBtn = document.getElementById('createGroupBtn');
-if (createGroupBtn) {
-    createGroupBtn.addEventListener('click', () => {
-        alert('Create new group feature - Coming soon!');
-    });
-}
-
-// ============ PRINT / RESET SHORTCUTS ============
-const printBtn = document.getElementById('printShortcuts');
-if (printBtn) {
-    printBtn.addEventListener('click', () => {
-        window.print();
-    });
-}
-
-const resetBtn = document.getElementById('resetShortcuts');
-if (resetBtn) {
-    resetBtn.addEventListener('click', () => {
-        alert('Keyboard shortcuts have been reset to defaults.');
-    });
-}
-
-
-// ============ APPROVAL SETTINGS INTEGRATION ============
-// When "Rules & Approvals" tab is clicked in Task Settings,
-// mount the ApprovalUI settings panel into #approvalSettingsMount.
-
 function setupApprovalSettings() {
   // Extend the task settings nav click handler to handle the approvals tab
   document.querySelectorAll('.task-settings-nav-item').forEach(item => {
