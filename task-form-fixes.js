@@ -90,12 +90,6 @@
     modal.querySelector('#tfxRecNone').addEventListener('click', function(){ modal.remove(); callback(null); });
     modal.querySelector('#tfxRecCnl').addEventListener('click', function(){ modal.remove(); });
   }
-js
-// Comprehensive fixes for create/edit task form
-// Fixes: 1.Status dropdown from group settings, 2.Assignee from admin users,
-// 3.Repeat task, 4.Attachment, 5.Tags with create prompt, 6.Category from group,
-// 7.Priority UI, 8.Reminder position, 9.Subtasks with full attributes + parent-child
-
 (function TaskFormFixes() {
   'use strict';
 
