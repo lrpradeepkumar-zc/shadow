@@ -318,7 +318,7 @@ function listItemHtml(item, delFn){
 }
 
 function renderCategories(categories){
-  const list=document.getElementById('categoriesList'); if(!list) return;
+  const list=document.getElementById('categoryList'); if(!list) return;
   if(!categories||categories.length===0){ list.innerHTML='<div style="color:#999;padding:16px 0;font-size:0.9rem">No categories yet. Type above and press Enter.</div>'; return; }
   list.innerHTML=categories.map(c=>
     '<div style="display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid #f5f5f5">' +
@@ -335,7 +335,7 @@ function renderCategories(categories){
 }
 
 function renderStatuses(statuses){
-  const list=document.getElementById('statusesList'); if(!list) return;
+  const list=document.getElementById('statusList'); if(!list) return;
   list.innerHTML=(statuses||DEFAULT_STATUSES).map(s=>
     '<div style="display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid #f5f5f5">' +
     '<div style="background:'+(s.color||'#667eea')+';width:14px;height:14px;border-radius:3px;flex-shrink:0"></div>' +
@@ -344,7 +344,7 @@ function renderStatuses(statuses){
 }
 
 function renderAssignees(members){
-  const list=document.getElementById('assigneesList'); if(!list) return;
+  const list=document.getElementById('assigneeList'); if(!list) return;
   if(!members||members.length===0){ list.innerHTML='<div style="color:#999;padding:16px 0;font-size:0.9rem">No assignees.</div>'; return; }
   list.innerHTML=members.map(m=>
     '<div style="display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid #f5f5f5">' +
@@ -389,9 +389,9 @@ function renderCustomFields(fields){
 }
 
 function renderOtherSettings(group){
-  const sla=document.getElementById('taskSLASelect');
-  const od=document.getElementById('sendOverdueNotif');
-  const st=document.getElementById('showAllSubtasks');
+  const sla=document.getElementById('taskSLA');
+  const od=document.getElementById('overdueNotification');
+  const st=document.getElementById('showSubtasks');
   if(sla){ sla.value=group.taskSLA||'none'; sla.onchange=()=>saveGroupSetting(group.id,{taskSLA:sla.value}); }
   if(od){ od.checked=group.sendOverdueNotif||false; od.onchange=()=>saveGroupSetting(group.id,{sendOverdueNotif:od.checked}); }
   if(st){ st.checked=group.showAllSubtasks||false; st.onchange=()=>saveGroupSetting(group.id,{showAllSubtasks:st.checked}); }
