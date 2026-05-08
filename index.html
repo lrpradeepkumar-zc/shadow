@@ -184,9 +184,9 @@
         </div>
         <div class="invitee-bar" id="invitees-bar">
                   <button class="icon-btn invitee-like-btn" title="Like"><i class="fa-regular fa-heart"></i></button>
-                  <span class="invitee-dot">ÃÂ¢ÃÂÃÂ¢</span>
+                  <span class="invitee-dot">ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ¢</span>
                   <button class="icon-btn invitee-refuse-btn" id="inviteeRefuseBtn" title="Click to refuse other invitees"><i class="fa-solid fa-user-slash"></i></button>
-                  <span class="invitee-dot">ÃÂ¢ÃÂÃÂ¢</span>
+                  <span class="invitee-dot">ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ¢</span>
                   <button class="icon-btn invitee-add-btn" id="inviteeAddBtn" title="Add / View invitees"><i class="fa-solid fa-plus"></i></button>
                 </div>
                 <div class="comment-section">
@@ -198,7 +198,7 @@
     </div>
     <aside class="right-sidebar">
       <button class="icon-btn" title="Ask Zia"><i class="fa-solid fa-robot"></i></button>
-      <a href="settings.html" class="icon-btn" id="settingsBtn" title="Settings"><i class="fa-solid fa-gear"></i></a>
+      <button class="icon-btn" id="settingsBtn" title="Settings" onclick="document.getElementById('settingsOverlay').style.display='flex'"><i class="fa-solid fa-gear"></i></button>
       <button class="icon-btn" title="Calendar"><i class="fa-regular fa-calendar"></i></button>
       <button class="icon-btn" title="Workflow" id="workflowBtn"><i class="fa-solid fa-diagram-project"></i></button>
       <button class="icon-btn" title="Playground" id="playgroundBtn"><i class="fa-solid fa-flask"></i></button>
@@ -334,6 +334,57 @@
   <script src="theme.js"></script>
   <script src="admin.js"></script>
 
+  </script>
+
+  <!-- Settings Overlay -->
+  <div id="settingsOverlay" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.45); align-items:center; justify-content:center;">
+    <iframe id="settingsIframe" src="settings.html" style="width:780px; max-width:96vw; height:88vh; border:none; border-radius:14px; box-shadow:0 8px 40px rgba(0,0,0,0.28);"></iframe>
+  </div>
+
+  <script>
+    (function() {
+      var overlay = null;
+      var iframe = null;
+      function initSettingsOverlay() {
+        overlay = document.getElementById('settingsOverlay');
+        iframe = document.getElementById('settingsIframe');
+        if (!overlay || !iframe) return;
+
+        // Close on backdrop click
+        overlay.addEventListener('click', function(e) {
+          if (e.target === overlay) closeSettingsOverlay();
+        });
+
+        // Close on Escape key
+        document.addEventListener('keydown', function(e) {
+          if (e.key === 'Escape' && overlay.style.display !== 'none') closeSettingsOverlay();
+        });
+
+        // When settings.html navigates to index.html (close button clicked), close the overlay instead
+        iframe.addEventListener('load', function() {
+          try {
+            var loc = iframe.contentWindow.location.href;
+            if (loc.includes('index.html') || loc.endsWith('/shadow/') || loc.endsWith('/shadow')) {
+              closeSettingsOverlay();
+            }
+          } catch(e) {}
+        });
+      }
+
+      window.closeSettingsOverlay = function() {
+        if (overlay) {
+          overlay.style.display = 'none';
+          // Reset iframe so settings reload fresh next time
+          if (iframe) iframe.src = iframe.src;
+        }
+      };
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initSettingsOverlay);
+      } else {
+        initSettingsOverlay();
+      }
+    })();
   </script>
 </body>
 </html>
