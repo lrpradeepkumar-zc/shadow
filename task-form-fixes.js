@@ -444,19 +444,6 @@ js
           if (disp) disp.innerHTML = rec ?
             '<span style="font-size:12px;color:#3b82f6;"><i class="fa-solid fa-repeat"></i> '+rec+'</span>' : '';
         });
-      } else {
-        var opts = ['Daily','Weekly','Monthly','Weekdays'];
-        var items = opts.map(function(o){ return {value:o, html:'<i class="fa-solid fa-repeat" style="color:#3b82f6;font-size:11px;"></i> '+o}; });
-        items.push({value:'__clear__', html:'<i class="fa-solid fa-times" style="color:#ef4444;font-size:11px;"></i> <span style="color:#ef4444;">Clear</span>'});
-        showDropdown(btn, items, function(item){
-          var val = item.value === '__clear__' ? null : item.value;
-          if (typeof state !== 'undefined') state.modalRecurrence = val;
-          updateIndicator();
-          var disp = document.getElementById('modalRecurrenceDisplay');
-          if (disp) disp.innerHTML = val ?
-            '<span style="font-size:12px;color:#3b82f6;"><i class="fa-solid fa-repeat"></i> '+val+'</span>' : '';
-        }, {title:'Repeat Task'});
-      }
     });
     updateIndicator();
   }
