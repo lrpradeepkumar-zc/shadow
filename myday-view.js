@@ -284,10 +284,10 @@
     if (action === 'toggle') {
       // Toggle task completion
       if (window.ShadowDB && window.ShadowDB.Tasks) {
-        ShadowDB.Tasks.get(id).then(function (task) {
+        ShadowDB.Tasks.getById(id).then(function (task) {
           if (!task) return;
           var newStatus = isDone(task) ? 'Open' : 'Closed';
-          ShadowDB.Tasks.update(id, { status: newStatus }).then(function () {
+          ShadowDB.Tasks.update({ id: id, status: newStatus }).then(function () {
             ShadowDB.Tasks.getAll().then(function (allTasks) {
               renderList(container, allTasks, ctx);
             });
@@ -300,7 +300,7 @@
     if (action === 'add-to-myday') {
       // Add task to My Day
       if (window.ShadowDB && window.ShadowDB.Tasks) {
-        ShadowDB.Tasks.update(id, { isMyDay: true }).then(function () {
+        ShadowDB.Tasks.update({ id: id, isMyDay: true }).then(function () {
           ShadowDB.Tasks.getAll().then(function (allTasks) {
             renderList(container, allTasks, ctx);
           });
@@ -312,7 +312,7 @@
     if (action === 'remove-from-myday') {
       // Remove task from My Day
       if (window.ShadowDB && window.ShadowDB.Tasks) {
-        ShadowDB.Tasks.update(id, { isMyDay: false }).then(function () {
+        ShadowDB.Tasks.update({ id: id, isMyDay: false }).then(function () {
           ShadowDB.Tasks.getAll().then(function (allTasks) {
             renderList(container, allTasks, ctx);
           });
