@@ -113,11 +113,10 @@
       </div>
     </main>
     <!-- Task Detail Modal Overlay -->
-    <div class="task-detail-modal-overl<!-- Task Detail Side Panel -->
+    <!-- Task Detail Side Panel -->
 <div class="task-detail-modal-overlay" id="taskDetailModalOverlay" style="display:none;">
   <div class="task-detail-panel" id="taskDetailPanel">
 
-    <!-- Panel Header -->
     <div class="tdp-header">
       <div class="tdp-header-actions">
         <button class="icon-btn" title="Repeat"><i class="fa-solid fa-repeat"></i></button>
@@ -128,7 +127,6 @@
       </div>
     </div>
 
-    <!-- Panel Body -->
     <div class="tdp-body">
 
       <h2 class="tdp-title" id="detailTitle" contenteditable="true" spellcheck="false">Task Title</h2>
@@ -163,7 +161,7 @@
 
       <div class="tdp-meta-row">
         <span class="tdp-meta-label">Group</span>
-        <button class="tdp-meta-chip" id="detailGroup">—</button>
+        <button class="tdp-meta-chip" id="detailGroup">No group</button>
       </div>
       <div class="tdp-meta-row">
         <span class="tdp-meta-label">Category</span>
@@ -228,7 +226,6 @@
 
     </div>
 
-    <!-- Comment Footer -->
     <div class="tdp-comment-bar">
       <div class="avatar-sm"><div></div></div>
       <input type="text" id="commentInput" class="tdp-comment-input" placeholder="Write a comment..."/>
@@ -237,7 +234,11 @@
 
   </div>
 </div>
-<!-- Create / Edit Task Modal -->
+button>
+    </aside>
+  </div>
+  <!-- New Task Modal -->
+  <!-- Create / Edit Task Modal -->
 <div class="modal-overlay" id="taskModal" style="display:none;">
   <div class="modal-content task-modal">
 
@@ -253,12 +254,10 @@
       </div>
 
       <div class="tmod-meta-grid">
-
         <div class="tmod-meta-item">
           <span class="tmod-meta-label">Status</span>
           <button class="tmod-status-btn" id="modalStatusBtn">Open</button>
         </div>
-
         <div class="tmod-meta-item">
           <span class="tmod-meta-label">Assignee</span>
           <div class="tmod-assignee-row">
@@ -268,31 +267,26 @@
             </select>
           </div>
         </div>
-
         <div class="tmod-meta-item">
           <span class="tmod-meta-label">Start Date</span>
           <input type="date" id="modalStartDate" class="tmod-date-input date-input"/>
         </div>
-
         <div class="tmod-meta-item">
           <span class="tmod-meta-label">Due Date</span>
           <input type="date" id="modalDueDate" class="tmod-date-input date-input"/>
         </div>
-
         <div class="tmod-meta-item">
           <span class="tmod-meta-label">Group</span>
           <select class="tmod-select meta-select" id="modalGroup">
             <option value="">No group</option>
           </select>
         </div>
-
         <div class="tmod-meta-item">
           <span class="tmod-meta-label">Category</span>
           <select class="tmod-select meta-select" id="modalCategory">
             <option value="General">General</option>
           </select>
         </div>
-
         <div class="tmod-meta-item">
           <span class="tmod-meta-label">Priority</span>
           <select class="tmod-select tmod-priority-select priority-select" id="modalPriority">
@@ -303,12 +297,10 @@
             <option value="Critical">Critical</option>
           </select>
         </div>
-
         <div class="tmod-meta-item">
           <span class="tmod-meta-label">Reminder</span>
           <button class="tmod-reminder-btn reminder-btn" id="modalReminderBtn"><i class="fa-regular fa-calendar-check"></i> Set reminder</button>
         </div>
-
       </div>
 
       <div class="tmod-tags-row">
@@ -345,7 +337,7 @@
 
   </div>
 </div>
-id="settingsOverlay">
+<div class="settings-overlay" id="settingsOverlay">
         <div class="settings-dialog">
             <!-- Close button -->
             <button class="settings-close-btn" id="closeSettings" title="Close">&times;</button>
@@ -624,7 +616,7 @@ id="settingsOverlay">
                                 </svg>
                                 Print Shortcuts
                             </button>
-                            <span class="header-divider">Â·</span>
+                            <span class="header-divider">ÃÂ·</span>
                             <button class="settings-text-btn" id="resetShortcuts">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <polyline points="1 4 1 10 7 10"/>
