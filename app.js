@@ -587,9 +587,7 @@ function renderBoardView() {
   if (!area) return;
   // My Day view uses ShadowMyDay renderer
   if (state.currentView === 'myday' && window.ShadowMyDay) {
-    ShadowDB.Tasks.getAll().then(function(allTasks) {
-      window.ShadowMyDay.renderBoard(area, allTasks, {});
-    });
+    window.ShadowMyDay.renderBoard(area, state.tasks || [], {});
     return;
   }
   var tasks = getFilteredTasks();
@@ -609,10 +607,7 @@ function renderListView() {
   if (!area) return;
   // My Day view uses ShadowMyDay renderer
   if (state.currentView === 'myday' && window.ShadowMyDay) {
-    ShadowDB.Tasks.getAll().then(function(allTasks) {
-      area.innerHTML = '';
-      window.ShadowMyDay.renderList(area, allTasks, {});
-    });
+    window.ShadowMyDay.renderList(area, state.tasks || [], {});
     if (lh) lh.style.display = 'none';
     return;
   }
