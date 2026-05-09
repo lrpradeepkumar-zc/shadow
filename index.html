@@ -113,231 +113,239 @@
       </div>
     </main>
     <!-- Task Detail Modal Overlay -->
-    <div class="task-detail-modal-overlay" id="taskDetailModalOverlay" style="display:none;"></div>
-    <!-- Task Detail Panel -->
-    <div class="task-detail-panel" id="taskDetailPanel" style="display:none;">
-      <div class="detail-header">
-        <div class="detail-header-left">
-          <select class="status-btn" id="detailStatus"><option>Open</option><option>In Progress</option><option>Fixed</option><option>Completed</option><option>Closed</option></select>
-          <div class="detail-assignee">
-            <div class="avatar-sm" id="detailAssigneeAvatar">P</div>
-            <div>
-              <div class="label-sm">Assigned to</div>
-              <div id="detailAssignee">Pradeep</div>
-            </div>
-          </div>
-          <div class="detail-date">
-            <div class="label-sm">Start Date</div>
-            <div id="detailStartDate" class="clickable">Yet to set</div>
-          </div>
-          <div class="detail-date">
-            <div class="label-sm">Due Date</div>
-            <div id="detailDueDate" class="clickable">Yet to set</div>
-          </div>
-        </div>
-        <div class="detail-header-right">
-          <button class="icon-btn" title="Recurrence"><i class="fa-solid fa-repeat"></i></button>
-          <button class="icon-btn" id="detailAttachBtn" title="Attachment"><i class="fa-solid fa-paperclip"></i></button>
-          <button class="icon-btn" id="detailTagsBtn" title="Tags"><i class="fa-solid fa-tag"></i></button>
-          <button class="icon-btn" id="detailMoreBtn" title="More"><i class="fa-solid fa-ellipsis-vertical"></i></button>
-          <button class="icon-btn" id="detailCloseBtn" title="Close"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-      </div>
-      <div class="detail-body">
-        <h2 class="detail-task-title" id="detailTitle" contenteditable="true"></h2>
-        <div class="detail-meta">
-          <span>in</span>
-          <button class="meta-btn" id="detailGroup">Personal tasks</button>
-          <span>under</span>
-          <button class="meta-btn" id="detailCategory">General</button>
-          <span>&bull;</span>
-          <select class="priority-btn" id="detailPriority"><option value="None">None</option><option value="Low">Low</option><option value="Medium">Medium</option><option value="High">High</option></select>
-          <span>|</span>
-          <div id="detailTagsContainer" style="display:inline-flex;gap:4px;flex-wrap:wrap;margin-right:8px"></div><button class="reminder-btn" id="detailReminderBtn"><i class="fa-regular fa-calendar-check"></i> Set reminder</button>
-        </div>
-        <div id="detailTagsDisplay" style="margin:4px 0;display:flex;gap:4px;flex-wrap:wrap"></div>
-        <div id="detailRecurrenceDisplay" style="color:#4285f4;font-size:12px;margin:4px 0"></div>
-        <div id="detailReminderDisplay" style="color:#e67e22;font-size:12px;margin:4px 0"></div>
-        <div class="detail-section">
-          <div class="section-label"><i class="fa-solid fa-align-left"></i> Description</div>
-          <textarea class="detail-textarea" id="detailDesc" placeholder="Description"></textarea>
-        </div>
-        <div class="detail-section">
-          <div class="section-label"><i class="fa-regular fa-note-sticky"></i> Notes <span class="required">*</span></div>
-          <textarea class="detail-textarea notes-area" id="detailNotes" placeholder="Notes">NA</textarea>
-        </div>
-        
-        <div class="detail-section">
-          <div class="section-label"><i class="fa-solid fa-paperclip"></i> Attachments</div>
-          <div id="detailAttachments"></div>
-        </div>
-<div class="detail-section">
-          <div class="section-label"><i class="fa-solid fa-list-check"></i> Subtasks <i class="fa-regular fa-circle-check"></i></div>
-          <div id="subtasksList"></div>
-          <div class="add-subtask">
-            <i class="fa-solid fa-plus"></i>
-            <input type="text" placeholder="Subtask Title, @mention assignee" id="newSubtaskInput">
-          </div>
-        </div>
-        <div class="detail-section">
-          <div class="section-label"><i class="fa-solid fa-timeline"></i> Timeline <i class="fa-regular fa-circle-check"></i></div>
-          <div id="timelineList" class="timeline-list"></div>
-        </div>
-        <div class="invitee-bar" id="invitees-bar">
-                  <button class="icon-btn invitee-like-btn" title="Like"><i class="fa-regular fa-heart"></i></button>
-                  <span class="invitee-dot">ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢</span>
-                  <button class="icon-btn invitee-refuse-btn" id="inviteeRefuseBtn" title="Click to refuse other invitees"><i class="fa-solid fa-user-slash"></i></button>
-                  <span class="invitee-dot">ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢</span>
-                  <button class="icon-btn invitee-add-btn" id="inviteeAddBtn" title="Add / View invitees"><i class="fa-solid fa-plus"></i></button>
-                </div>
-                <div class="comment-section">
-                  <div class="avatar-sm">P</div>
-          <input type="text" placeholder="Write a Comment" id="commentInput" class="comment-input">
-          <button class="icon-btn"><i class="fa-regular fa-face-smile"></i></button>
-        </div>
+    <div class="task-detail-modal-overl<!-- Task Detail Side Panel -->
+<div class="task-detail-modal-overlay" id="taskDetailModalOverlay" style="display:none;">
+  <div class="task-detail-panel" id="taskDetailPanel">
+
+    <!-- Panel Header -->
+    <div class="tdp-header">
+      <div class="tdp-header-actions">
+        <button class="icon-btn" title="Repeat"><i class="fa-solid fa-repeat"></i></button>
+        <button class="icon-btn" id="detailAttachBtn" title="Attachments"><i class="fa-solid fa-paperclip"></i></button>
+        <button class="icon-btn" id="detailTagsBtn" title="Tags"><i class="fa-solid fa-tag"></i></button>
+        <button class="icon-btn" id="detailMoreBtn" title="More options"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+        <button class="icon-btn" id="detailCloseBtn" title="Close"><i class="fa-solid fa-xmark"></i></button>
       </div>
     </div>
-    <aside class="right-sidebar">
-      <button class="icon-btn" title="Ask Zia"><i class="fa-solid fa-robot"></i></button>
-      <button class="icon-btn" id="settingsBtn" title="Settings" onclick="document.getElementById('settingsOverlay').style.display='flex'"><i class="fa-solid fa-gear"></i></button>
-      <button class="icon-btn" title="Calendar"><i class="fa-regular fa-calendar"></i></button>
-      <button class="icon-btn" title="Workflow" id="workflowBtn"><i class="fa-solid fa-diagram-project"></i></button>
-      <button class="icon-btn" title="Playground" id="playgroundBtn"><i class="fa-solid fa-flask"></i></button>
-      <div class="sidebar-spacer"></div>
-      <button class="icon-btn theme-toggle" id="themeToggle" id="themeToggleBtn" title="Toggle theme"><i class="fa-solid fa-moon"></i></button>
-      <button class="icon-btn" title="Feedback"><i class="fa-regular fa-comment-dots"></i></button>
-    </aside>
-  </div>
-  <!-- New Task Modal -->
-  <div class="modal-overlay" id="taskModal" style="display:none;">
-    <div class="modal-content task-modal">
-      <div class="modal-header">
-        <div class="modal-header-left">
-          <button class="status-btn" id="modalStatusBtn">Open</button>
-          <div class="detail-assignee">
-            <div class="avatar-sm">P</div>
-            <div>
-              <div class="label-sm">Assigned to</div>
-              <select id="modalAssignee" class="inline-select"><option>Pradeep</option></select>
-            </div>
-          </div>
-          <div class="detail-date">
-            <div class="label-sm">Start Date</div>
-            <input type="date" id="modalStartDate" class="date-input">
-          </div>
-          <div class="detail-date">
-            <div class="label-sm">Due Date</div>
-            <input type="date" id="modalDueDate" class="date-input">
-          </div>
-        </div>
-        <div class="modal-header-right">
-          <button class="icon-btn" title="Recurrence"><i class="fa-solid fa-repeat"></i></button>
-          <button class="icon-btn" title="Attachment"><i class="fa-solid fa-paperclip"></i></button>
-          <button class="icon-btn" title="Tags" id="modalTagBtn"><i class="fa-solid fa-tag"></i></button>
-          <span id="modalTagsContainer" style="display:inline-flex;gap:4px;flex-wrap:wrap"></span><button class="icon-btn close-modal" id="closeModalBtn"><i class="fa-solid fa-xmark"></i></button>
+
+    <!-- Panel Body -->
+    <div class="tdp-body">
+
+      <h2 class="tdp-title" id="detailTitle" contenteditable="true" spellcheck="false">Task Title</h2>
+
+      <div class="tdp-meta-row">
+        <span class="tdp-meta-label">Status</span>
+        <select class="tdp-select tdp-status-select" id="detailStatus">
+          <option value="Open">Open</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Fixed">Fixed</option>
+          <option value="Completed">Completed</option>
+          <option value="Closed">Closed</option>
+        </select>
+      </div>
+
+      <div class="tdp-meta-row">
+        <span class="tdp-meta-label">Assignee</span>
+        <div class="tdp-assignee">
+          <div class="avatar-sm" id="detailAssigneeAvatar"><div></div></div>
+          <span id="detailAssignee" class="tdp-assignee-name">Unassigned</span>
         </div>
       </div>
-      <div class="modal-body">
-        <input type="text" class="task-title-input" id="modalTaskTitle" placeholder="Task Title, @mention assignee">
-        <div class="detail-meta">
-          <span>in</span>
-          <select id="modalGroup" class="meta-select"><option value="personal">Personal tasks</option></select>
-          <span>under</span>
-          <select id="modalCategory" class="meta-select"><option value="General">General</option></select>
-          <span>&bull;</span>
-          <select id="modalPriority" class="priority-select">
-            <option value="None">None</option><option value="Low">Low</option>
-            <option value="Medium" selected>Medium</option><option value="High">High</option>
+
+      <div class="tdp-meta-row">
+        <span class="tdp-meta-label">Start Date</span>
+        <div class="tdp-date-value clickable" id="detailStartDate">Not set</div>
+      </div>
+      <div class="tdp-meta-row">
+        <span class="tdp-meta-label">Due Date</span>
+        <div class="tdp-date-value clickable" id="detailDueDate">Not set</div>
+      </div>
+
+      <div class="tdp-meta-row">
+        <span class="tdp-meta-label">Group</span>
+        <button class="tdp-meta-chip" id="detailGroup">—</button>
+      </div>
+      <div class="tdp-meta-row">
+        <span class="tdp-meta-label">Category</span>
+        <button class="tdp-meta-chip" id="detailCategory">General</button>
+      </div>
+      <div class="tdp-meta-row">
+        <span class="tdp-meta-label">Priority</span>
+        <button class="tdp-meta-chip tdp-priority-chip" id="detailPriority">None</button>
+      </div>
+      <div class="tdp-meta-row">
+        <span class="tdp-meta-label">Tags</span>
+        <div id="detailTagsContainer"><span id="detailTagsDisplay"></span></div>
+      </div>
+      <div class="tdp-meta-row">
+        <span class="tdp-meta-label">Reminder</span>
+        <button class="tdp-meta-chip" id="detailReminderBtn"><i class="fa-regular fa-calendar-check"></i> Set reminder</button>
+      </div>
+      <div class="tdp-meta-row" id="detailRecurrenceDisplay" style="display:none;">
+        <span class="tdp-meta-label">Repeat</span>
+        <span class="tdp-meta-value"></span>
+      </div>
+      <div class="tdp-meta-row" id="detailReminderDisplay" style="display:none;">
+        <span class="tdp-meta-label">Remind</span>
+        <span class="tdp-meta-value"></span>
+      </div>
+
+      <hr class="tdp-divider"/>
+
+      <div class="tdp-section">
+        <div class="tdp-section-label"><i class="fa-solid fa-align-left"></i> Description</div>
+        <textarea id="detailDesc" class="tdp-textarea" placeholder="Add a description..." rows="3"></textarea>
+      </div>
+
+      <div class="tdp-section">
+        <div class="tdp-section-label"><i class="fa-regular fa-note-sticky"></i> Notes</div>
+        <textarea id="detailNotes" class="tdp-textarea" placeholder="Add notes..." rows="3"></textarea>
+      </div>
+
+      <div class="tdp-section">
+        <div class="tdp-section-label"><i class="fa-solid fa-paperclip"></i> Attachments</div>
+        <div id="detailAttachments" class="tdp-attachments-list"></div>
+      </div>
+
+      <div class="tdp-section">
+        <div class="tdp-section-label"><i class="fa-solid fa-list-check"></i> Subtasks</div>
+        <ul id="subtasksList" class="tdp-subtasks-list"></ul>
+        <div class="tdp-add-subtask">
+          <i class="fa-solid fa-plus"></i>
+          <input type="text" id="newSubtaskInput" class="tdp-subtask-input" placeholder="Add a subtask..."/>
+        </div>
+      </div>
+
+      <div class="tdp-section">
+        <div class="tdp-section-label"><i class="fa-solid fa-clock-rotate-left"></i> Timeline</div>
+        <div id="timelineList" class="tdp-timeline-list"></div>
+      </div>
+
+      <div class="tdp-section tdp-invitee-section" id="invitees-bar">
+        <button class="tdp-meta-chip" id="inviteeRefuseBtn" style="display:none;">Decline</button>
+        <button class="tdp-meta-chip tdp-invite-btn" id="inviteeAddBtn"><i class="fa-solid fa-user-plus"></i> Invite</button>
+      </div>
+
+    </div>
+
+    <!-- Comment Footer -->
+    <div class="tdp-comment-bar">
+      <div class="avatar-sm"><div></div></div>
+      <input type="text" id="commentInput" class="tdp-comment-input" placeholder="Write a comment..."/>
+      <button class="icon-btn tdp-emoji-btn" title="Emoji">&#128512;</button>
+    </div>
+
+  </div>
+</div>
+<!-- Create / Edit Task Modal -->
+<div class="modal-overlay" id="taskModal" style="display:none;">
+  <div class="modal-content task-modal">
+
+    <div class="tmod-header">
+      <h3 class="tmod-header-title">New Task</h3>
+      <button class="icon-btn close-modal" id="closeModalBtn" title="Close"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    <div class="tmod-body">
+
+      <div class="tmod-title-wrap">
+        <input type="text" class="tmod-task-title task-title-input" id="modalTaskTitle" placeholder="Task title, @mention assignee"/>
+      </div>
+
+      <div class="tmod-meta-grid">
+
+        <div class="tmod-meta-item">
+          <span class="tmod-meta-label">Status</span>
+          <button class="tmod-status-btn" id="modalStatusBtn">Open</button>
+        </div>
+
+        <div class="tmod-meta-item">
+          <span class="tmod-meta-label">Assignee</span>
+          <div class="tmod-assignee-row">
+            <div class="avatar-sm"><div></div></div>
+            <select class="tmod-select inline-select" id="modalAssignee">
+              <option value="">Assigned to</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="tmod-meta-item">
+          <span class="tmod-meta-label">Start Date</span>
+          <input type="date" id="modalStartDate" class="tmod-date-input date-input"/>
+        </div>
+
+        <div class="tmod-meta-item">
+          <span class="tmod-meta-label">Due Date</span>
+          <input type="date" id="modalDueDate" class="tmod-date-input date-input"/>
+        </div>
+
+        <div class="tmod-meta-item">
+          <span class="tmod-meta-label">Group</span>
+          <select class="tmod-select meta-select" id="modalGroup">
+            <option value="">No group</option>
           </select>
-          <span>|</span>
-          <button class="reminder-btn" id="modalReminderBtn"><i class="fa-regular fa-calendar-check"></i> Set reminder</button>
         </div>
-        <div class="detail-section">
-          <div class="section-label"><i class="fa-solid fa-align-left"></i> Description</div>
-          <textarea class="detail-textarea" id="modalDesc" placeholder="Description"></textarea>
-        </div>
-        <div class="detail-section">
-          <div class="section-label"><i class="fa-regular fa-note-sticky"></i> Notes <span class="required">*</span></div>
-          <textarea class="detail-textarea notes-area" id="modalNotes">NA</textarea>
-        </div>
-        <div class="detail-section">
-          <div class="section-label"><i class="fa-solid fa-list-check"></i> Subtasks <i class="fa-regular fa-circle-check"></i></div>
-          <div id="modalSubtasksList"></div>
-          <div class="add-subtask"><i class="fa-solid fa-plus"></i><input type="text" placeholder="Subtask Title" id="modalSubtaskInput"><button type="button" id="modalAddSubtaskBtn" class="icon-btn"><i class="fa-solid fa-plus"></i></button></div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="save-btn" id="modalSaveBtn">Save</button>
-        <button class="cancel-btn" id="modalCancelBtn">Cancel</button>
-      </div>
-    </div>
-  </div>
-  <div class="modal-overlay" id="groupModal" style="display:none;">
-    <div class="modal-content small-modal">
-      <h3>Create Group</h3>
-      <input type="text" id="groupNameInput" placeholder="Group name" class="modal-input">
-      <div class="modal-footer"><button class="save-btn" id="saveGroupBtn">Create</button><button class="cancel-btn" id="cancelGroupBtn">Cancel</button></div>
-    </div>
-  </div>
-  <div class="modal-overlay" id="tagModal" style="display:none;">
-    <div class="modal-content small-modal">
-      <h3>Create Tag</h3>
-      <input type="text" id="tagNameInput" placeholder="Tag name" class="modal-input">
-      <div class="color-picker">
-        <span class="color-dot" data-color="#e67e22" style="background:#e67e22"></span>
-        <span class="color-dot" data-color="#e74c3c" style="background:#e74c3c"></span>
-        <span class="color-dot" data-color="#9b59b6" style="background:#9b59b6"></span>
-        <span class="color-dot" data-color="#2ecc71" style="background:#2ecc71"></span>
-        <span class="color-dot" data-color="#3498db" style="background:#3498db"></span>
-        <span class="color-dot selected" data-color="#e67e22" style="background:#e67e22"></span>
-      </div>
-      <div class="modal-footer"><button class="save-btn" id="saveTagBtn">Create</button><button class="cancel-btn" id="cancelTagBtn">Cancel</button></div>
-    </div>
-  </div>
-  <div class="dropdown-menu" id="sortDropdown" style="display:none;">
-    <div class="dropdown-title">Sort by</div>
-    <div class="dropdown-item" data-sort="dueDate">Due Date</div>
-    <div class="dropdown-item" data-sort="createdTime">Created Time</div>
-    <div class="dropdown-item" data-sort="priority">Priority</div>
-    <div class="dropdown-item" data-sort="title">Title</div>
-    <div class="dropdown-divider"></div>
-    <div class="dropdown-item" data-direction="desc"><i class="fa-solid fa-arrow-down"></i> Newest on top</div>
-    <div class="dropdown-item" data-direction="asc"><i class="fa-solid fa-arrow-up"></i> Oldest on top</div>
-  </div>
-  <div class="dropdown-menu" id="statusDropdown" style="display:none;">
-    <div class="dropdown-item status-option" data-status="Open">Open</div>
-    <div class="dropdown-item status-option" data-status="In Progress">In Progress</div>
-    <div class="dropdown-item status-option" data-status="Fixed">Fixed</div>
-    <div class="dropdown-item status-option" data-status="Closed">Closed</div>
-  </div>
-  <div class="dropdown-menu" id="priorityDropdown" style="display:none;">
-    <div class="dropdown-item priority-option" data-priority="None">None</div>
-    <div class="dropdown-item priority-option" data-priority="Low"><i class="fa-solid fa-exclamation" style="color:#3498db"></i> Low</div>
-    <div class="dropdown-item priority-option" data-priority="Medium"><i class="fa-solid fa-exclamation" style="color:#e67e22"></i> Medium</div>
-    <div class="dropdown-item priority-option" data-priority="High"><i class="fa-solid fa-exclamation" style="color:#e74c3c"></i> High</div>
-  </div>
-  <script src="backend.js"></script>
-  <script src="approval-backend.js"></script>
-  <script src="approval-ui.js"></script>
-  <script src="agenda-view.js"></script>
-  <script src="myday-view.js"></script>
-  <script src="createdbyme-view.js"></script>
-  <script src="app.js"></script>
-  <script src="group-ui.js"></script>
-    <script src="auth.js"></script>
-    <script src="auth-supabase.js"></script>
-    <script src="onboarding.js"></script>
-      <script src="task-enhancements.js"></script>
-  <script src="workflow-engine.js"></script>
-  <script src="workflow-builder.js"></script>
- <script src="rbac.js"></script>
-<script src="shadow-db-patch.js"></script>
-  <script src="theme.js"></script>
-  <script src="admin.js"></script>
 
-  </script>
+        <div class="tmod-meta-item">
+          <span class="tmod-meta-label">Category</span>
+          <select class="tmod-select meta-select" id="modalCategory">
+            <option value="General">General</option>
+          </select>
+        </div>
 
-  <div class="settings-overlay" id="settingsOverlay">
+        <div class="tmod-meta-item">
+          <span class="tmod-meta-label">Priority</span>
+          <select class="tmod-select tmod-priority-select priority-select" id="modalPriority">
+            <option value="None">None</option>
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+            <option value="Critical">Critical</option>
+          </select>
+        </div>
+
+        <div class="tmod-meta-item">
+          <span class="tmod-meta-label">Reminder</span>
+          <button class="tmod-reminder-btn reminder-btn" id="modalReminderBtn"><i class="fa-regular fa-calendar-check"></i> Set reminder</button>
+        </div>
+
+      </div>
+
+      <div class="tmod-tags-row">
+        <button class="icon-btn" id="modalTagBtn" title="Add Tags"><i class="fa-solid fa-tag"></i> Tags</button>
+        <span id="modalTagsContainer" style="margin-left:8px;"></span>
+      </div>
+
+      <div class="tmod-section">
+        <div class="tmod-section-label"><i class="fa-solid fa-align-left"></i> Description</div>
+        <textarea id="modalDesc" class="tmod-textarea detail-textarea" placeholder="Add a description..." rows="3"></textarea>
+      </div>
+
+      <div class="tmod-section">
+        <div class="tmod-section-label"><i class="fa-regular fa-note-sticky"></i> Notes</div>
+        <textarea id="modalNotes" class="tmod-textarea detail-textarea notes-area" placeholder="Add notes..." rows="2"></textarea>
+      </div>
+
+      <div class="tmod-section">
+        <div class="tmod-section-label"><i class="fa-solid fa-list-check"></i> Subtasks</div>
+        <ul id="modalSubtasksList" class="tmod-subtasks-list"></ul>
+        <div class="tmod-add-subtask add-subtask">
+          <i class="fa-solid fa-plus"></i>
+          <input type="text" id="modalSubtaskInput" class="tmod-subtask-input" placeholder="Add a subtask..."/>
+          <button class="icon-btn" id="modalAddSubtaskBtn" title="Add subtask"><i class="fa-solid fa-plus"></i></button>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="tmod-footer">
+      <button class="btn-primary tmod-save-btn" id="modalSaveBtn">Save Task</button>
+      <button class="btn-secondary tmod-cancel-btn" id="modalCancelBtn">Cancel</button>
+    </div>
+
+  </div>
+</div>
+id="settingsOverlay">
         <div class="settings-dialog">
             <!-- Close button -->
             <button class="settings-close-btn" id="closeSettings" title="Close">&times;</button>
