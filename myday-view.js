@@ -282,12 +282,13 @@
     if (!id) return;
 
     if (action === 'toggle') {
-      // Toggle task completion
+      // Toggle task completion (fetch first to preserve all fields)
       if (window.ShadowDB && window.ShadowDB.Tasks) {
         ShadowDB.Tasks.getById(id).then(function (task) {
           if (!task) return;
           var newStatus = isDone(task) ? 'Open' : 'Closed';
-          ShadowDB.Tasks.update({ id: id, status: newStatus }).then(function () {
+          var merged = Object.assign({}, task, { status: newStatus });
+          ShadowDB.Tasks.update(merged).then(function () {
             ShadowDB.Tasks.getAll().then(function (allTasks) {
               renderList(container, allTasks, ctx);
             });
@@ -298,11 +299,15 @@
     }
 
     if (action === 'add-to-myday') {
-      // Add task to My Day
+      // Add task to My Day (fetch first to preserve all fields)
       if (window.ShadowDB && window.ShadowDB.Tasks) {
-        ShadowDB.Tasks.update({ id: id, isMyDay: true }).then(function () {
-          ShadowDB.Tasks.getAll().then(function (allTasks) {
-            renderList(container, allTasks, ctx);
+        ShadowDB.Tasks.getById(id).then(function (task) {
+          if (!task) return;
+          var merged = Object.assign({}, task, { isMyDay: true });
+          ShadowDB.Tasks.update(merged).then(function () {
+            ShadowDB.Tasks.getAll().then(function (allTasks) {
+              renderList(container, allTasks, ctx);
+            });
           });
         });
       }
@@ -310,11 +315,15 @@
     }
 
     if (action === 'remove-from-myday') {
-      // Remove task from My Day
+      // Remove task from My Day (fetch first to preserve all fields)
       if (window.ShadowDB && window.ShadowDB.Tasks) {
-        ShadowDB.Tasks.update({ id: id, isMyDay: false }).then(function () {
-          ShadowDB.Tasks.getAll().then(function (allTasks) {
-            renderList(container, allTasks, ctx);
+        ShadowDB.Tasks.getById(id).then(function (task) {
+          if (!task) return;
+          var merged = Object.assign({}, task, { isMyDay: false });
+          ShadowDB.Tasks.update(merged).then(function () {
+            ShadowDB.Tasks.getAll().then(function (allTasks) {
+              renderList(container, allTasks, ctx);
+            });
           });
         });
       }
