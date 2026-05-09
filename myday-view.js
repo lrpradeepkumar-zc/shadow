@@ -258,8 +258,12 @@
       // Walk up to find action element
       while (target && target !== container) {
         var action = target.getAttribute && target.getAttribute('data-action');
-        if (action) {
-          ev.stopPropagation();
+        if (action && action !== 'open') {
+          ev.preventDefault();
+          handleAction(action, target, container, ctx);
+          return;
+        }
+        if (action === 'open') {
           handleAction(action, target, container, ctx);
           return;
         }
