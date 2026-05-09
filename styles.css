@@ -1299,8 +1299,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 /* Panel */
 .task-detail-panel {
-  background: #1e2029 !important;
-  color: #e0e0e0 !important;
+  background: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
   width: 400px !important;
   max-width: 100vw !important;
   height: 100% !important;
@@ -1317,9 +1317,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   align-items: center !important;
   justify-content: flex-end !important;
   padding: 12px 16px !important;
-  border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+  border: 1px solid var(--border-color) !important;
   flex-shrink: 0 !important;
-  background: #1e2029 !important;
+  background: var(--bg-secondary) !important;
 }
 
 .tdp-header-actions {
@@ -1329,7 +1329,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 }
 
 .tdp-header .icon-btn {
-  color: #9da3ae !important;
+  color: var(--text-secondary) !important;
   background: transparent !important;
   border: none !important;
   width: 32px !important;
@@ -1344,8 +1344,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 }
 
 .tdp-header .icon-btn:hover {
-  background: rgba(255,255,255,0.1) !important;
-  color: #e0e0e0 !important;
+  background: var(--bg-hover) !important;
+  color: var(--text-primary) !important;
 }
 
 /* Scrollable body */
@@ -1362,7 +1362,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   width: 4px !important;
 }
 .tdp-body::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.15) !important;
+  background: var(--bg-hover) !important;
   border-radius: 2px !important;
 }
 
@@ -1370,7 +1370,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .tdp-title {
   font-size: 20px !important;
   font-weight: 600 !important;
-  color: #f0f0f0 !important;
+  color: var(--text-primary) !important;
   background: transparent !important;
   border: none !important;
   border-bottom: 2px solid transparent !important;
@@ -1386,7 +1386,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 }
 
 .tdp-title:focus {
-  border-bottom-color: #3b82f6 !important;
+  border-bottom-color: var(--accent-blue) !important;
 }
 
 /* Meta rows */
@@ -1395,13 +1395,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   align-items: center !important;
   min-height: 36px !important;
   padding: 4px 0 !important;
-  border-bottom: 1px solid rgba(255,255,255,0.04) !important;
+  border-bottom: 1px solid var(--bg-tertiary) !important;
   gap: 12px !important;
 }
 
 .tdp-meta-label {
   font-size: 12px !important;
-  color: #6b7280 !important;
+  color: var(--text-muted) !important;
   min-width: 90px !important;
   font-weight: 500 !important;
   text-transform: uppercase !important;
@@ -1411,13 +1411,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 .tdp-meta-value {
   font-size: 14px !important;
-  color: #d1d5db !important;
+  color: var(--text-secondary) !important;
 }
 
 /* Status select */
 .tdp-status-select {
   background: rgba(59,130,246,0.15) !important;
-  color: #60a5fa !important;
+  color: var(--accent-blue) !important;
   border: 1px solid rgba(59,130,246,0.3) !important;
   border-radius: 6px !important;
   padding: 4px 10px !important;
@@ -1428,14 +1428,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 }
 
 .tdp-status-select:focus {
-  border-color: #3b82f6 !important;
+  border-color: var(--accent-blue) !important;
 }
 
 /* General select */
 .tdp-select {
-  background: #2a2d38 !important;
-  color: #d1d5db !important;
-  border: 1px solid rgba(255,255,255,0.12) !important;
+  background: var(--bg-tertiary) !important;
+  color: var(--text-secondary) !important;
+  border: 1px solid var(--border-color) !important;
   border-radius: 6px !important;
   padding: 4px 8px !important;
   font-size: 13px !important;
@@ -1451,30 +1451,30 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 .tdp-assignee-name {
   font-size: 13px !important;
-  color: #d1d5db !important;
+  color: var(--text-secondary) !important;
 }
 
 /* Date value */
 .tdp-date-value {
   font-size: 13px !important;
-  color: #d1d5db !important;
+  color: var(--text-secondary) !important;
   padding: 3px 8px !important;
   border-radius: 5px !important;
   cursor: pointer !important;
-  background: rgba(255,255,255,0.04) !important;
+  background: var(--bg-tertiary) !important;
   border: 1px solid transparent !important;
 }
 
 .tdp-date-value:hover {
-  background: rgba(255,255,255,0.08) !important;
-  border-color: rgba(255,255,255,0.12) !important;
+  background: var(--bg-tertiary) !important;
+  border-color: var(--border-color) !important;
 }
 
 /* Meta chip buttons */
 .tdp-meta-chip {
-  background: rgba(255,255,255,0.05) !important;
-  color: #d1d5db !important;
-  border: 1px solid rgba(255,255,255,0.1) !important;
+  background: var(--bg-tertiary) !important;
+  color: var(--text-secondary) !important;
+  border: 1px solid var(--bg-hover) !important;
   border-radius: 6px !important;
   padding: 3px 10px !important;
   font-size: 13px !important;
@@ -1484,19 +1484,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 }
 
 .tdp-meta-chip:hover {
-  background: rgba(255,255,255,0.1) !important;
+  background: var(--bg-hover) !important;
 }
 
 .tdp-priority-chip[data-priority="High"],
 .tdp-priority-chip.high {
-  color: #f87171 !important;
+  color: var(--accent-red) !important;
   background: rgba(248,113,113,0.12) !important;
   border-color: rgba(248,113,113,0.3) !important;
 }
 
 .tdp-priority-chip[data-priority="Medium"],
 .tdp-priority-chip.medium {
-  color: #fbbf24 !important;
+  color: var(--accent-yellow) !important;
   background: rgba(251,191,36,0.12) !important;
   border-color: rgba(251,191,36,0.3) !important;
 }
@@ -1504,7 +1504,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 /* Divider */
 .tdp-divider {
   border: none !important;
-  border-top: 1px solid rgba(255,255,255,0.08) !important;
+  border: 1px solid var(--border-color) !important;
   margin: 16px 0 !important;
 }
 
@@ -1515,7 +1515,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 .tdp-section-label {
   font-size: 12px !important;
-  color: #6b7280 !important;
+  color: var(--text-muted) !important;
   font-weight: 600 !important;
   text-transform: uppercase !important;
   letter-spacing: 0.5px !important;
@@ -1527,16 +1527,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 .tdp-section-label i {
   font-size: 13px !important;
-  color: #6b7280 !important;
+  color: var(--text-muted) !important;
 }
 
 /* Textareas */
 .tdp-textarea {
   width: 100% !important;
-  background: rgba(255,255,255,0.04) !important;
-  border: 1px solid rgba(255,255,255,0.1) !important;
+  background: var(--bg-tertiary) !important;
+  border: 1px solid var(--bg-hover) !important;
   border-radius: 8px !important;
-  color: #d1d5db !important;
+  color: var(--text-secondary) !important;
   padding: 10px 12px !important;
   font-size: 14px !important;
   resize: vertical !important;
@@ -1548,12 +1548,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 }
 
 .tdp-textarea:focus {
-  border-color: #3b82f6 !important;
-  background: rgba(255,255,255,0.06) !important;
+  border-color: var(--accent-blue) !important;
+  background: var(--bg-tertiary) !important;
 }
 
 .tdp-textarea::placeholder {
-  color: #4b5563 !important;
+  color: var(--text-muted) !important;
 }
 
 /* Subtasks */
@@ -1568,15 +1568,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   align-items: center !important;
   gap: 8px !important;
   padding: 6px 0 !important;
-  color: #6b7280 !important;
+  color: var(--text-muted) !important;
 }
 
 .tdp-subtask-input {
   flex: 1 !important;
   background: transparent !important;
   border: none !important;
-  border-bottom: 1px solid rgba(255,255,255,0.1) !important;
-  color: #d1d5db !important;
+  border-bottom: 1px solid var(--bg-hover) !important;
+  color: var(--text-secondary) !important;
   font-size: 14px !important;
   outline: none !important;
   padding: 4px 0 !important;
@@ -1584,22 +1584,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 }
 
 .tdp-subtask-input::placeholder {
-  color: #4b5563 !important;
+  color: var(--text-muted) !important;
 }
 
 .tdp-subtask-input:focus {
-  border-bottom-color: #3b82f6 !important;
+  border-bottom-color: var(--accent-blue) !important;
 }
 
 /* Timeline */
 .tdp-timeline-list {
-  color: #9da3ae !important;
+  color: var(--text-secondary) !important;
   font-size: 13px !important;
 }
 
 /* Attachments */
 .tdp-attachments-list {
-  color: #9da3ae !important;
+  color: var(--text-secondary) !important;
   font-size: 13px !important;
 }
 
@@ -1614,17 +1614,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   align-items: center !important;
   gap: 10px !important;
   padding: 12px 16px !important;
-  border-top: 1px solid rgba(255,255,255,0.08) !important;
-  background: #1e2029 !important;
+  border: 1px solid var(--border-color) !important;
+  background: var(--bg-secondary) !important;
   flex-shrink: 0 !important;
 }
 
 .tdp-comment-input {
   flex: 1 !important;
-  background: rgba(255,255,255,0.06) !important;
-  border: 1px solid rgba(255,255,255,0.1) !important;
+  background: var(--bg-tertiary) !important;
+  border: 1px solid var(--bg-hover) !important;
   border-radius: 20px !important;
-  color: #d1d5db !important;
+  color: var(--text-secondary) !important;
   padding: 8px 14px !important;
   font-size: 14px !important;
   outline: none !important;
@@ -1632,11 +1632,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 }
 
 .tdp-comment-input::placeholder {
-  color: #4b5563 !important;
+  color: var(--text-muted) !important;
 }
 
 .tdp-comment-input:focus {
-  border-color: #3b82f6 !important;
+  border-color: var(--accent-blue) !important;
 }
 
 .tdp-emoji-btn {
@@ -1670,8 +1670,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 /* Modal content box */
 #taskModal .modal-content.task-modal,
 #taskModal .task-modal {
-  background: #1e2029 !important;
-  color: #e0e0e0 !important;
+  background: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
   border-radius: 12px !important;
   box-shadow: 0 24px 64px rgba(0,0,0,0.6) !important;
   width: 640px !important;
@@ -1680,7 +1680,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   display: flex !important;
   flex-direction: column !important;
   overflow: hidden !important;
-  border: 1px solid rgba(255,255,255,0.08) !important;
+  border: 1px solid var(--border-color) !important;
 }
 
 /* Modal header bar */
@@ -1689,19 +1689,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   align-items: center !important;
   justify-content: space-between !important;
   padding: 16px 20px !important;
-  border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+  border: 1px solid var(--border-color) !important;
   flex-shrink: 0 !important;
 }
 
 .tmod-header-title {
   font-size: 16px !important;
   font-weight: 600 !important;
-  color: #f0f0f0 !important;
+  color: var(--text-primary) !important;
   margin: 0 !important;
 }
 
 .tmod-header .icon-btn {
-  color: #6b7280 !important;
+  color: var(--text-muted) !important;
   background: transparent !important;
   border: none !important;
   width: 32px !important;
@@ -1716,8 +1716,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 }
 
 .tmod-header .icon-btn:hover {
-  background: rgba(255,255,255,0.08) !important;
-  color: #e0e0e0 !important;
+  background: var(--bg-tertiary) !important;
+  color: var(--text-primary) !important;
 }
 
 /* Scrollable body */
@@ -1734,13 +1734,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   width: 4px !important;
 }
 .tmod-body::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.15) !important;
+  background: var(--bg-hover) !important;
   border-radius: 2px !important;
 }
 
 /* Title wrap */
 .tmod-title-wrap {
-  border-bottom: 2px solid rgba(255,255,255,0.1) !important;
+  border-bottom: 2px solid var(--bg-hover) !important;
   padding-bottom: 4px !important;
 }
 
@@ -1748,7 +1748,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   width: 100% !important;
   background: transparent !important;
   border: none !important;
-  color: #f0f0f0 !important;
+  color: var(--text-primary) !important;
   font-size: 18px !important;
   font-weight: 500 !important;
   outline: none !important;
@@ -1758,7 +1758,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 }
 
 .tmod-task-title::placeholder {
-  color: #4b5563 !important;
+  color: var(--text-muted) !important;
 }
 
 /* Meta grid */
@@ -1776,7 +1776,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 .tmod-meta-label {
   font-size: 11px !important;
-  color: #6b7280 !important;
+  color: var(--text-muted) !important;
   font-weight: 600 !important;
   text-transform: uppercase !important;
   letter-spacing: 0.5px !important;
@@ -1785,7 +1785,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 /* Status button */
 .tmod-status-btn {
   background: rgba(59,130,246,0.12) !important;
-  color: #60a5fa !important;
+  color: var(--accent-blue) !important;
   border: 1px solid rgba(59,130,246,0.25) !important;
   border-radius: 6px !important;
   padding: 6px 12px !important;
@@ -1810,9 +1810,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 /* Select */
 .tmod-select {
-  background: #2a2d38 !important;
-  color: #d1d5db !important;
-  border: 1px solid rgba(255,255,255,0.12) !important;
+  background: var(--bg-tertiary) !important;
+  color: var(--text-secondary) !important;
+  border: 1px solid var(--border-color) !important;
   border-radius: 6px !important;
   padding: 6px 10px !important;
   font-size: 13px !important;
@@ -1823,14 +1823,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 }
 
 .tmod-select:focus {
-  border-color: #3b82f6 !important;
+  border-color: var(--accent-blue) !important;
 }
 
 /* Date input */
 .tmod-date-input {
-  background: #2a2d38 !important;
-  color: #d1d5db !important;
-  border: 1px solid rgba(255,255,255,0.12) !important;
+  background: var(--bg-tertiary) !important;
+  color: var(--text-secondary) !important;
+  border: 1px solid var(--border-color) !important;
   border-radius: 6px !important;
   padding: 6px 10px !important;
   font-size: 13px !important;
@@ -1841,19 +1841,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 }
 
 .tmod-date-input:focus {
-  border-color: #3b82f6 !important;
+  border-color: var(--accent-blue) !important;
 }
 
 /* Priority select */
-.tmod-priority-select option[value="High"] { color: #f87171 !important; }
-.tmod-priority-select option[value="Medium"] { color: #fbbf24 !important; }
-.tmod-priority-select option[value="Critical"] { color: #ef4444 !important; }
+.tmod-priority-select option[value="High"] { color: var(--accent-red) !important; }
+.tmod-priority-select option[value="Medium"] { color: var(--accent-yellow) !important; }
+.tmod-priority-select option[value="Critical"] { color: var(--accent-red) !important; }
 
 /* Reminder button */
 .tmod-reminder-btn {
-  background: rgba(255,255,255,0.05) !important;
-  color: #9da3ae !important;
-  border: 1px solid rgba(255,255,255,0.1) !important;
+  background: var(--bg-tertiary) !important;
+  color: var(--text-secondary) !important;
+  border: 1px solid var(--bg-hover) !important;
   border-radius: 6px !important;
   padding: 6px 10px !important;
   font-size: 13px !important;
@@ -1865,7 +1865,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 }
 
 .tmod-reminder-btn:hover {
-  background: rgba(255,255,255,0.09) !important;
+  background: var(--border-color) !important;
 }
 
 /* Tags row */
@@ -1874,13 +1874,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   align-items: center !important;
   gap: 8px !important;
   padding: 4px 0 !important;
-  border-top: 1px solid rgba(255,255,255,0.06) !important;
+  border-top: 1px solid var(--bg-tertiary) !important;
 }
 
 .tmod-tags-row .icon-btn {
-  background: rgba(255,255,255,0.05) !important;
-  color: #9da3ae !important;
-  border: 1px solid rgba(255,255,255,0.1) !important;
+  background: var(--bg-tertiary) !important;
+  color: var(--text-secondary) !important;
+  border: 1px solid var(--bg-hover) !important;
   border-radius: 6px !important;
   padding: 5px 10px !important;
   font-size: 13px !important;
@@ -1899,7 +1899,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 .tmod-section-label {
   font-size: 12px !important;
-  color: #6b7280 !important;
+  color: var(--text-muted) !important;
   font-weight: 600 !important;
   text-transform: uppercase !important;
   letter-spacing: 0.5px !important;
@@ -1911,10 +1911,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 /* Textareas */
 .tmod-textarea {
   width: 100% !important;
-  background: rgba(255,255,255,0.04) !important;
-  border: 1px solid rgba(255,255,255,0.1) !important;
+  background: var(--bg-tertiary) !important;
+  border: 1px solid var(--bg-hover) !important;
   border-radius: 8px !important;
-  color: #d1d5db !important;
+  color: var(--text-secondary) !important;
   padding: 10px 12px !important;
   font-size: 14px !important;
   resize: vertical !important;
@@ -1926,12 +1926,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 }
 
 .tmod-textarea:focus {
-  border-color: #3b82f6 !important;
-  background: rgba(255,255,255,0.06) !important;
+  border-color: var(--accent-blue) !important;
+  background: var(--bg-tertiary) !important;
 }
 
 .tmod-textarea::placeholder {
-  color: #4b5563 !important;
+  color: var(--text-muted) !important;
 }
 
 /* Subtasks */
@@ -1945,15 +1945,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   display: flex !important;
   align-items: center !important;
   gap: 8px !important;
-  color: #6b7280 !important;
+  color: var(--text-muted) !important;
 }
 
 .tmod-subtask-input {
   flex: 1 !important;
   background: transparent !important;
   border: none !important;
-  border-bottom: 1px solid rgba(255,255,255,0.1) !important;
-  color: #d1d5db !important;
+  border-bottom: 1px solid var(--bg-hover) !important;
+  color: var(--text-secondary) !important;
   font-size: 14px !important;
   outline: none !important;
   padding: 4px 0 !important;
@@ -1961,11 +1961,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 }
 
 .tmod-subtask-input::placeholder {
-  color: #4b5563 !important;
+  color: var(--text-muted) !important;
 }
 
 .tmod-subtask-input:focus {
-  border-bottom-color: #3b82f6 !important;
+  border-bottom-color: var(--accent-blue) !important;
 }
 
 /* Footer */
@@ -1974,13 +1974,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   align-items: center !important;
   gap: 12px !important;
   padding: 16px 20px !important;
-  border-top: 1px solid rgba(255,255,255,0.08) !important;
+  border: 1px solid var(--border-color) !important;
   justify-content: flex-end !important;
   flex-shrink: 0 !important;
 }
 
 .tmod-save-btn {
-  background: #3b82f6 !important;
+  background: var(--accent-blue) !important;
   color: #fff !important;
   border: none !important;
   border-radius: 8px !important;
@@ -1993,13 +1993,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 }
 
 .tmod-save-btn:hover {
-  background: #2563eb !important;
+  background: var(--accent-blue) !important;
 }
 
 .tmod-cancel-btn {
-  background: rgba(255,255,255,0.06) !important;
-  color: #9da3ae !important;
-  border: 1px solid rgba(255,255,255,0.12) !important;
+  background: var(--bg-tertiary) !important;
+  color: var(--text-secondary) !important;
+  border: 1px solid var(--border-color) !important;
   border-radius: 8px !important;
   padding: 10px 20px !important;
   font-size: 14px !important;
@@ -2009,8 +2009,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 }
 
 .tmod-cancel-btn:hover {
-  background: rgba(255,255,255,0.1) !important;
-  color: #d1d5db !important;
+  background: var(--bg-hover) !important;
+  color: var(--text-secondary) !important;
 }
 
 /* Fix old status-btn red border issue (legacy) */
@@ -2027,9 +2027,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 #taskModal .tmod-select,
 #taskModal .tmod-priority-select,
 #taskModal select.priority-select {
-  background: #2a2d38 !important;
-  color: #d1d5db !important;
-  border: 1px solid rgba(255,255,255,0.12) !important;
+  background: var(--bg-tertiary) !important;
+  color: var(--text-secondary) !important;
+  border: 1px solid var(--border-color) !important;
   border-radius: 6px !important;
   padding: 6px 10px !important;
   font-size: 13px !important;
@@ -2042,9 +2042,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 /* Fix date inputs to stay consistent in dark mode */
 #taskModal input[type="date"].tmod-date-input {
-  background: #2a2d38 !important;
-  color: #d1d5db !important;
-  border: 1px solid rgba(255,255,255,0.12) !important;
+  background: var(--bg-tertiary) !important;
+  color: var(--text-secondary) !important;
+  border: 1px solid var(--border-color) !important;
   border-radius: 6px !important;
   padding: 6px 10px !important;
   font-size: 13px !important;
@@ -2059,7 +2059,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .tmod-status-btn,
 #taskModal .tmod-status-btn {
   background: rgba(59,130,246,0.12) !important;
-  color: #60a5fa !important;
+  color: var(--accent-blue) !important;
   border: 1px solid rgba(59,130,246,0.3) !important;
   border-radius: 6px !important;
   padding: 6px 14px !important;
@@ -2076,7 +2076,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 #taskDetailPanel .tdp-status-select,
 #taskDetailPanel select#detailStatus {
   background: rgba(59,130,246,0.12) !important;
-  color: #60a5fa !important;
+  color: var(--accent-blue) !important;
   border: 1px solid rgba(59,130,246,0.3) !important;
   border-radius: 6px !important;
   padding: 5px 10px !important;
@@ -2091,7 +2091,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 #taskDetailPanel .tdp-meta-row,
 #taskDetailPanel .tdp-body {
   font-size: 13px !important;
-  color: #d1d5db !important;
+  color: var(--text-secondary) !important;
 }
 
 /* Remove old task detail panel CSS interference */
@@ -2122,8 +2122,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 /* Fix modal content inner styling */
 #taskModal .modal-content {
-  background: #1e2029 !important;
-  border: 1px solid rgba(255,255,255,0.1) !important;
+  background: var(--bg-secondary) !important;
+  border: 1px solid var(--bg-hover) !important;
   border-radius: 12px !important;
   max-height: 90vh !important;
   overflow: hidden !important;
@@ -2133,7 +2133,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 /* Fix tmod-footer button visibility */
 .tmod-footer .tmod-save-btn {
-  background: #3b82f6 !important;
+  background: var(--accent-blue) !important;
   color: #ffffff !important;
   border: none !important;
   padding: 10px 24px !important;
@@ -2144,9 +2144,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 }
 
 .tmod-footer .tmod-cancel-btn {
-  background: rgba(255,255,255,0.06) !important;
-  color: #9da3ae !important;
-  border: 1px solid rgba(255,255,255,0.15) !important;
+  background: var(--bg-tertiary) !important;
+  color: var(--text-secondary) !important;
+  border: 1px solid var(--bg-hover) !important;
   padding: 10px 20px !important;
   border-radius: 8px !important;
   font-size: 14px !important;
@@ -2156,9 +2156,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 /* Fix meta-select class interference */
 #taskModal select.meta-select,
 #taskModal select.inline-select {
-  background: #2a2d38 !important;
-  color: #d1d5db !important;
-  border: 1px solid rgba(255,255,255,0.12) !important;
+  background: var(--bg-tertiary) !important;
+  color: var(--text-secondary) !important;
+  border: 1px solid var(--border-color) !important;
   border-radius: 6px !important;
   padding: 6px 10px !important;
   font-size: 13px !important;
@@ -2194,7 +2194,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   display: flex !important;
   flex-direction: column !important;
   overflow: hidden !important;
-  background: #1e2029 !important;
+  background: var(--bg-secondary) !important;
 }
 
 /* When panel is open, show a backdrop overlay */
