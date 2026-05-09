@@ -116,7 +116,6 @@
     <!-- Task Detail Side Panel -->
 <div class="task-detail-modal-overlay" id="taskDetailModalOverlay" style="display:none;">
   <div class="task-detail-panel" id="taskDetailPanel">
-
     <div class="tdp-header">
       <div class="tdp-header-actions">
         <button class="icon-btn" title="Repeat"><i class="fa-solid fa-repeat"></i></button>
@@ -126,112 +125,32 @@
         <button class="icon-btn" id="detailCloseBtn" title="Close"><i class="fa-solid fa-xmark"></i></button>
       </div>
     </div>
-
     <div class="tdp-body">
-
       <h2 class="tdp-title" id="detailTitle" contenteditable="true" spellcheck="false">Task Title</h2>
-
-      <div class="tdp-meta-row">
-        <span class="tdp-meta-label">Status</span>
-        <select class="tdp-select tdp-status-select" id="detailStatus">
-          <option value="Open">Open</option>
-          <option value="In Progress">In Progress</option>
-          <option value="Fixed">Fixed</option>
-          <option value="Completed">Completed</option>
-          <option value="Closed">Closed</option>
-        </select>
-      </div>
-
-      <div class="tdp-meta-row">
-        <span class="tdp-meta-label">Assignee</span>
-        <div class="tdp-assignee">
-          <div class="avatar-sm" id="detailAssigneeAvatar"><div></div></div>
-          <span id="detailAssignee" class="tdp-assignee-name">Unassigned</span>
-        </div>
-      </div>
-
-      <div class="tdp-meta-row">
-        <span class="tdp-meta-label">Start Date</span>
-        <div class="tdp-date-value clickable" id="detailStartDate">Not set</div>
-      </div>
-      <div class="tdp-meta-row">
-        <span class="tdp-meta-label">Due Date</span>
-        <div class="tdp-date-value clickable" id="detailDueDate">Not set</div>
-      </div>
-
-      <div class="tdp-meta-row">
-        <span class="tdp-meta-label">Group</span>
-        <button class="tdp-meta-chip" id="detailGroup">No group</button>
-      </div>
-      <div class="tdp-meta-row">
-        <span class="tdp-meta-label">Category</span>
-        <button class="tdp-meta-chip" id="detailCategory">General</button>
-      </div>
-      <div class="tdp-meta-row">
-        <span class="tdp-meta-label">Priority</span>
-        <button class="tdp-meta-chip tdp-priority-chip" id="detailPriority">None</button>
-      </div>
-      <div class="tdp-meta-row">
-        <span class="tdp-meta-label">Tags</span>
-        <div id="detailTagsContainer"><span id="detailTagsDisplay"></span></div>
-      </div>
-      <div class="tdp-meta-row">
-        <span class="tdp-meta-label">Reminder</span>
-        <button class="tdp-meta-chip" id="detailReminderBtn"><i class="fa-regular fa-calendar-check"></i> Set reminder</button>
-      </div>
-      <div class="tdp-meta-row" id="detailRecurrenceDisplay" style="display:none;">
-        <span class="tdp-meta-label">Repeat</span>
-        <span class="tdp-meta-value"></span>
-      </div>
-      <div class="tdp-meta-row" id="detailReminderDisplay" style="display:none;">
-        <span class="tdp-meta-label">Remind</span>
-        <span class="tdp-meta-value"></span>
-      </div>
-
+      <div class="tdp-meta-row"><span class="tdp-meta-label">Status</span><select class="tdp-select tdp-status-select" id="detailStatus"><option value="Open">Open</option><option value="In Progress">In Progress</option><option value="Fixed">Fixed</option><option value="Completed">Completed</option><option value="Closed">Closed</option></select></div>
+      <div class="tdp-meta-row"><span class="tdp-meta-label">Assignee</span><div class="tdp-assignee"><div class="avatar-sm" id="detailAssigneeAvatar"><div></div></div><span id="detailAssignee" class="tdp-assignee-name">Unassigned</span></div></div>
+      <div class="tdp-meta-row"><span class="tdp-meta-label">Start Date</span><div class="tdp-date-value clickable" id="detailStartDate">Not set</div></div>
+      <div class="tdp-meta-row"><span class="tdp-meta-label">Due Date</span><div class="tdp-date-value clickable" id="detailDueDate">Not set</div></div>
+      <div class="tdp-meta-row"><span class="tdp-meta-label">Group</span><button class="tdp-meta-chip" id="detailGroup">No group</button></div>
+      <div class="tdp-meta-row"><span class="tdp-meta-label">Category</span><button class="tdp-meta-chip" id="detailCategory">General</button></div>
+      <div class="tdp-meta-row"><span class="tdp-meta-label">Priority</span><button class="tdp-meta-chip tdp-priority-chip" id="detailPriority">None</button></div>
+      <div class="tdp-meta-row"><span class="tdp-meta-label">Tags</span><div id="detailTagsContainer"><span id="detailTagsDisplay"></span></div></div>
+      <div class="tdp-meta-row"><span class="tdp-meta-label">Reminder</span><button class="tdp-meta-chip" id="detailReminderBtn"><i class="fa-regular fa-calendar-check"></i> Set reminder</button></div>
+      <div class="tdp-meta-row" id="detailRecurrenceDisplay" style="display:none;"><span class="tdp-meta-label">Repeat</span><span class="tdp-meta-value"></span></div>
+      <div class="tdp-meta-row" id="detailReminderDisplay" style="display:none;"><span class="tdp-meta-label">Remind</span><span class="tdp-meta-value"></span></div>
       <hr class="tdp-divider"/>
-
-      <div class="tdp-section">
-        <div class="tdp-section-label"><i class="fa-solid fa-align-left"></i> Description</div>
-        <textarea id="detailDesc" class="tdp-textarea" placeholder="Add a description..." rows="3"></textarea>
-      </div>
-
-      <div class="tdp-section">
-        <div class="tdp-section-label"><i class="fa-regular fa-note-sticky"></i> Notes</div>
-        <textarea id="detailNotes" class="tdp-textarea" placeholder="Add notes..." rows="3"></textarea>
-      </div>
-
-      <div class="tdp-section">
-        <div class="tdp-section-label"><i class="fa-solid fa-paperclip"></i> Attachments</div>
-        <div id="detailAttachments" class="tdp-attachments-list"></div>
-      </div>
-
-      <div class="tdp-section">
-        <div class="tdp-section-label"><i class="fa-solid fa-list-check"></i> Subtasks</div>
-        <ul id="subtasksList" class="tdp-subtasks-list"></ul>
-        <div class="tdp-add-subtask">
-          <i class="fa-solid fa-plus"></i>
-          <input type="text" id="newSubtaskInput" class="tdp-subtask-input" placeholder="Add a subtask..."/>
-        </div>
-      </div>
-
-      <div class="tdp-section">
-        <div class="tdp-section-label"><i class="fa-solid fa-clock-rotate-left"></i> Timeline</div>
-        <div id="timelineList" class="tdp-timeline-list"></div>
-      </div>
-
-      <div class="tdp-section tdp-invitee-section" id="invitees-bar">
-        <button class="tdp-meta-chip" id="inviteeRefuseBtn" style="display:none;">Decline</button>
-        <button class="tdp-meta-chip tdp-invite-btn" id="inviteeAddBtn"><i class="fa-solid fa-user-plus"></i> Invite</button>
-      </div>
-
+      <div class="tdp-section"><div class="tdp-section-label"><i class="fa-solid fa-align-left"></i> Description</div><textarea id="detailDesc" class="tdp-textarea" placeholder="Add a description..." rows="3"></textarea></div>
+      <div class="tdp-section"><div class="tdp-section-label"><i class="fa-regular fa-note-sticky"></i> Notes</div><textarea id="detailNotes" class="tdp-textarea" placeholder="Add notes..." rows="3"></textarea></div>
+      <div class="tdp-section"><div class="tdp-section-label"><i class="fa-solid fa-paperclip"></i> Attachments</div><div id="detailAttachments" class="tdp-attachments-list"></div></div>
+      <div class="tdp-section"><div class="tdp-section-label"><i class="fa-solid fa-list-check"></i> Subtasks</div><ul id="subtasksList" class="tdp-subtasks-list"></ul><div class="tdp-add-subtask"><i class="fa-solid fa-plus"></i><input type="text" id="newSubtaskInput" class="tdp-subtask-input" placeholder="Add a subtask..."/></div></div>
+      <div class="tdp-section"><div class="tdp-section-label"><i class="fa-solid fa-clock-rotate-left"></i> Timeline</div><div id="timelineList" class="tdp-timeline-list"></div></div>
+      <div class="tdp-section tdp-invitee-section" id="invitees-bar"><button class="tdp-meta-chip" id="inviteeRefuseBtn" style="display:none;">Decline</button><button class="tdp-meta-chip tdp-invite-btn" id="inviteeAddBtn"><i class="fa-solid fa-user-plus"></i> Invite</button></div>
     </div>
-
     <div class="tdp-comment-bar">
       <div class="avatar-sm"><div></div></div>
       <input type="text" id="commentInput" class="tdp-comment-input" placeholder="Write a comment..."/>
       <button class="icon-btn tdp-emoji-btn" title="Emoji">&#128512;</button>
     </div>
-
   </div>
 </div>
 button>
@@ -241,103 +160,57 @@ button>
   <!-- Create / Edit Task Modal -->
 <div class="modal-overlay" id="taskModal" style="display:none;">
   <div class="modal-content task-modal">
-
     <div class="tmod-header modal-header">
       <h3 class="tmod-header-title">New Task</h3>
       <button class="icon-btn close-modal" id="closeModalBtn" title="Close"><i class="fa-solid fa-xmark"></i></button>
     </div>
-
     <div class="tmod-body modal-body">
-
       <div class="tmod-title-wrap">
         <input type="text" class="tmod-task-title task-title-input" id="modalTaskTitle" placeholder="Task title, @mention assignee"/>
       </div>
-
       <div class="tmod-meta-grid">
-        <div class="tmod-meta-item">
-          <span class="tmod-meta-label">Status</span>
-          <button class="tmod-status-btn" id="modalStatusBtn">Open</button>
-        </div>
-        <div class="tmod-meta-item">
-          <span class="tmod-meta-label">Assignee</span>
-          <div class="tmod-assignee-row">
-            <div class="avatar-sm"><div></div></div>
-            <select class="tmod-select inline-select" id="modalAssignee">
-              <option value="">Assigned to</option>
-            </select>
-          </div>
-        </div>
-        <div class="tmod-meta-item">
-          <span class="tmod-meta-label">Start Date</span>
-          <input type="date" id="modalStartDate" class="tmod-date-input date-input"/>
-        </div>
-        <div class="tmod-meta-item">
-          <span class="tmod-meta-label">Due Date</span>
-          <input type="date" id="modalDueDate" class="tmod-date-input date-input"/>
-        </div>
-        <div class="tmod-meta-item">
-          <span class="tmod-meta-label">Group</span>
-          <select class="tmod-select meta-select" id="modalGroup">
-            <option value="">No group</option>
-          </select>
-        </div>
-        <div class="tmod-meta-item">
-          <span class="tmod-meta-label">Category</span>
-          <select class="tmod-select meta-select" id="modalCategory">
-            <option value="General">General</option>
-          </select>
-        </div>
-        <div class="tmod-meta-item">
-          <span class="tmod-meta-label">Priority</span>
-          <select class="tmod-select tmod-priority-select priority-select" id="modalPriority">
-            <option value="None">None</option>
-            <option value="Low">Low</option>
-            <option value="Medium">Medium</option>
-            <option value="High">High</option>
-            <option value="Critical">Critical</option>
-          </select>
-        </div>
-        <div class="tmod-meta-item">
-          <span class="tmod-meta-label">Reminder</span>
-          <button class="tmod-reminder-btn reminder-btn" id="modalReminderBtn"><i class="fa-regular fa-calendar-check"></i> Set reminder</button>
-        </div>
+        <div class="tmod-meta-item"><span class="tmod-meta-label">Status</span><button class="tmod-status-btn" id="modalStatusBtn">Open</button></div>
+        <div class="tmod-meta-item"><span class="tmod-meta-label">Assignee</span><div class="tmod-assignee-row"><div class="avatar-sm"><div></div></div><select class="tmod-select inline-select" id="modalAssignee"><option value="">Assigned to</option></select></div></div>
+        <div class="tmod-meta-item"><span class="tmod-meta-label">Start Date</span><input type="date" id="modalStartDate" class="tmod-date-input date-input"/></div>
+        <div class="tmod-meta-item"><span class="tmod-meta-label">Due Date</span><input type="date" id="modalDueDate" class="tmod-date-input date-input"/></div>
+        <div class="tmod-meta-item"><span class="tmod-meta-label">Group</span><select class="tmod-select meta-select" id="modalGroup"><option value="">No group</option></select></div>
+        <div class="tmod-meta-item"><span class="tmod-meta-label">Category</span><select class="tmod-select meta-select" id="modalCategory"><option value="General">General</option></select></div>
+        <div class="tmod-meta-item"><span class="tmod-meta-label">Priority</span><select class="tmod-select tmod-priority-select priority-select" id="modalPriority"><option value="None">None</option><option value="Low">Low</option><option value="Medium">Medium</option><option value="High">High</option><option value="Critical">Critical</option></select></div>
+        <div class="tmod-meta-item"><span class="tmod-meta-label">Reminder</span><button class="tmod-reminder-btn reminder-btn" id="modalReminderBtn"><i class="fa-regular fa-calendar-check"></i> Set reminder</button></div>
       </div>
-
-      <div class="tmod-tags-row">
-        <button class="icon-btn" id="modalTagBtn" title="Add Tags"><i class="fa-solid fa-tag"></i> Tags</button>
-        <span id="modalTagsContainer" style="margin-left:8px;"></span>
-      </div>
-
-      <div class="tmod-section">
-        <div class="tmod-section-label"><i class="fa-solid fa-align-left"></i> Description</div>
-        <textarea id="modalDesc" class="tmod-textarea detail-textarea" placeholder="Add a description..." rows="3"></textarea>
-      </div>
-
-      <div class="tmod-section">
-        <div class="tmod-section-label"><i class="fa-regular fa-note-sticky"></i> Notes</div>
-        <textarea id="modalNotes" class="tmod-textarea detail-textarea notes-area" placeholder="Add notes..." rows="2"></textarea>
-      </div>
-
-      <div class="tmod-section">
-        <div class="tmod-section-label"><i class="fa-solid fa-list-check"></i> Subtasks</div>
-        <ul id="modalSubtasksList" class="tmod-subtasks-list"></ul>
-        <div class="tmod-add-subtask add-subtask">
-          <i class="fa-solid fa-plus"></i>
-          <input type="text" id="modalSubtaskInput" class="tmod-subtask-input" placeholder="Add a subtask..."/>
-          <button class="icon-btn" id="modalAddSubtaskBtn" title="Add subtask"><i class="fa-solid fa-plus"></i></button>
-        </div>
-      </div>
-
+      <div class="tmod-tags-row"><button class="icon-btn" id="modalTagBtn" title="Add Tags"><i class="fa-solid fa-tag"></i> Tags</button><span id="modalTagsContainer" style="margin-left:8px;"></span></div>
+      <div class="tmod-section"><div class="tmod-section-label"><i class="fa-solid fa-align-left"></i> Description</div><textarea id="modalDesc" class="tmod-textarea detail-textarea" placeholder="Add a description..." rows="3"></textarea></div>
+      <div class="tmod-section"><div class="tmod-section-label"><i class="fa-regular fa-note-sticky"></i> Notes</div><textarea id="modalNotes" class="tmod-textarea detail-textarea notes-area" placeholder="Add notes..." rows="2"></textarea></div>
+      <div class="tmod-section"><div class="tmod-section-label"><i class="fa-solid fa-list-check"></i> Subtasks</div><ul id="modalSubtasksList" class="tmod-subtasks-list"></ul><div class="tmod-add-subtask add-subtask"><i class="fa-solid fa-plus"></i><input type="text" id="modalSubtaskInput" class="tmod-subtask-input" placeholder="Add a subtask..."/><button class="icon-btn" id="modalAddSubtaskBtn" title="Add subtask"><i class="fa-solid fa-plus"></i></button></div></div>
     </div>
-
     <div class="tmod-footer">
       <button class="btn-primary tmod-save-btn" id="modalSaveBtn">Save Task</button>
       <button class="btn-secondary tmod-cancel-btn" id="modalCancelBtn">Cancel</button>
     </div>
-
   </div>
 </div>
-<div class="settings-overlay" id="settingsOverlay">
+<script src="backend.js"></script>
+  <script src="approval-backend.js"></script>
+  <script src="approval-ui.js"></script>
+  <script src="agenda-view.js"></script>
+  <script src="myday-view.js"></script>
+  <script src="createdbyme-view.js"></script>
+  <script src="app.js"></script>
+  <script src="group-ui.js"></script>
+    <script src="auth.js"></script>
+    <script src="auth-supabase.js"></script>
+    <script src="onboarding.js"></script>
+      <script src="task-enhancements.js"></script>
+  <script src="workflow-engine.js"></script>
+  <script src="workflow-builder.js"></script>
+ <script src="rbac.js"></script>
+<script src="shadow-db-patch.js"></script>
+  <script src="theme.js"></script>
+  <script src="admin.js"></script>
+
+  </script>
+
+  <div class="settings-overlay" id="settingsOverlay">
         <div class="settings-dialog">
             <!-- Close button -->
             <button class="settings-close-btn" id="closeSettings" title="Close">&times;</button>
