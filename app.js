@@ -585,6 +585,13 @@
 function renderBoardView() {
   var area = document.getElementById('boardArea');
   if (!area) return;
+  // My Day view uses ShadowMyDay renderer
+  if (state.currentView === 'myday' && window.ShadowMyDay) {
+    ShadowDB.Tasks.getAll().then(function(allTasks) {
+      window.ShadowMyDay.renderBoard(area, allTasks, {});
+    });
+    return;
+  }
   var tasks = getFilteredTasks();
   var kit = window.ShadowAgenda || window.ShadowViewKit || window.ShadowCreatedByMe;
   if (kit && typeof kit.renderBoard === 'function') {
@@ -600,6 +607,15 @@ function renderListView() {
   var area = document.getElementById('listArea');
   var lh = document.getElementById('listHeader');
   if (!area) return;
+  // My Day view uses ShadowMyDay renderer
+  if (state.currentView === 'myday' && window.ShadowMyDay) {
+    ShadowDB.Tasks.getAll().then(function(allTasks) {
+      area.innerHTML = '';
+      window.ShadowMyDay.renderList(area, allTasks, {});
+    });
+    if (lh) lh.style.display = 'none';
+    return;
+  }
   // Hide the legacy column strip ÃÂ¢ÃÂÃÂ ShadowViewKit renders its own columnar table.
   if (lh) { lh.innerHTML = ''; lh.classList.add('compact-header'); }
   var tasks = getFilteredTasks();
