@@ -2163,3 +2163,57 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   padding: 6px 10px !important;
   font-size: 13px !important;
 }
+
+
+/* ============================================================
+   TASK DETAIL PANEL - Open Class Integration
+   When app.js adds 'open' class to .task-detail-panel,
+   show the panel as a fixed right-side panel
+   ============================================================ */
+
+/* Show overlay when panel has 'open' class */
+.task-detail-modal-overlay:has(.task-detail-panel.open),
+.task-detail-panel.open ~ .task-detail-modal-overlay {
+  display: flex !important;
+}
+
+/* Direct approach: show overlay when panel is open */
+/* Use the panel's open class to show the overlay via JS */
+
+/* Make the panel position fixed from right when open class is added */
+.task-detail-panel.open {
+  position: fixed !important;
+  right: 0 !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  width: 400px !important;
+  max-width: 95vw !important;
+  height: 100vh !important;
+  z-index: 1001 !important;
+  box-shadow: -4px 0 24px rgba(0,0,0,0.5) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  background: #1e2029 !important;
+}
+
+/* When panel is open, show a backdrop overlay */
+.task-detail-panel.open::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 400px;
+  bottom: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: -1;
+}
+
+/* Keep the overlay hidden by default, panel handles its own positioning */
+.task-detail-modal-overlay {
+  pointer-events: none;
+}
+
+.task-detail-panel.open {
+  pointer-events: all;
+}
