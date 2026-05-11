@@ -1481,144 +1481,493 @@ function renderListView() {
     });
   }
 
-  // New Task button
-  document.getElementById('newTaskBtn').addEventListener('click', function(){
-    state.modalSubtasks = [];
-    state.modalTags = [];
-    state.modalReminder = null;
-    state.modalRecurrence = null;
-    updateGroupSelects();
-    const modal = document.getElementById('taskModal');
-    if (modal) {
-      modal.style.display='flex';
-      document.getElementById('modalTaskTitle').value='';
-      const descEl = document.getElementById('modalDesc');
-      if (descEl) descEl.value='';
-      document.getElementById('modalStatusBtn').value='Open';
-      document.getElementById('modalPriority').value='None';
-      document.getElementById('modalDueDate').value='';
-      const startEl = document.getElementById('modalStartDate');
-      if (startEl) startEl.value='';
-      renderModalSubtasks();
-      renderModalTags();
-      updateCategorySelect(document.getElementById('modalGroup').value, document.getElementById('modalCategory'));
-      document.getElementById('modalTaskTitle').focus();
+  // ============================================================
+  // NEW TASK MODAL — ntm-* wiring  (replaces old modal event block)
+  // ============================================================
+  (function initNTM() {
+    'use strict';
+
+    var DEFAULT_STATUSES = [
+      { id:'Open',        name:'Open',        color:'#e53e3e' },
+      { id:'In Progress', name:'In Progress', color:'#d69e2e' },
+      { id:'Fixed',       name:'Fixed',       color:'#3182ce' },
+      { id:'Completed',   name:'Completed',   color:'#38a169' },
+      { id:'Closed',      name:'Closed',      color:'#718096' }
+    ];
+
+    function $el(id) { return document.getElementById(id); }
+
+    function fmtDate(val) {
+      if (!val) return 'Yet to set';
+      var d = new Date(val + 'T00:00:00');
+      return d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
     }
-  });
 
-  // Group change -> Update category
-  const modalGroupEl = document.getElementById('modalGroup');
-  if (modalGroupEl) {
-    modalGroupEl.addEventListener('change', function() {
-      updateCategorySelect(this.value, document.getElementById('modalCategory'));
-    });
-  }
+    function getInitials(name) {
+      if (!name) return '?';
+      var p = name.trim().split(/\s+/);
+      return p.length === 1 ? p[0][0].toUpperCase() : (p[0][0]+p[p.length-1][0]).toUpperCase();
+    }
 
-  // Modal close/cancel
-  const modalCancelBtn = document.getElementById('modalCancelBtn');
-  if (modalCancelBtn) modalCancelBtn.addEventListener('click', function(){
-    document.getElementById('taskModal').style.display='none';
-  });
+    function avatarBg(name) {
+      var c = ['#4285f4','#ea4335','#34a853','#fbbc04','#9c27b0','#00acc1','#e67e22','#1abc9c'];
+      if (!name) return c[0];
+      var h = 0;
+      for (var i = 0; i < name.length; i++) h = (h*31+name.charCodeAt(i))&0xffffffff;
+      return c[Math.abs(h)%c.length];
+    }
 
-  // Modal Recurrence button
-  const modalRecurBtn = document.getElementById('modalRecurBtn');
-  if (modalRecurBtn) {
-    modalRecurBtn.addEventListener('click', function() {
-      showRecurrenceModal(function(rec) {
-        state.modalRecurrence = rec;
-        modalRecurBtn.innerHTML = rec ? '<i class="fa-solid fa-repeat"></i> '+rec.type : '<i class="fa-solid fa-repeat"></i> Recurrence';
+    function closeAllDropdowns(except) {
+      ['ntmStatusWrap','ntmGroupDropdown','ntmCatDropdown',
+       'ntmPriorityDropdown','ntmTagsDropdown','ntmAssigneeModal'].forEach(function(id) {
+        if (id === except) return;
+        var el = $el(id); if (!el) return;
+        el.classList.remove('open');
       });
-    });
-  }
+    }
 
-  // Modal Tags button
-  const modalTagBtnEl = document.getElementById('modalTagBtn');
-  if (modalTagBtnEl) {
-    modalTagBtnEl.addEventListener('click', function() {
-      showTagsPicker(state.modalTags, function(selected) {
-        state.modalTags = selected;
-        renderModalTags();
+    // ── state ──
+    var selGroupId  = '';
+    var selStatus   = 'Open';
+    var selPriority = 'Medium';
+    var selTags     = [];
+    var selAssignee = '';
+    var grpStatuses = DEFAULT_STATUSES.slice();
+    var mtSubtasks  = [];
+    var grpCats     = [{ name:'General' }];
+
+    // ── status ──
+    function getStatusColor(name) {
+      var s = grpStatuses.find(function(x){ return x.name===name; });
+      return s ? s.color : '#718096';
+    }
+
+    function updateStatusBtn() {
+      var btn = $el('ntmStatusBtn'); if (!btn) return;
+      var color = getStatusColor(selStatus);
+      btn.style.borderColor = color; btn.style.color = color;
+      btn.innerHTML = selStatus+' <i class="fa-solid fa-chevron-down" style="font-size:9px"></i>';
+      var h = $el('modalStatus'); if (h) h.value = selStatus;
+      var b = $el('modalStatusBtn'); if (b) b.value = selStatus;
+    }
+
+    function buildStatusList(filter) {
+      var list = $el('ntmStatusList'); if (!list) return;
+      var q = (filter||'').toLowerCase();
+      var filtered = grpStatuses.filter(function(s){ return s.name.toLowerCase().includes(q); });
+      list.innerHTML = filtered.map(function(s) {
+        return '<div class="ntm-status-menu-item" data-status="'+s.name+'">'
+          +'<span class="ntm-status-dot" style="background:'+s.color+'"></span>'+s.name
+          +(s.name===selStatus?'<i class="fa-solid fa-check" style="margin-left:auto;font-size:11px;color:var(--accent-blue)"></i>':'')
+          +'</div>';
+      }).join('');
+      list.querySelectorAll('.ntm-status-menu-item').forEach(function(item) {
+        item.addEventListener('click', function() {
+          selStatus = item.dataset.status; updateStatusBtn();
+          $el('ntmStatusWrap').classList.remove('open');
+        });
       });
-    });
-  }
+    }
 
-  // Modal Attachment button
-  const modalAttachBtn = document.getElementById('modalAttachBtn');
-  if (modalAttachBtn) {
-    modalAttachBtn.addEventListener('click', function() {
-      handleAttachment(function(files) {
-        if (!state.modalAttachments) state.modalAttachments = [];
-        state.modalAttachments = state.modalAttachments.concat(files);
+    function loadStatusesForGroup(groupId) {
+      grpStatuses = DEFAULT_STATUSES.slice();
+      if (!grpStatuses.find(function(s){ return s.name===selStatus; })) selStatus = grpStatuses[0].name;
+      updateStatusBtn(); buildStatusList();
+    }
+
+    var sWrap = $el('ntmStatusWrap'), sSrch = $el('ntmStatusSearch');
+    if ($el('ntmStatusBtn')) {
+      $el('ntmStatusBtn').addEventListener('click', function(e) {
+        e.stopPropagation(); closeAllDropdowns('ntmStatusWrap');
+        sWrap.classList.toggle('open'); buildStatusList();
       });
-    });
-  }
+    }
+    if (sSrch) sSrch.addEventListener('input', function(){ buildStatusList(sSrch.value); });
 
-  // Modal Reminder button
-  const modalReminderBtnEl = document.getElementById('modalReminderBtn');
-  if (modalReminderBtnEl) {
-    modalReminderBtnEl.addEventListener('click', function() {
-      showReminderModal(state.modalReminder, function(reminder) {
-        state.modalReminder = reminder;
-        modalReminderBtnEl.innerHTML = reminder ?
-          '<i class="fa-regular fa-calendar-check"></i> ' + formatDate(reminder.date) + ' ' + (reminder.time||'') :
-          '<i class="fa-regular fa-calendar-check"></i> Reminder';
+    // ── group ──
+    function buildGroupList(filter) {
+      var list = $el('ntmGroupList'); if (!list) return;
+      var q = (filter||'').toLowerCase();
+      var groups = (window.state && window.state.groups) ? window.state.groups : [];
+      var all = [{id:'',name:'Personal tasks',isPersonal:true}].concat(groups);
+      var filtered = all.filter(function(g){ return g.name.toLowerCase().includes(q); });
+      list.innerHTML = filtered.map(function(g) {
+        return '<div class="ntm-dropdown-item'+(g.id===selGroupId?' active':'')+'" data-gid="'+g.id+'">'
+          +'<i class="fa-solid '+(g.isPersonal?'fa-user':'fa-users')+'" style="font-size:11px"></i> '
+          +g.name
+          +(g.id===selGroupId?'<i class="fa-solid fa-check" style="margin-left:auto;font-size:11px"></i>':'')
+          +'</div>';
+      }).join('');
+      list.querySelectorAll('.ntm-dropdown-item').forEach(function(item) {
+        item.addEventListener('click', function() {
+          selGroupId = item.dataset.gid;
+          var grps = (window.state && window.state.groups) ? window.state.groups : [];
+          var grp = grps.find(function(g){ return g.id===selGroupId; });
+          var lbl = $el('ntmGroupLabel');
+          if (lbl) lbl.textContent = selGroupId==='' ? 'Personal tasks' : (grp ? grp.name : 'Unknown');
+          var hg = $el('modalGroup'); if (hg) hg.value = selGroupId;
+          loadCategoriesForGroup(selGroupId); loadStatusesForGroup(selGroupId);
+          $el('ntmGroupDropdown').classList.remove('open');
+        });
       });
-    });
-  }
+    }
 
-  // Modal subtask add
-  const modalSubtaskInput = document.getElementById('modalSubtaskInput');
-  const modalAddSubtaskBtn = document.getElementById('modalAddSubtaskBtn');
-  if (modalAddSubtaskBtn && modalSubtaskInput) {
-    modalAddSubtaskBtn.addEventListener('click', function() {
-      const val = modalSubtaskInput.value.trim();
-      if (val) { state.modalSubtasks.push({id: Date.now(), title: val, completed: false}); modalSubtaskInput.value=''; renderModalSubtasks(); }
-    });
-    modalSubtaskInput.addEventListener('keydown', function(e) {
-      if (e.key==='Enter') { modalAddSubtaskBtn.click(); }
-    });
-  }
+    var gBtn = $el('ntmGroupBtn'), gDrop = $el('ntmGroupDropdown'), gSrch = $el('ntmGroupSearch');
+    if (gBtn) {
+      gBtn.addEventListener('click', function(e) {
+        e.stopPropagation(); closeAllDropdowns('ntmGroupDropdown');
+        gDrop.classList.toggle('open'); buildGroupList(); if (gSrch) gSrch.focus();
+      });
+    }
+    if (gSrch) gSrch.addEventListener('input', function(){ buildGroupList(gSrch.value); });
 
-  // Modal Save (create task)
-  const modalSaveBtn = document.getElementById('modalSaveBtn');
-  if (modalSaveBtn) {
-    modalSaveBtn.addEventListener('click', async function() {
-      const title = document.getElementById('modalTaskTitle').value.trim();
-      if (!title) { alert('Please enter a task title.'); return; }
-      const descEl = document.getElementById('modalDesc');
-      const startEl = document.getElementById('modalStartDate');
-      const task = {
-        title: title,
-        description: descEl ? descEl.value : '',
-        status: document.getElementById('modalStatusBtn').value,
-        priority: document.getElementById('modalPriority').value,
-        group: document.getElementById('modalGroup').value || null,
-        category: document.getElementById('modalCategory').value,
-        assignee: document.getElementById('modalAssignee').value,
-        dueDate: document.getElementById('modalDueDate').value || null,
-        startDate: startEl ? startEl.value || null : null,
-        tags: state.modalTags.slice(),
-        subtasks: state.modalSubtasks.slice(),
-        recurrence: state.modalRecurrence || null,
-        reminder: state.modalReminder || null,
-        attachments: state.modalAttachments ? state.modalAttachments.slice() : [],
-        createdBy: state.currentUserId,
-        createdAt: new Date().toISOString(),
-        modifiedDate: new Date().toISOString(),
-        activity: []
-      };
-      task.createdBy = state.currentUserId;
-      const created = await ShadowDB.Tasks.create(task);
-      state.tasks = await ShadowDB.Tasks.getAll();
-      document.getElementById('taskModal').style.display='none';
-      state.modalSubtasks = [];
-      state.modalTags = [];
-      state.modalAttachments = [];
-      renderSidebar();
-      renderView();
-      if (created && created.id) showTaskDetail(created.id, 'panel');
+    // ── category ──
+    function loadCategoriesForGroup(groupId) {
+      ShadowDB.Categories.getAll().then(function(cats) {
+        if (!groupId) {
+          grpCats = [{name:'General'}].concat(cats.filter(function(c){ return !c.group && !c.groupId; }));
+        } else {
+          var f = cats.filter(function(c){ return c.group===groupId||c.groupId===groupId; });
+          grpCats = f.length > 0 ? f : [{name:'General'}];
+        }
+        var first = grpCats[0];
+        var lbl = $el('ntmCatLabel'); if (lbl) lbl.textContent = first ? first.name : 'General';
+        var hc = $el('modalCategory');
+        if (hc) {
+          hc.innerHTML = grpCats.map(function(c){ return '<option value="'+c.name+'">'+c.name+'</option>'; }).join('');
+          hc.value = first ? first.name : 'General';
+        }
+        buildCatList();
+      });
+    }
+
+    function buildCatList(filter) {
+      var list = $el('ntmCatList'); if (!list) return;
+      var q = (filter||'').toLowerCase();
+      var curCat = $el('ntmCatLabel') ? $el('ntmCatLabel').textContent : '';
+      var filtered = grpCats.filter(function(c){ return c.name.toLowerCase().includes(q); });
+      list.innerHTML = filtered.map(function(c) {
+        return '<div class="ntm-dropdown-item'+(c.name===curCat?' active':'')+'" data-cat="'+c.name+'">'
+          +(c.color?'<span style="width:10px;height:10px;border-radius:2px;background:'+c.color+';flex-shrink:0;display:inline-block"></span>':'')
+          +c.name+(c.name===curCat?'<i class="fa-solid fa-check" style="margin-left:auto;font-size:11px"></i>':'')
+          +'</div>';
+      }).join('');
+      list.querySelectorAll('.ntm-dropdown-item').forEach(function(item) {
+        item.addEventListener('click', function() {
+          var lbl = $el('ntmCatLabel'); if (lbl) lbl.textContent = item.dataset.cat;
+          var hc = $el('modalCategory'); if (hc) hc.value = item.dataset.cat;
+          $el('ntmCatDropdown').classList.remove('open');
+        });
+      });
+    }
+
+    var cBtn = $el('ntmCatBtn'), cDrop = $el('ntmCatDropdown'), cSrch = $el('ntmCatSearch');
+    if (cBtn) {
+      cBtn.addEventListener('click', function(e) {
+        e.stopPropagation(); closeAllDropdowns('ntmCatDropdown');
+        cDrop.classList.toggle('open'); buildCatList(); if (cSrch) cSrch.focus();
+      });
+    }
+    if (cSrch) cSrch.addEventListener('input', function(){ buildCatList(cSrch.value); });
+
+    // ── priority ──
+    function updatePriorityBtn() {
+      var icon = $el('ntmPriorityIcon'), lbl = $el('ntmPriorityLabel');
+      if (icon) {
+        icon.className = 'fa-solid fa-circle-exclamation ntm-priority-icon';
+        if (selPriority==='High') icon.classList.add('high');
+        else if (selPriority==='Medium') icon.classList.add('medium');
+        else { icon.className='fa-regular fa-circle ntm-priority-icon'; }
+      }
+      if (lbl) lbl.textContent = selPriority;
+      var hp = $el('modalPriority'); if (hp) hp.value = selPriority;
+    }
+
+    var pBtn = $el('ntmPriorityBtn'), pDrop = $el('ntmPriorityDropdown');
+    if (pBtn) {
+      pBtn.addEventListener('click', function(e) {
+        e.stopPropagation(); closeAllDropdowns('ntmPriorityDropdown');
+        pDrop.classList.toggle('open');
+      });
+    }
+    if (pDrop) {
+      pDrop.querySelectorAll('.ntm-dropdown-item').forEach(function(item) {
+        item.addEventListener('click', function() {
+          selPriority = item.dataset.val; updatePriorityBtn(); pDrop.classList.remove('open');
+        });
+      });
+    }
+
+    // ── tags ──
+    function buildTagsList(filter) {
+      var list = $el('ntmTagsList'); if (!list) return;
+      var tags = (window.state && window.state.tags) ? window.state.tags : [];
+      var q = (filter||'').toLowerCase();
+      var filtered = tags.filter(function(t){ return t.name.toLowerCase().includes(q); });
+      list.innerHTML = filtered.map(function(t) {
+        return '<div class="ntm-tag-item'+(selTags.includes(t.name)?' selected':'')+'" data-tag="'+t.name+'">'
+          +'<span class="ntm-tag-color" style="background:'+(t.color||'#888')+'"></span>'+t.name
+          +(selTags.includes(t.name)?'<i class="fa-solid fa-check" style="margin-left:auto;font-size:11px"></i>':'')
+          +'</div>';
+      }).join('');
+      list.querySelectorAll('.ntm-tag-item').forEach(function(item) {
+        item.addEventListener('click', function() {
+          var tn = item.dataset.tag;
+          if (selTags.includes(tn)) selTags = selTags.filter(function(t){ return t!==tn; });
+          else selTags.push(tn);
+          renderTagsBar(); buildTagsList(filter);
+          if (window.state) window.state.modalTags = selTags.slice();
+        });
+      });
+    }
+
+    function renderTagsBar() {
+      var bar = $el('ntmTagsBar'); if (!bar) return;
+      var tags = (window.state && window.state.tags) ? window.state.tags : [];
+      bar.innerHTML = selTags.map(function(name) {
+        var tag = tags.find(function(t){ return t.name===name; });
+        return '<span class="ntm-tag-pill" style="background:'+(tag?tag.color:'#888')+'">'+name+'</span>';
+      }).join('');
+    }
+
+    var tBtn = $el('ntmTagBtn'), tDrop = $el('ntmTagsDropdown'), tSrch = $el('ntmTagsSearch');
+    if (tBtn) {
+      tBtn.addEventListener('click', function(e) {
+        e.stopPropagation(); closeAllDropdowns('ntmTagsDropdown');
+        tDrop.classList.toggle('open'); buildTagsList(); if (tSrch) tSrch.focus();
+      });
+    }
+    if (tSrch) tSrch.addEventListener('input', function(){ buildTagsList(tSrch.value); });
+
+    // ── assignee ──
+    function buildAssigneeList(filter) {
+      var list = $el('ntmAssigneeList'); if (!list) return;
+      var members = (window.state && window.state.members) ? window.state.members : [];
+      var q = (filter||'').toLowerCase();
+      var filtered = members.filter(function(m){ return m.name.toLowerCase().includes(q)||(m.email||'').toLowerCase().includes(q); });
+      list.innerHTML = filtered.map(function(m) {
+        return '<div class="ntm-assignee-item" data-name="'+m.name+'">'
+          +'<div style="width:28px;height:28px;border-radius:50%;background:'+(m.color||avatarBg(m.name))
+          +';display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:600;flex-shrink:0">'
+          +(m.avatar||getInitials(m.name))+'</div>'
+          +'<div><div style="font-size:13px">'+m.name+'</div>'
+          +'<div style="font-size:11px;color:var(--text-muted)">'+(m.email||'')+'</div></div>'
+          +(m.name===selAssignee?'<i class="fa-solid fa-check" style="margin-left:auto;color:var(--accent-blue)"></i>':'')
+          +'</div>';
+      }).join('');
+      list.querySelectorAll('.ntm-assignee-item').forEach(function(item) {
+        item.addEventListener('click', function() {
+          selAssignee = item.dataset.name; updateAssigneeChip();
+          $el('ntmAssigneeModal').classList.remove('open');
+        });
+      });
+    }
+
+    function updateAssigneeChip() {
+      var av = $el('ntmAssigneeAvatar'), nm = $el('ntmAssigneeName');
+      if (av) { av.textContent = getInitials(selAssignee); av.style.background = avatarBg(selAssignee); }
+      if (nm) nm.textContent = selAssignee || 'Assigned to';
+      var ha = $el('modalAssignee'); if (ha) ha.value = selAssignee;
+      var sa = $el('ntmSubtaskAssigneeName'); if (sa) sa.textContent = selAssignee;
+      var sav = $el('ntmSubtaskAvatar');
+      if (sav) { sav.textContent = getInitials(selAssignee); sav.style.background = avatarBg(selAssignee); }
+    }
+
+    var aChip = $el('ntmAssigneeChip'), aMod = $el('ntmAssigneeModal'), aSrch = $el('ntmAssigneeSearch');
+    if (aChip && aMod) {
+      aChip.addEventListener('click', function(e) {
+        e.stopPropagation(); closeAllDropdowns('ntmAssigneeModal');
+        var rect = aChip.getBoundingClientRect();
+        aMod.style.top = (rect.bottom+6)+'px'; aMod.style.left = rect.left+'px';
+        aMod.classList.toggle('open'); buildAssigneeList(); if (aSrch) aSrch.focus();
+      });
+    }
+    if (aSrch) aSrch.addEventListener('input', function(){ buildAssigneeList(aSrch.value); });
+
+    // ── dates ──
+    var startInput = $el('modalStartDate'), startVal = $el('ntmStartVal');
+    if (startInput) startInput.addEventListener('change', function(){ if(startVal) startVal.textContent = fmtDate(startInput.value); });
+    var dueInput = $el('modalDueDate'), dueVal = $el('ntmDueVal');
+    if (dueInput) dueInput.addEventListener('change', function(){ if(dueVal) dueVal.textContent = fmtDate(dueInput.value); });
+
+    // ── recurrence ──
+    var recurBtn = $el('modalRecurBtn');
+    if (recurBtn) {
+      recurBtn.addEventListener('click', function() {
+        if (typeof showRecurrenceModal==='function') showRecurrenceModal(function(rec){ if(window.state) window.state.modalRecurrence=rec; });
+      });
+    }
+
+    // ── attachment ──
+    var attachBtn = $el('modalAttachBtn');
+    if (attachBtn) {
+      attachBtn.addEventListener('click', function() {
+        if (typeof handleAttachment==='function') handleAttachment(function(files) {
+          if (window.state) { if(!window.state.modalAttachments) window.state.modalAttachments=[]; window.state.modalAttachments = window.state.modalAttachments.concat(files); }
+        });
+      });
+    }
+
+    // ── reminder ──
+    var remBtn = $el('modalReminderBtn');
+    if (remBtn) {
+      remBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (typeof showReminderModal==='function') showReminderModal(window.state?window.state.modalReminder:null, function(reminder) {
+          if(window.state) window.state.modalReminder=reminder;
+          var lbl = $el('ntmReminderLabel'); if(lbl) lbl.textContent = reminder ? 'Reminder set' : 'Set reminder';
+        });
+      });
+    }
+
+    // ── subtasks ──
+    function renderSubtasksList() {
+      var list = $el('ntmSubtasksList'); if (!list) return;
+      list.innerHTML = mtSubtasks.map(function(st,i) {
+        return '<div class="ntm-subtask-item" data-idx="'+i+'">'
+          +'<input type="checkbox" class="ntm-subtask-check"'+(st.completed?' checked':'')+' data-idx="'+i+'">'
+          +'<span class="ntm-subtask-title'+(st.completed?' done':'')+'">'+st.title+'</span>'
+          +'<button class="ntm-subtask-del" data-idx="'+i+'">x</button>'
+          +'</div>';
+      }).join('');
+      list.querySelectorAll('.ntm-subtask-check').forEach(function(cb) {
+        cb.addEventListener('change', function(){ mtSubtasks[parseInt(cb.dataset.idx)].completed=cb.checked; renderSubtasksList(); });
+      });
+      list.querySelectorAll('.ntm-subtask-del').forEach(function(btn) {
+        btn.addEventListener('click', function(){ mtSubtasks.splice(parseInt(btn.dataset.idx),1); renderSubtasksList(); });
+      });
+      if (window.state) window.state.modalSubtasks = mtSubtasks.slice();
+    }
+
+    function addSubtask() {
+      var inp = $el('modalSubtaskInput'); if (!inp) return;
+      var val = inp.value.trim(); if (!val) return;
+      mtSubtasks.push({id:Date.now(),title:val,completed:false,assignee:selAssignee});
+      inp.value=''; renderSubtasksList();
+    }
+
+    var stInput = $el('modalSubtaskInput');
+    if (stInput) stInput.addEventListener('keydown', function(e){ if(e.key==='Enter') addSubtask(); });
+    var stPlus = document.querySelector('.ntm-subtask-plus');
+    if (stPlus) stPlus.addEventListener('click', addSubtask);
+    var stAddBtn = $el('ntmSubtaskAddBtn');
+    if (stAddBtn) stAddBtn.addEventListener('click', addSubtask);
+
+    // ── save ──
+    var saveBtn = $el('modalSaveBtn');
+    if (saveBtn) {
+      saveBtn.addEventListener('click', async function() {
+        var title = ($el('modalTaskTitle')||{}).value||''; title = title.trim();
+        if (!title) {
+          if($el('modalTaskTitle')) $el('modalTaskTitle').focus();
+          var tip = document.createElement('div');
+          tip.style.cssText='position:fixed;background:#e53e3e;color:#fff;padding:6px 12px;border-radius:6px;font-size:13px;z-index:9999;pointer-events:none';
+          var rect = $el('modalTaskTitle').getBoundingClientRect();
+          tip.style.left=rect.left+'px'; tip.style.top=(rect.top-36)+'px';
+          tip.innerHTML='<i class="fa-solid fa-circle-exclamation"></i> Please enter title';
+          document.body.appendChild(tip); setTimeout(function(){tip.remove();},2000); return;
+        }
+        var catLbl = $el('ntmCatLabel');
+        var task = {
+          title: title,
+          description: ($el('modalDesc')||{}).value||'',
+          status: selStatus,
+          priority: selPriority,
+          group: selGroupId||null,
+          category: catLbl ? catLbl.textContent : '',
+          assignee: selAssignee,
+          dueDate: dueInput?(dueInput.value||null):null,
+          startDate: startInput?(startInput.value||null):null,
+          tags: selTags.slice(),
+          subtasks: mtSubtasks.slice(),
+          recurrence: window.state?window.state.modalRecurrence||null:null,
+          reminder: window.state?window.state.modalReminder||null:null,
+          attachments: window.state?(window.state.modalAttachments||[]).slice():[],
+          createdBy: window.state?window.state.currentUserId:null,
+          createdAt: new Date().toISOString(),
+          modifiedDate: new Date().toISOString(),
+          activity: []
+        };
+        var created = await ShadowDB.Tasks.create(task);
+        if (window.state) window.state.tasks = await ShadowDB.Tasks.getAll();
+        $el('taskModal').style.display='none';
+        if (window.state) { window.state.modalSubtasks=[]; window.state.modalTags=[]; window.state.modalAttachments=[]; window.state.modalRecurrence=null; window.state.modalReminder=null; }
+        if (typeof renderSidebar==='function') renderSidebar();
+        if (typeof renderView==='function') renderView();
+        if (created&&created.id&&typeof showTaskDetail==='function') showTaskDetail(created.id,'panel');
+      });
+    }
+
+    // ── cancel / close ──
+    function closeModal() {
+      var m=$el('taskModal'); if(m) m.style.display='none';
+      closeAllDropdowns(); var am=$el('ntmAssigneeModal'); if(am) am.classList.remove('open');
+    }
+    var cancelBtn=$el('modalCancelBtn'); if(cancelBtn) cancelBtn.addEventListener('click',closeModal);
+    var closeBtn=$el('closeModalBtn');   if(closeBtn)  closeBtn.addEventListener('click',closeModal);
+
+    // ── click-outside ──
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('#ntmStatusWrap'))    { var el=$el('ntmStatusWrap');    if(el) el.classList.remove('open'); }
+      if (!e.target.closest('#ntmGroupBtn') && !e.target.closest('#ntmGroupDropdown'))       { var el=$el('ntmGroupDropdown');   if(el) el.classList.remove('open'); }
+      if (!e.target.closest('#ntmCatBtn')   && !e.target.closest('#ntmCatDropdown'))         { var el=$el('ntmCatDropdown');     if(el) el.classList.remove('open'); }
+      if (!e.target.closest('#ntmPriorityBtn') && !e.target.closest('#ntmPriorityDropdown')) { var el=$el('ntmPriorityDropdown');if(el) el.classList.remove('open'); }
+      if (!e.target.closest('#ntmTagBtn')   && !e.target.closest('#ntmTagsDropdown'))        { var el=$el('ntmTagsDropdown');    if(el) el.classList.remove('open'); }
+      if (!e.target.closest('#ntmAssigneeChip') && !e.target.closest('#ntmAssigneeModal'))   { var el=$el('ntmAssigneeModal');   if(el) el.classList.remove('open'); }
     });
-  }
+
+    // ── reset & open ──
+    function resetAndOpen() {
+      selGroupId=''; selStatus='Open'; selPriority='Medium'; selTags=[]; mtSubtasks=[]; selAssignee='';
+      if (window.state && window.state.members && window.state.members.length) {
+        var owner = window.state.members.find(function(m){ return m.role==='Owner'||m.role==='admin'||m.role==='owner'; });
+        selAssignee = owner ? owner.name : (window.state.members[0]||{}).name||'';
+      }
+      if (!selAssignee && window.state && window.state.tasks) {
+        var t = window.state.tasks.find(function(t){ return t.assignee; });
+        if (t) selAssignee = t.assignee;
+      }
+      var mt=$el('modalTaskTitle'); if(mt) mt.value='';
+      var md=$el('modalDesc');      if(md) md.value='';
+      if(startInput) startInput.value=''; if(startVal) startVal.textContent='Yet to set';
+      if(dueInput)   dueInput.value='';   if(dueVal)   dueVal.textContent='Yet to set';
+      var rl=$el('ntmReminderLabel'); if(rl) rl.textContent='Set reminder';
+      var gl=$el('ntmGroupLabel');    if(gl) gl.textContent='Personal tasks';
+      var hg=$el('modalGroup');
+      if(hg && window.state) {
+        hg.innerHTML='<option value="">Personal tasks</option>'
+          +(window.state.groups||[]).map(function(g){ return '<option value="'+g.id+'">'+g.name+'</option>'; }).join('');
+        hg.value='';
+      }
+      loadCategoriesForGroup(''); loadStatusesForGroup('');
+      updateAssigneeChip(); updatePriorityBtn(); renderSubtasksList(); renderTagsBar();
+      var m=$el('taskModal'); if(m) m.style.display='flex';
+      if($el('modalTaskTitle')) $el('modalTaskTitle').focus();
+    }
+
+    // Wire New Task button
+    var newTaskBtn = $el('newTaskBtn');
+    if (newTaskBtn) {
+      var newBtn = newTaskBtn.cloneNode(true);
+      newTaskBtn.parentNode.replaceChild(newBtn, newTaskBtn);
+      newBtn.addEventListener('click', resetAndOpen);
+    }
+
+    window.ntmResetAndOpen = resetAndOpen;
+
+    // Init
+    updateStatusBtn(); updatePriorityBtn(); loadCategoriesForGroup('');
+    if (window.state && window.state.members && window.state.members.length) {
+      var owner = window.state.members.find(function(m){ return m.role==='Owner'||m.role==='admin'||m.role==='owner'; });
+      selAssignee = owner ? owner.name : (window.state.members[0]||{}).name||'';
+    }
+    if (!selAssignee && window.state && window.state.tasks) {
+      var t0 = window.state.tasks.find(function(t){ return t.assignee; });
+      if (t0) selAssignee = t0.assignee;
+    }
+    updateAssigneeChip();
+  })(); // end initNTM
+
 
   // Task detail close button
   const detailCloseBtn = document.getElementById('detailCloseBtn');
