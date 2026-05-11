@@ -54,7 +54,7 @@ function setupCloseButton() {
     const closeBtn = document.getElementById('closeSettings');
     if (closeBtn) {
         closeBtn.addEventListener('click', () => {
-            window.location.href = 'index.html';
+            document.getElementById('settingsOverlay').style.display='none';
         });
     }
 }
