@@ -128,7 +128,7 @@
   </div>
   <!-- New Task Modal -->
   <!-- Create / Edit Task Modal -->
-<div class="modal-overlay" id="taskModal" style="display:none;"><div class="modal-content task-modal"><div class="tmod-header modal-header"><h3 class="tmod-header-title">New Task</h3><button class="icon-btn close-modal" id="closeModalBtn" title="Close"><i class="fa-solid fa-xmark"></i></button></div><div class="tmod-body modal-body"><div class="tmod-title-wrap"><input type="text" class="tmod-task-title task-title-input" id="modalTaskTitle" placeholder="Task title, @mention assignee"/></div><div class="tmod-meta-grid"><div class="tmod-meta-item"><span class="tmod-meta-label">Status</span><button class="tmod-status-btn" id="modalStatusBtn">Open</button></div><div class="tmod-meta-item"><span class="tmod-meta-label">Assignee</span><div class="tmod-assignee-row"><div class="avatar-sm"><div></div></div><select class="tmod-select inline-select" id="modalAssignee"><option value="">Assigned to</option></select></div></div><div class="tmod-meta-item"><span class="tmod-meta-label">Start Date</span><input type="date" id="modalStartDate" class="tmod-date-input date-input"/></div><div class="tmod-meta-item"><span class="tmod-meta-label">Due Date</span><input type="date" id="modalDueDate" class="tmod-date-input date-input"/></div><div class="tmod-meta-item"><span class="tmod-meta-label">Group</span><select class="tmod-select meta-select" id="modalGroup"><option value="">No group</option></select></div><div class="tmod-meta-item"><span class="tmod-meta-label">Category</span><select class="tmod-select meta-select" id="modalCategory"><option value="General">General</option></select></div><div class="tmod-meta-item"><span class="tmod-meta-label">Priority</span><select class="tmod-select tmod-priority-select priority-select" id="modalPriority"><option value="None">None</option><option value="Low">Low</option><option value="Medium">Medium</option><option value="High">High</option><option value="Critical">Critical</option></select></div><div class="tmod-meta-item"><span class="tmod-meta-label">Reminder</span><button class="tmod-reminder-btn reminder-btn" id="modalReminderBtn"><i class="fa-regular fa-calendar-check"></i> Set reminder</button></div></div><div class="tmod-tags-row"><button class="icon-btn" id="modalTagBtn" title="Add Tags"><i class="fa-solid fa-tag"></i> Tags</button><span id="modalTagsContainer" style="margin-left:8px;"></span></div><div class="tmod-section"><div class="tmod-section-label"><i class="fa-solid fa-align-left"></i> Description</div><textarea id="modalDesc" class="tmod-textarea detail-textarea" placeholder="Add a description..." rows="3"></textarea></div><div class="tmod-section"><div class="tmod-section-label"><i class="fa-regular fa-note-sticky"></i> Notes</div><textarea id="modalNotes" class="tmod-textarea detail-textarea notes-area" placeholder="Add notes..." rows="2"></textarea></div><div class="tmod-section"><div class="tmod-section-label"><i class="fa-solid fa-list-check"></i> Subtasks</div><ul id="modalSubtasksList" class="tmod-subtasks-list"></ul><div class="tmod-add-subtask add-subtask"><i class="fa-solid fa-plus"></i><input type="text" id="modalSubtaskInput" class="tmod-subtask-input" placeholder="Add a subtask..."/><button class="icon-btn" id="modalAddSubtaskBtn" title="Add subtask"><i class="fa-solid fa-plus"></i></button></div></div></div><div class="tmod-footer"><button class="btn-primary tmod-save-btn" id="modalSaveBtn">Save Task</button><button class="btn-secondary tmod-cancel-btn" id="modalCancelBtn">Cancel</button></div></div></div>
+
 <div class="modal-overlay" id="groupModal" style="display:none;">
     <div class="modal-content small-modal">
       <h3>Create Group</h3>
@@ -173,6 +173,146 @@
     <div class="dropdown-item priority-option" data-priority="Medium"><i class="fa-solid fa-exclamation" style="color:#e67e22"></i> Medium</div>
     <div class="dropdown-item priority-option" data-priority="High"><i class="fa-solid fa-exclamation" style="color:#e74c3c"></i> High</div>
   </div>
+  <!-- New Task Modal -->
+<div id="taskModal">
+  <div class="ntm-box">
+    <div class="ntm-topbar">
+      <div class="ntm-status-wrap" id="ntmStatusWrap">
+        <button class="ntm-status-btn" id="ntmStatusBtn">Open <i class="fa-solid fa-chevron-down" style="font-size:9px"></i></button>
+        <div class="ntm-status-menu" id="ntmStatusMenu">
+          <input class="ntm-status-search" id="ntmStatusSearch" placeholder="Search status..." type="text">
+          <div id="ntmStatusList"></div>
+        </div>
+      </div>
+      <div class="ntm-assignee-chip" id="ntmAssigneeChip">
+        <div id="ntmAssigneeAvatar" style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;color:#fff;background:#4285f4;flex-shrink:0">P</div>
+        <div class="ntm-assignee-label"><span>Assigned to</span><strong id="ntmAssigneeName">Pradeep</strong></div>
+      </div>
+      <div class="ntm-date-chip">
+        <span>Start Date</span>
+        <span class="ntm-date-val" id="ntmStartVal">Yet to set</span>
+        <input type="date" class="ntm-date-input-hidden" id="modalStartDate">
+      </div>
+      <div class="ntm-divider"></div>
+      <div class="ntm-date-chip">
+        <span>Due Date</span>
+        <span class="ntm-date-val" id="ntmDueVal">Yet to set</span>
+        <input type="date" class="ntm-date-input-hidden" id="modalDueDate">
+      </div>
+      <div class="ntm-topbar-spacer"></div>
+      <div class="ntm-topbar-actions">
+        <div class="ntm-tag-btn-wrap">
+          <button class="ntm-icon-btn" id="ntmTagBtn" title="Tags"><i class="fa-solid fa-tag"></i></button>
+          <div class="ntm-tags-dropdown" id="ntmTagsDropdown">
+            <input class="ntm-tags-search" id="ntmTagsSearch" placeholder="Search tags..." type="text">
+            <div id="ntmTagsList"></div>
+          </div>
+        </div>
+        <button class="ntm-icon-btn" id="modalRecurBtn" title="Recurrence"><i class="fa-solid fa-repeat"></i></button>
+        <button class="ntm-icon-btn" id="modalAttachBtn" title="Attach file"><i class="fa-solid fa-paperclip"></i></button>
+        <button class="ntm-icon-btn" id="ntmMoreBtn" title="More options"><i class="fa-solid fa-chevron-down"></i></button>
+        <button class="ntm-icon-btn" id="ntmFavBtn" title="Favourite"><i class="fa-regular fa-heart"></i></button>
+      </div>
+      <button class="ntm-close-btn" id="closeModalBtn" title="Close"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="ntm-body">
+      <div class="ntm-title-row">
+        <i class="fa-regular fa-envelope ntm-title-icon"></i>
+        <input type="text" class="ntm-title-input" id="modalTaskTitle" placeholder="Task Title, @mention assignee">
+      </div>
+      <div class="ntm-tags-bar" id="ntmTagsBar" style="padding-left:25px;margin-bottom:6px;"></div>
+      <div class="ntm-chips-row">
+        <span class="ntm-chip-label">in</span>
+        <div style="position:relative">
+          <button class="ntm-group-chip" id="ntmGroupBtn">
+            <i class="fa-solid fa-users" style="font-size:10px"></i>
+            <span id="ntmGroupLabel">Personal tasks</span>
+            <i class="fa-solid fa-chevron-down ntm-chip-caret"></i>
+          </button>
+          <div class="ntm-dropdown" id="ntmGroupDropdown">
+            <input class="ntm-dropdown-search" id="ntmGroupSearch" placeholder="Search groups..." type="text">
+            <div id="ntmGroupList"></div>
+          </div>
+        </div>
+        <span class="ntm-chip-sep">|</span>
+        <span class="ntm-chip-label">under</span>
+        <div style="position:relative">
+          <button class="ntm-cat-chip" id="ntmCatBtn">
+            <span id="ntmCatLabel">General</span>
+            <i class="fa-solid fa-chevron-down ntm-chip-caret"></i>
+          </button>
+          <div class="ntm-dropdown" id="ntmCatDropdown">
+            <input class="ntm-dropdown-search" id="ntmCatSearch" placeholder="Search categories..." type="text">
+            <div id="ntmCatList"></div>
+          </div>
+        </div>
+        <span class="ntm-chip-dot">*</span>
+        <div style="position:relative">
+          <button class="ntm-priority-chip" id="ntmPriorityBtn">
+            <i class="fa-solid fa-circle-exclamation ntm-priority-icon medium" id="ntmPriorityIcon"></i>
+            <span id="ntmPriorityLabel">Medium</span>
+            <i class="fa-solid fa-chevron-down ntm-chip-caret"></i>
+          </button>
+          <div class="ntm-dropdown" id="ntmPriorityDropdown" style="min-width:130px">
+            <div class="ntm-dropdown-item" data-val="High"><i class="fa-solid fa-circle-exclamation" style="color:#e53e3e"></i> High</div>
+            <div class="ntm-dropdown-item" data-val="Medium"><i class="fa-solid fa-circle-exclamation" style="color:#e67e22"></i> Medium</div>
+            <div class="ntm-dropdown-item" data-val="Low"><i class="fa-solid fa-circle-exclamation" style="color:#999"></i> Low</div>
+            <div class="ntm-dropdown-item" data-val="None"><i class="fa-regular fa-circle" style="color:#999"></i> None</div>
+          </div>
+        </div>
+        <span class="ntm-chip-sep">|</span>
+        <button class="ntm-reminder-chip" id="modalReminderBtn">
+          <i class="fa-regular fa-clock"></i>
+          <span id="ntmReminderLabel">Set reminder</span>
+        </button>
+      </div>
+      <div class="ntm-section">
+        <div class="ntm-section-header"><i class="fa-solid fa-align-left"></i><span>Description</span></div>
+        <textarea class="ntm-desc-textarea" id="modalDesc" placeholder="Description"></textarea>
+      </div>
+      <div class="ntm-section">
+        <div class="ntm-subtasks-header">
+          <i class="fa-solid fa-list-check" style="color:var(--text-muted);font-size:13px"></i>
+          <span>Subtasks</span>
+          <button class="ntm-subtask-add-btn" id="ntmSubtaskAddBtn" title="Add subtask">+</button>
+        </div>
+        <div id="ntmSubtasksList"></div>
+        <div class="ntm-subtask-row-input">
+          <span class="ntm-subtask-plus">+</span>
+          <input type="text" class="ntm-subtask-input" id="modalSubtaskInput" placeholder="Subtask Title, @mention assignee">
+          <div class="ntm-subtask-assignee-chip" id="ntmSubtaskAssignee">
+            <div id="ntmSubtaskAvatar" style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#fff;background:#4285f4;flex-shrink:0">P</div>
+            <span id="ntmSubtaskAssigneeName">Pradeep</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="ntm-footer">
+      <button class="ntm-save-btn" id="modalSaveBtn">Save</button>
+      <button class="ntm-cancel-btn" id="modalCancelBtn">Cancel</button>
+    </div>
+  </div>
+  <select id="modalGroup" class="ntm-hidden"><option value="">Personal tasks</option></select>
+  <select id="modalCategory" class="ntm-hidden"></select>
+  <select id="modalAssignee" class="ntm-hidden"></select>
+  <select id="modalPriority" class="ntm-hidden">
+    <option value="High">High</option>
+    <option value="Medium" selected>Medium</option>
+    <option value="Low">Low</option>
+    <option value="None">None</option>
+  </select>
+  <input type="hidden" id="modalStatus" value="Open">
+  <button id="modalStatusBtn" class="ntm-hidden"></button>
+  <button id="modalTagBtn" class="ntm-hidden"></button>
+  <button id="modalAddSubtaskBtn" class="ntm-hidden"></button>
+  <div id="modalSubtasksList" class="ntm-hidden"></div>
+  <div id="modalTagsContainer" class="ntm-hidden"></div>
+  <div class="ntm-assignee-modal" id="ntmAssigneeModal">
+    <div class="ntm-assignee-modal-title">Assignees</div>
+    <input class="ntm-assignee-search" id="ntmAssigneeSearch" placeholder="Select up to 5 assignees" type="text">
+    <div id="ntmAssigneeList"></div>
+  </div>
+</div>
   <script src="backend.js"></script>
   <script src="approval-backend.js"></script>
   <script src="approval-ui.js"></script>
