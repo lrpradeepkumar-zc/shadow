@@ -1784,76 +1784,192 @@ function renderListView() {
     }
     if (aSrch) aSrch.addEventListener('input', function(){ buildAssigneeList(aSrch.value); });
 
-    // ── dates ──
-    var startInput = $el('modalStartDate'), startVal = $el('ntmStartVal');
-    if (startInput) startInput.addEventListener('change', function(){ if(startVal) startVal.textContent = fmtDate(startInput.value); });
-    var dueInput = $el('modalDueDate'), dueVal = $el('ntmDueVal');
-    if (dueInput) dueInput.addEventListener('change', function(){ if(dueVal) dueVal.textContent = fmtDate(dueInput.value); });
+    // ── custom date picker ──
+  var selStartDate = null; // stores 'YYYY-MM-DD' string
+  var selDueDate = null;
 
-    // ── recurrence ──
-    var recurBtn = $el('modalRecurBtn');
-    if (recurBtn) {
-      recurBtn.addEventListener('click', function() {
-        if (typeof showRecurrenceModal==='function') showRecurrenceModal(function(rec){ if(window.state) window.state.modalRecurrence=rec; });
-      });
+  function buildNtmDatePicker(anchorEl, currentVal, onConfirm) {
+    var existing = document.getElementById('ntmCustomDatePicker');
+    if (existing) existing.remove();
+    var selDate = currentVal ? new Date(currentVal + 'T12:00:00') : new Date();
+    var viewYear = selDate.getFullYear();
+    var viewMonth = selDate.getMonth();
+    var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    var DAYS_H = ['S','M','T','W','T','F','S'];
+
+    function createPicker() {
+      var div = document.createElement('div');
+      div.id = 'ntmCustomDatePicker';
+      div.style.cssText = 'position:fixed;z-index:99999;background:var(--bg-primary,#fff);border:1px solid var(--border-color,#e2e8f0);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.18);padding:16px;min-width:285px;font-family:inherit;';
+      document.body.appendChild(div);
+      var rect = anchorEl.getBoundingClientRect();
+      var top = rect.bottom + 6;
+      var left = rect.left;
+      if (left + 305 > window.innerWidth) left = window.innerWidth - 313;
+      if (top + 330 > window.innerHeight) top = rect.top - 338;
+      div.style.top = top + 'px';
+      div.style.left = left + 'px';
+      return div;
     }
 
-    // ── attachment ──
-    var attachBtn = $el('modalAttachBtn');
-    if (attachBtn) {
-      attachBtn.addEventListener('click', function() {
-        if (typeof handleAttachment==='function') handleAttachment(function(files) {
-          if (window.state) { if(!window.state.modalAttachments) window.state.modalAttachments=[]; window.state.modalAttachments = window.state.modalAttachments.concat(files); }
+    function fmtHrs(d) { var h = d.getHours() % 12; return h === 0 ? '12' : String(h).padStart(2,'0'); }
+    function fmtMins(d) { return String(d.getMinutes()).padStart(2,'0'); }
+    function isAM(d) { return d.getHours() < 12; }
+
+    function buildHTML() {
+      var firstDay = new Date(viewYear, viewMonth, 1).getDay();
+      var daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+      var selY = selDate.getFullYear(), selM = selDate.getMonth(), selD = selDate.getDate();
+      var today = new Date();
+      var prevDays = new Date(viewYear, viewMonth, 0).getDate();
+      var h = fmtHrs(selDate), m = fmtMins(selDate), ampm = isAM(selDate) ? 'AM' : 'PM';
+
+      var btnBase = 'background:none;border:1px solid var(--border-color,#e2e8f0);border-radius:4px;width:26px;height:26px;cursor:pointer;color:var(--text-muted,#718096);font-size:';
+      var html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">';
+      html += '<span style="font-weight:600;font-size:14px;color:var(--text-primary,#1a202c)">'+MONTHS[viewMonth]+' '+viewYear+'</span>';
+      html += '<div style="display:flex;gap:3px;">';
+      html += '<button class="ntm-dp-nav" data-a="py" style="'+btnBase+'10px;">«</button>';
+      html += '<button class="ntm-dp-nav" data-a="pm" style="'+btnBase+'15px;">‹</button>';
+      html += '<button class="ntm-dp-nav" data-a="nm" style="'+btnBase+'15px;">›</button>';
+      html += '<button class="ntm-dp-nav" data-a="ny" style="'+btnBase+'10px;">»</button>';
+      html += '</div></div>';
+
+      html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;margin-bottom:3px;">';
+      DAYS_H.forEach(function(d){ html += '<div style="text-align:center;font-size:10px;font-weight:500;color:var(--text-muted,#718096);padding:3px 0;">'+d+'</div>'; });
+      html += '</div>';
+
+      html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;">';
+      for (var i = 0; i < firstDay; i++) {
+        var pd = prevDays - firstDay + i + 1;
+        html += '<button class="ntm-dp-prev" data-pd="'+pd+'" style="text-align:center;padding:5px 1px;border:none;background:none;font-size:11px;color:var(--text-muted,#cbd5e0);border-radius:5px;cursor:pointer;">'+pd+'</button>';
+      }
+      for (var d = 1; d <= daysInMonth; d++) {
+        var isSel = (d === selD && viewMonth === selM && viewYear === selY);
+        var isToday = (d === today.getDate() && viewMonth === today.getMonth() && viewYear === today.getFullYear());
+        var st;
+        if (isSel) st = 'background:#4a6cf7;color:#fff;font-weight:600;';
+        else if (isToday) st = 'background:none;border:2px solid #4a6cf7;color:#4a6cf7;font-weight:600;';
+        else st = 'background:none;border:none;color:var(--text-primary,#1a202c);';
+        html += '<button class="ntm-dp-day" data-d="'+d+'" style="text-align:center;padding:5px 1px;border-radius:5px;cursor:pointer;font-size:12px;'+st+'">'+d+'</button>';
+      }
+      var lastDay = new Date(viewYear, viewMonth, daysInMonth).getDay();
+      for (var n = 1; lastDay + n < 7; n++) {
+        html += '<button class="ntm-dp-next" data-nd="'+n+'" style="text-align:center;padding:5px 1px;border:none;background:none;font-size:11px;color:var(--text-muted,#cbd5e0);border-radius:5px;cursor:pointer;">'+n+'</button>';
+      }
+      html += '</div>';
+
+      html += '<div style="display:flex;align-items:center;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border-color,#e2e8f0);">';
+      html += '<input id="ntmDpTime" type="text" value="'+h+':'+m+'" maxlength="5" style="width:58px;border:1px solid var(--border-color,#e2e8f0);border-radius:6px;padding:4px 6px;font-size:13px;text-align:center;background:var(--bg-secondary,#f7fafc);color:var(--text-primary,#1a202c);">';
+      html += '<div style="display:flex;border:1px solid var(--border-color,#e2e8f0);border-radius:6px;overflow:hidden;">';
+      html += '<button id="ntmDpAM" style="padding:4px 9px;border:none;background:'+(ampm==='AM'?'#4a6cf7':'var(--bg-secondary,#f7fafc)')+';color:'+(ampm==='AM'?'#fff':'var(--text-muted,#718096)')+';cursor:pointer;font-size:11px;font-weight:500;">AM</button>';
+      html += '<button id="ntmDpPM" style="padding:4px 9px;border:none;background:'+(ampm==='PM'?'#4a6cf7':'var(--bg-secondary,#f7fafc)')+';color:'+(ampm==='PM'?'#fff':'var(--text-muted,#718096)')+';cursor:pointer;font-size:11px;font-weight:500;">PM</button>';
+      html += '</div>';
+      html += '<div style="flex:1"></div>';
+      html += '<button id="ntmDpOk" style="background:#4a6cf7;color:#fff;border:none;border-radius:6px;padding:5px 16px;font-size:13px;font-weight:600;cursor:pointer;">Ok</button>';
+      html += '</div>';
+      return html;
+    }
+
+    function wireEvents(picker) {
+      picker.querySelectorAll('.ntm-dp-nav').forEach(function(btn){
+        btn.addEventListener('click', function(e){ e.stopPropagation();
+          var a = btn.dataset.a;
+          if (a==='pm'){viewMonth--;if(viewMonth<0){viewMonth=11;viewYear--;}}
+          else if (a==='nm'){viewMonth++;if(viewMonth>11){viewMonth=0;viewYear++;}}
+          else if (a==='py'){viewYear--;}
+          else if (a==='ny'){viewYear++;}
+          render();
         });
       });
-    }
-
-    // ── reminder ──
-    var remBtn = $el('modalReminderBtn');
-    if (remBtn) {
-      remBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        if (typeof showReminderModal==='function') showReminderModal(window.state?window.state.modalReminder:null, function(reminder) {
-          if(window.state) window.state.modalReminder=reminder;
-          var lbl = $el('ntmReminderLabel'); if(lbl) lbl.textContent = reminder ? 'Reminder set' : 'Set reminder';
+      picker.querySelectorAll('.ntm-dp-day').forEach(function(btn){
+        btn.addEventListener('click', function(e){ e.stopPropagation();
+          selDate = new Date(viewYear, viewMonth, parseInt(btn.dataset.d), selDate.getHours(), selDate.getMinutes());
+          render();
         });
       });
-    }
-
-    // ── subtasks ──
-    function renderSubtasksList() {
-      var list = $el('ntmSubtasksList'); if (!list) return;
-      list.innerHTML = mtSubtasks.map(function(st,i) {
-        return '<div class="ntm-subtask-item" data-idx="'+i+'">'
-          +'<input type="checkbox" class="ntm-subtask-check"'+(st.completed?' checked':'')+' data-idx="'+i+'">'
-          +'<span class="ntm-subtask-title'+(st.completed?' done':'')+'">'+st.title+'</span>'
-          +'<button class="ntm-subtask-del" data-idx="'+i+'">x</button>'
-          +'</div>';
-      }).join('');
-      list.querySelectorAll('.ntm-subtask-check').forEach(function(cb) {
-        cb.addEventListener('change', function(){ mtSubtasks[parseInt(cb.dataset.idx)].completed=cb.checked; renderSubtasksList(); });
+      picker.querySelectorAll('.ntm-dp-prev').forEach(function(btn){
+        btn.addEventListener('click', function(e){ e.stopPropagation();
+          viewMonth--; if(viewMonth<0){viewMonth=11;viewYear--;}
+          selDate = new Date(viewYear, viewMonth, parseInt(btn.dataset.pd), selDate.getHours(), selDate.getMinutes());
+          render();
+        });
       });
-      list.querySelectorAll('.ntm-subtask-del').forEach(function(btn) {
-        btn.addEventListener('click', function(){ mtSubtasks.splice(parseInt(btn.dataset.idx),1); renderSubtasksList(); });
+      picker.querySelectorAll('.ntm-dp-next').forEach(function(btn){
+        btn.addEventListener('click', function(e){ e.stopPropagation();
+          viewMonth++; if(viewMonth>11){viewMonth=0;viewYear++;}
+          selDate = new Date(viewYear, viewMonth, parseInt(btn.dataset.nd), selDate.getHours(), selDate.getMinutes());
+          render();
+        });
       });
-      if (window.state) window.state.modalSubtasks = mtSubtasks.slice();
+      var amBtn = picker.querySelector('#ntmDpAM');
+      var pmBtn = picker.querySelector('#ntmDpPM');
+      if (amBtn) amBtn.addEventListener('click', function(e){ e.stopPropagation(); if(selDate.getHours()>=12) selDate.setHours(selDate.getHours()-12); render(); });
+      if (pmBtn) pmBtn.addEventListener('click', function(e){ e.stopPropagation(); if(selDate.getHours()<12) selDate.setHours(selDate.getHours()+12); render(); });
+      var tIn = picker.querySelector('#ntmDpTime');
+      if (tIn) tIn.addEventListener('blur', function(e){ e.stopPropagation();
+        var parts = tIn.value.split(':');
+        var hh = parseInt(parts[0])||0, mm = parseInt(parts[1])||0;
+        if (selDate.getHours()>=12 && hh<12) hh+=12;
+        if (selDate.getHours()<12 && hh===12) hh=0;
+        selDate.setHours(hh, mm);
+        render();
+      });
+      var okBtn = picker.querySelector('#ntmDpOk');
+      if (okBtn) okBtn.addEventListener('click', function(e){ e.stopPropagation();
+        var y=selDate.getFullYear(), mo=String(selDate.getMonth()+1).padStart(2,'0'), dy=String(selDate.getDate()).padStart(2,'0');
+        onConfirm(y+'-'+mo+'-'+dy, selDate);
+        picker.remove();
+        document.removeEventListener('click', onOutside, true);
+      });
     }
 
-    function addSubtask() {
-      var inp = $el('modalSubtaskInput'); if (!inp) return;
-      var val = inp.value.trim(); if (!val) return;
-      mtSubtasks.push({id:Date.now(),title:val,completed:false,assignee:selAssignee});
-      inp.value=''; renderSubtasksList();
+    function render() {
+      var picker = document.getElementById('ntmCustomDatePicker') || createPicker();
+      picker.innerHTML = buildHTML();
+      wireEvents(picker);
     }
 
-    var stInput = $el('modalSubtaskInput');
-    if (stInput) stInput.addEventListener('keydown', function(e){ if(e.key==='Enter') addSubtask(); });
-    var stPlus = document.querySelector('.ntm-subtask-plus');
-    if (stPlus) stPlus.addEventListener('click', addSubtask);
-    var stAddBtn = $el('ntmSubtaskAddBtn');
-    if (stAddBtn) stAddBtn.addEventListener('click', addSubtask);
+    function onOutside(e) {
+      var picker = document.getElementById('ntmCustomDatePicker');
+      if (picker && !picker.contains(e.target) && !anchorEl.contains(e.target)) {
+        picker.remove();
+        document.removeEventListener('click', onOutside, true);
+      }
+    }
+    setTimeout(function(){ document.addEventListener('click', onOutside, true); }, 50);
+    render();
+  }
 
-    // ── save ──
+  function fmtDateDisp(val) {
+    if (!val) return 'Yet to set';
+    var d = new Date(val + 'T00:00:00');
+    return d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+  }
+
+  var startChip = document.querySelector('.ntm-date-chip:first-of-type'), startValEl = $el('ntmStartVal');
+  var dueChip = null, dueValEl = $el('ntmDueVal');
+  var allChips = document.querySelectorAll('.ntm-date-chip');
+  if (allChips.length >= 1) startChip = allChips[0];
+  if (allChips.length >= 2) dueChip = allChips[1];
+
+  if (startChip) startChip.addEventListener('click', function(e){
+    e.stopPropagation();
+    var existing = document.getElementById('ntmCustomDatePicker');
+    if (existing) { existing.remove(); return; }
+    buildNtmDatePicker(startChip, selStartDate, function(val){
+      selStartDate = val;
+      if (startValEl) startValEl.textContent = fmtDateDisp(val);
+    });
+  });
+  if (dueChip) dueChip.addEventListener('click', function(e){
+    e.stopPropagation();
+    var existing = document.getElementById('ntmCustomDatePicker');
+    if (existing) { existing.remove(); return; }
+    buildNtmDatePicker(dueChip, selDueDate, function(val){
+      selDueDate = val;
+      if (dueValEl) dueValEl.textContent = fmtDateDisp(val);
+    });
+  });// ── save ──
     var saveBtn = $el('modalSaveBtn');
     if (saveBtn) {
       saveBtn.addEventListener('click', async function() {
@@ -1876,8 +1992,8 @@ function renderListView() {
           group: selGroupId||null,
           category: catLbl ? catLbl.textContent : '',
           assignee: selAssignee,
-          dueDate: dueInput?(dueInput.value||null):null,
-          startDate: startInput?(startInput.value||null):null,
+          dueDate: selDueDate||null,
+          startDate: selStartDate||null,
           tags: selTags.slice(),
           subtasks: mtSubtasks.slice(),
           recurrence: window.state?window.state.modalRecurrence||null:null,
@@ -1929,8 +2045,9 @@ function renderListView() {
       }
       var mt=$el('modalTaskTitle'); if(mt) mt.value='';
       var md=$el('modalDesc');      if(md) md.value='';
-      if(startInput) startInput.value=''; if(startVal) startVal.textContent='Yet to set';
-      if(dueInput)   dueInput.value='';   if(dueVal)   dueVal.textContent='Yet to set';
+      selStartDate=null; selDueDate=null;
+      if($el('ntmStartVal')) $el('ntmStartVal').textContent='Yet to set';
+      if($el('ntmDueVal')) $el('ntmDueVal').textContent='Yet to set';
       var rl=$el('ntmReminderLabel'); if(rl) rl.textContent='Set reminder';
       var gl=$el('ntmGroupLabel');    if(gl) gl.textContent='Personal tasks';
       var hg=$el('modalGroup');
