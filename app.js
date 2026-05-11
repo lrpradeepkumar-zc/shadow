@@ -1970,7 +1970,7 @@ function renderListView() {
       if (dueValEl) dueValEl.textContent = fmtDateDisp(val);
     });
   });
-recurBtn = $el('modalRecurBtn');
+    var recurBtn = $el('modalRecurBtn');
     if (recurBtn) {
       recurBtn.addEventListener('click', function() {
         if (typeof showRecurrenceModal==='function') showRecurrenceModal(function(rec){ if(window.state) window.state.modalRecurrence=rec; });
