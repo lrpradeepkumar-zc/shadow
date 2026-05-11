@@ -1969,7 +1969,70 @@ function renderListView() {
       selDueDate = val;
       if (dueValEl) dueValEl.textContent = fmtDateDisp(val);
     });
-  });// ── save ──
+  });
+recurBtn = $el('modalRecurBtn');
+    if (recurBtn) {
+      recurBtn.addEventListener('click', function() {
+        if (typeof showRecurrenceModal==='function') showRecurrenceModal(function(rec){ if(window.state) window.state.modalRecurrence=rec; });
+      });
+    }
+
+    // ── attachment ──
+    var attachBtn = $el('modalAttachBtn');
+    if (attachBtn) {
+      attachBtn.addEventListener('click', function() {
+        if (typeof handleAttachment==='function') handleAttachment(function(files) {
+          if (window.state) { if(!window.state.modalAttachments) window.state.modalAttachments=[]; window.state.modalAttachments = window.state.modalAttachments.concat(files); }
+        });
+      });
+    }
+
+    // ── reminder ──
+    var remBtn = $el('modalReminderBtn');
+    if (remBtn) {
+      remBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (typeof showReminderModal==='function') showReminderModal(window.state?window.state.modalReminder:null, function(reminder) {
+          if(window.state) window.state.modalReminder=reminder;
+          var lbl = $el('ntmReminderLabel'); if(lbl) lbl.textContent = reminder ? 'Reminder set' : 'Set reminder';
+        });
+      });
+    }
+
+    // ── subtasks ──
+    function renderSubtasksList() {
+      var list = $el('ntmSubtasksList'); if (!list) return;
+      list.innerHTML = mtSubtasks.map(function(st,i) {
+        return '<div class="ntm-subtask-item" data-idx="'+i+'">'
+          +'<input type="checkbox" class="ntm-subtask-check"'+(st.completed?' checked':'')+' data-idx="'+i+'">'
+          +'<span class="ntm-subtask-title'+(st.completed?' done':'')+'">'+st.title+'</span>'
+          +'<button class="ntm-subtask-del" data-idx="'+i+'">x</button>'
+          +'</div>';
+      }).join('');
+      list.querySelectorAll('.ntm-subtask-check').forEach(function(cb) {
+        cb.addEventListener('change', function(){ mtSubtasks[parseInt(cb.dataset.idx)].completed=cb.checked; renderSubtasksList(); });
+      });
+      list.querySelectorAll('.ntm-subtask-del').forEach(function(btn) {
+        btn.addEventListener('click', function(){ mtSubtasks.splice(parseInt(btn.dataset.idx),1); renderSubtasksList(); });
+      });
+      if (window.state) window.state.modalSubtasks = mtSubtasks.slice();
+    }
+
+    function addSubtask() {
+      var inp = $el('modalSubtaskInput'); if (!inp) return;
+      var val = inp.value.trim(); if (!val) return;
+      mtSubtasks.push({id:Date.now(),title:val,completed:false,assignee:selAssignee});
+      inp.value=''; renderSubtasksList();
+    }
+
+    var stInput = $el('modalSubtaskInput');
+    if (stInput) stInput.addEventListener('keydown', function(e){ if(e.key==='Enter') addSubtask(); });
+    var stPlus = document.querySelector('.ntm-subtask-plus');
+    if (stPlus) stPlus.addEventListener('click', addSubtask);
+    var stAddBtn = $el('ntmSubtaskAddBtn');
+    if (stAddBtn) stAddBtn.addEventListener('click', addSubtask);
+
+    // ── save ──
     var saveBtn = $el('modalSaveBtn');
     if (saveBtn) {
       saveBtn.addEventListener('click', async function() {
