@@ -388,7 +388,7 @@ if (typeof ApprovalUI !== 'undefined') {
   };
 
   function injectBadge(type) {
-    var headerRight = document.querySelector('.detail-header-right');
+    var headerRight = document.querySelector('.tdp-header-actions');
     if (!headerRight) return;
     var old = headerRight.querySelector('.approval-header-badge,.request-approval-header-btn');
     if (old) old.remove();
@@ -405,7 +405,7 @@ if (typeof ApprovalUI !== 'undefined') {
   }
 
   function injectRequestBtn(task, groupId) {
-    var headerRight = document.querySelector('.detail-header-right');
+    var headerRight = document.querySelector('.tdp-header-actions');
     if (!headerRight) return;
     var old = headerRight.querySelector('.approval-header-badge,.request-approval-header-btn');
     if (old) old.remove();
@@ -608,47 +608,50 @@ if (typeof ApprovalUI !== 'undefined') {
 }
 
 /* ═══════════════════════════════════════════════
-   PART 4 — MutationObserver on taskDetailPanel (C2+C3)
-   Works regardless of how showTaskDetail is called (closure or global)
+   PART 4 — Poll-based task detail approval injector (C2+C3)
+   Uses setInterval to reliably detect task panel open state
    ═══════════════════════════════════════════════ */
 function setupTaskDetailObserver() {
   if (window._approvalObserverPatched) return;
   window._approvalObserverPatched = true;
-  var panel = document.getElementById('taskDetailPanel');
-  if (!panel) { setTimeout(setupTaskDetailObserver, 500); return; }
-  var lastTaskId = null;
-  var obs = new MutationObserver(function() {
-    var isOpen = panel.classList.contains('open') || panel.style.display === 'flex';
-    if (!isOpen) { lastTaskId = null; return; }
-    var s = window.state;
-    var taskId = s && s.selectedTaskId;
-    if (!taskId || taskId === lastTaskId) return;
-    lastTaskId = taskId;
-    setTimeout(async function() {
-      try {
-        var task = s.tasks && s.tasks.find(function(t){return t.id===taskId;});
-        if (!task || !task.group) return;
-        var settings = await ApprovalWorkflow.Settings.get(task.group);
-        if (!settings.enabled) return;
-        panel.querySelectorAll('.approval-request-section,.approval-audit-trail,.task-lock-banner,.approval-status-strip').forEach(function(el){el.remove();});
-        var hdr = document.querySelector('.approval-header-badge,.request-approval-header-btn');
-        if (hdr) hdr.remove();
-        var reqSec = ApprovalUI.renderRequestButton(task, task.group);
-        var db = panel.querySelector('.detail-body');
-        if (db) db.insertBefore(reqSec, db.firstChild);
-        setTimeout(async function() {
+  var lastInjectedTaskId = null;
+  setInterval(async function() {
+    try {
+      var panel = document.getElementById('taskDetailPanel');
+      if (!panel) return;
+      var isOpen = panel.classList.contains('open') || panel.style.display === 'flex';
+      if (!isOpen) { lastInjectedTaskId = null; return; }
+      var s = window.state;
+      if (!s) return;
+      var taskId = s.selectedTaskId;
+      if (!taskId || taskId === lastInjectedTaskId) return;
+      lastInjectedTaskId = taskId;
+      var task = s.tasks && s.tasks.find(function(t){return t.id===taskId;});
+      if (!task || !task.group) return;
+      var settings = await ApprovalWorkflow.Settings.get(task.group);
+      if (!settings.enabled) return;
+      // Clean up old approval UI
+      panel.querySelectorAll('.approval-request-section,.approval-audit-trail,.task-lock-banner,.approval-status-strip').forEach(function(el){el.remove();});
+      document.querySelectorAll('.approval-header-badge,.request-approval-header-btn').forEach(function(el){el.remove();});
+      // Insert approval section at top of .tdp-body
+      var reqSec = ApprovalUI.renderRequestButton(task, task.group);
+      var tdpBody = panel.querySelector('.tdp-body');
+      if (tdpBody) tdpBody.insertBefore(reqSec, tdpBody.firstChild);
+      else panel.insertBefore(reqSec, panel.children[1] || panel.firstChild);
+      // Insert audit trail after a short delay
+      setTimeout(async function() {
+        try {
           var tl = panel.querySelector('#timelineList');
           if (tl && tl.parentNode) {
             var ex = panel.querySelector('.approval-audit-trail'); if(ex) ex.remove();
             tl.parentNode.insertBefore(ApprovalUI.renderAuditTrail(taskId), tl);
           }
           ApprovalUI.applyFieldLocks(panel, taskId);
-        }, 400);
-      } catch(e) { console.warn('[ApprovalPatch] observer error:', e.message); }
-    }, 200);
-  });
-  obs.observe(panel, {attributes:true, attributeFilter:['class','style']});
-  console.log('[ApprovalPatch] TaskDetail MutationObserver installed');
+        } catch(e2) {}
+      }, 400);
+    } catch(e) { /* silent */ }
+  }, 600);
+  console.log('[ApprovalPatch] Task detail approval poller installed (600ms)');
 }
 
 /* ═══════════════════════════════════════════════
@@ -788,7 +791,7 @@ function setupRefreshListener() {
     if (!settings.enabled) return;
 
     var reqSection = ApprovalUI.renderRequestButton(task, groupId);
-    var detailBody = panel.querySelector('.detail-body');
+    var detailBody = panel.querySelector('.tdp-body');
     if (detailBody) detailBody.insertBefore(reqSection, detailBody.firstChild);
 
     setTimeout(async function() {
