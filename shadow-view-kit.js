@@ -793,4 +793,231 @@ window.ShadowViewKit = {
   renderList: function(c,t,x){ SVK.renderList(c,t,x); }
 };
 
+// ── Settings Merge: Group Settings → Master Settings ─────────
+// Merges the small group settings modal into the master settings page.
+// Clicking the gear icon on a group now opens master settings,
+// navigates to the group, and lands on Task Settings.
+// Also adds Preferences + Workflows & Rules tabs to the group detail.
+(function svkSettingsMerge() {
+
+  function injectMergedGroupTabs() {
+    var gd = document.getElementById('groupDetailView');
+    if (!gd) return;
+    var tabsContainer = gd.querySelector('.group-detail-tabs');
+    if (!tabsContainer) return;
+
+    if (!tabsContainer.querySelector('[data-tab="preferences"]')) {
+      var prefBtn = document.createElement('button');
+      prefBtn.className = 'group-tab';
+      prefBtn.dataset.tab = 'preferences';
+      prefBtn.textContent = 'Preferences';
+      tabsContainer.appendChild(prefBtn);
+    }
+
+    if (!tabsContainer.querySelector('[data-tab="workflows"]')) {
+      var wfBtn = document.createElement('button');
+      wfBtn.className = 'group-tab';
+      wfBtn.dataset.tab = 'workflows';
+      wfBtn.textContent = 'Workflows & Rules';
+      tabsContainer.appendChild(wfBtn);
+    }
+
+    if (!document.getElementById('tab-preferences')) {
+      var prefContent = document.createElement('div');
+      prefContent.className = 'group-tab-content';
+      prefContent.id = 'tab-preferences';
+      prefContent.innerHTML = '<div id="svk-prefs-body"></div>';
+      var tsc = document.getElementById('tab-taskSettings');
+      if (tsc && tsc.parentNode) tsc.parentNode.insertBefore(prefContent, tsc.nextSibling);
+      else gd.appendChild(prefContent);
+    }
+
+    if (!document.getElementById('tab-workflows')) {
+      var wfContent = document.createElement('div');
+      wfContent.className = 'group-tab-content';
+      wfContent.id = 'tab-workflows';
+      wfContent.innerHTML = '<div id="svk-workflows-body"></div>';
+      var pce = document.getElementById('tab-preferences');
+      if (pce && pce.parentNode) pce.parentNode.insertBefore(wfContent, pce.nextSibling);
+      else gd.appendChild(wfContent);
+    }
+
+    tabsContainer.querySelectorAll('.group-tab').forEach(function(tab) {
+      if (!tab._svkWired) {
+        tab._svkWired = true;
+        tab.addEventListener('click', function() {
+          tabsContainer.querySelectorAll('.group-tab').forEach(function(t){ t.classList.remove('active'); });
+          tab.classList.add('active');
+          document.querySelectorAll('.group-tab-content').forEach(function(c){ c.classList.remove('active'); });
+          var tgt = document.getElementById('tab-' + tab.dataset.tab);
+          if (tgt) tgt.classList.add('active');
+          if (tab.dataset.tab === 'preferences') svkRenderPreferences();
+          if (tab.dataset.tab === 'workflows') svkRenderWorkflows();
+        });
+      }
+    });
+  }
+
+  function svkRenderPreferences() {
+    var body = document.getElementById('svk-prefs-body');
+    if (!body) return;
+    var groupId = (typeof currentGroupId !== 'undefined') ? currentGroupId : null;
+    var group = groupId && window.state ? (window.state.groups||[]).find(function(g){return g.id===groupId;}) : null;
+    if (!group) { body.innerHTML = '<p style="color:var(--text-secondary);padding:16px;">No group selected.</p>'; return; }
+
+    var esc = SVK.esc || function(s){ return s == null ? '' : String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); };
+    body.innerHTML = '<div style="display:flex;flex-direction:column;gap:16px;padding:4px 0;">'
+      + '<label style="display:flex;flex-direction:column;gap:4px;font-size:13px;">'
+      + '<span style="color:var(--text-secondary,#64748b);font-size:12px;">Group name</span>'
+      + '<input id="svkPrefName" type="text" value="' + esc(group.name||'') + '" style="padding:8px 10px;border:1px solid var(--border-color,#334155);background:var(--bg-secondary,#0f172a);color:inherit;border-radius:7px;font-size:13px;">'
+      + '</label>'
+      + '<label style="display:flex;flex-direction:column;gap:4px;font-size:13px;">'
+      + '<span style="color:var(--text-secondary,#64748b);font-size:12px;">Description</span>'
+      + '<textarea id="svkPrefDesc" rows="3" style="padding:8px 10px;border:1px solid var(--border-color,#334155);background:var(--bg-secondary,#0f172a);color:inherit;border-radius:7px;font-size:13px;resize:vertical;">' + esc(group.description||'') + '</textarea>'
+      + '</label>'
+      + '<label style="display:flex;flex-direction:column;gap:4px;font-size:13px;">'
+      + '<span style="color:var(--text-secondary,#64748b);font-size:12px;">Default categories (comma-separated)</span>'
+      + '<input id="svkPrefCats" type="text" value="' + esc((group.defaultCategories||[]).join(', ')) + '" style="padding:8px 10px;border:1px solid var(--border-color,#334155);background:var(--bg-secondary,#0f172a);color:inherit;border-radius:7px;font-size:13px;">'
+      + '</label>'
+      + '<div><button id="svkPrefSave" style="padding:8px 20px;border:none;border-radius:7px;background:var(--accent,#4285f4);color:#fff;font-size:13px;cursor:pointer;font-weight:500;display:inline-flex;align-items:center;gap:6px;"><i class=\'fa-solid fa-save\'></i>Save Preferences</button></div>'
+      + '</div>';
+
+    var saveBtn = body.querySelector('#svkPrefSave');
+    if (saveBtn) saveBtn.addEventListener('click', async function() {
+      var patch = {
+        name: (body.querySelector('#svkPrefName').value||'').trim() || group.name,
+        description: body.querySelector('#svkPrefDesc').value,
+        defaultCategories: body.querySelector('#svkPrefCats').value.split(',').map(function(s){return s.trim();}).filter(Boolean)
+      };
+      Object.assign(group, patch);
+      try {
+        if (window.ShadowDB && window.ShadowDB.Groups && window.ShadowDB.Groups.update) {
+          await window.ShadowDB.Groups.update(groupId, patch);
+        }
+        if (typeof window.renderSidebar === 'function') window.renderSidebar();
+        var titleEl = document.getElementById('groupDetailName');
+        if (titleEl) titleEl.textContent = group.name;
+        saveBtn.innerHTML = '<i class=\'fa-solid fa-check\'></i> Saved!';
+        setTimeout(function(){ saveBtn.innerHTML = '<i class=\'fa-solid fa-save\'></i> Save Preferences'; }, 2000);
+      } catch(e) { alert('Could not save: ' + e.message); }
+    });
+  }
+
+  function svkRenderWorkflows() {
+    var body = document.getElementById('svk-workflows-body');
+    if (!body) return;
+    var groupId = (typeof currentGroupId !== 'undefined') ? currentGroupId : null;
+    if (!groupId) { body.innerHTML = '<p style="color:var(--text-secondary);padding:16px;">No group selected.</p>'; return; }
+
+    var engine = window.WorkflowEngine;
+    if (!engine || typeof engine.getRulesByGroup !== 'function') {
+      body.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text-secondary);font-size:13px;">Workflow engine not available.</div>';
+      return;
+    }
+
+    var rules = engine.getRulesByGroup(groupId) || [];
+    var canManage = engine.canManage ? engine.canManage(groupId) : true;
+
+    var html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding:4px 0;">'
+      + '<span style="font-size:12px;color:var(--text-secondary);">' + rules.length + ' rule(s) mapped to this group</span>'
+      + (canManage ? '<div style="display:flex;gap:8px;">'
+        + '<button id="svkWfNewRule" style="padding:6px 14px;border:1px solid var(--border-color);border-radius:6px;background:var(--accent,#4285f4);color:#fff;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;"><i class=\'fa-solid fa-plus\'></i> New Rule</button>'
+        + '<a href="workflow.html?groupId=' + encodeURIComponent(groupId) + '" style="padding:6px 14px;border:1px solid var(--border-color);border-radius:6px;font-size:12px;color:var(--accent,#4285f4);text-decoration:none;display:inline-flex;align-items:center;gap:5px;"><i class=\'fa-solid fa-up-right-from-square\'></i> Open Workflow Window</a>'
+        + '</div>' : '') + '</div>';
+
+    if (rules.length === 0) {
+      html += '<div style="text-align:center;padding:32px;color:var(--text-secondary);font-size:13px;border:1px dashed var(--border-color);border-radius:8px;">No rules yet for this group.</div>';
+    } else {
+      html += '<div>' + rules.map(function(r) {
+        var st = (r.state||'draft').toLowerCase();
+        return '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border-color);border-radius:7px;margin-bottom:6px;">'
+          + '<i class=\'fa-solid fa-bolt\' style=\'color:#4285f4;\'></i>'
+          + '<span style=\'flex:1;font-size:13px;\'>' + (r.name||'Untitled rule') + '</span>'
+          + '<span style=\'font-size:11px;padding:2px 8px;border-radius:8px;background:rgba(66,133,244,.15);color:#4285f4;\'>' + st + '</span>'
+          + (canManage ? '<button data-rule-id=\"' + r.id + '\" class=\"svk-wf-edit-btn\" style=\"background:none;border:none;cursor:pointer;color:var(--text-secondary);font-size:12px;padding:4px 6px;\" title=\"Edit\"><i class=\"fa-solid fa-pen\"></i></button>' : '')
+          + '</div>';
+      }).join('') + '</div>';
+    }
+
+    body.innerHTML = html;
+
+    var newRuleBtn = body.querySelector('#svkWfNewRule');
+    if (newRuleBtn) newRuleBtn.addEventListener('click', function() {
+      if (window.ShadowWorkflowBuilder && window.ShadowWorkflowBuilder.openBuilder) {
+        window.ShadowWorkflowBuilder.openBuilder({groupId: groupId, lockGroup: true});
+        document.getElementById('settingsOverlay').style.display = 'none';
+      } else {
+        window.location.href = 'workflow.html?groupId=' + encodeURIComponent(groupId) + '&new=1';
+      }
+    });
+
+    body.querySelectorAll('.svk-wf-edit-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var id = btn.getAttribute('data-rule-id');
+        window.location.href = 'workflow.html?groupId=' + encodeURIComponent(groupId) + '&ruleId=' + encodeURIComponent(id);
+      });
+    });
+  }
+
+  // Redirect openGroupSettings to master settings
+  SVK.openGroupInMasterSettings = function(groupId, initialTab) {
+    initialTab = initialTab || 'taskSettings';
+    var overlay = document.getElementById('settingsOverlay');
+    if (!overlay) return;
+    overlay.style.display = 'flex';
+
+    // Activate groups section in left nav
+    var groupsNavItem = document.querySelector('.settings-nav-item[data-section="groups"]');
+    if (groupsNavItem) groupsNavItem.click();
+
+    function doOpen() {
+      if (typeof window.openGroupDetail === 'function') {
+        window.openGroupDetail(groupId);
+        requestAnimationFrame(function() {
+          injectMergedGroupTabs();
+          var targetTab = document.querySelector('.group-tab[data-tab="' + initialTab + '"]');
+          if (targetTab && !targetTab.classList.contains('active')) {
+            targetTab.click();
+          }
+          if (initialTab === 'preferences') svkRenderPreferences();
+          if (initialTab === 'workflows') svkRenderWorkflows();
+        });
+      }
+    }
+    setTimeout(doOpen, 120);
+  };
+
+  // Override window.openGroupSettings to redirect to master settings
+  window.openGroupSettings = function(groupId, tab) {
+    var tabMap = { workflows: 'taskSettings', general: 'general', members: 'members', preferences: 'preferences' };
+    var mappedTab = tabMap[tab] || 'taskSettings';
+    SVK.openGroupInMasterSettings(groupId, mappedTab);
+  };
+
+  // Patch openGroupDetail to always inject new tabs after render
+  var _origOpenGroupDetail = window.openGroupDetail;
+  if (typeof _origOpenGroupDetail === 'function') {
+    window.openGroupDetail = function(groupId) {
+      _origOpenGroupDetail.call(this, groupId);
+      requestAnimationFrame(function() { injectMergedGroupTabs(); });
+    };
+  }
+
+  // Watch settingsOverlay visibility to inject tabs when it opens
+  var _settingsOverlay = document.getElementById('settingsOverlay');
+  if (_settingsOverlay) {
+    var _soObserver = new MutationObserver(function(mutations) {
+      mutations.forEach(function(m) {
+        if (m.type === 'attributes' && m.attributeName === 'style' && _settingsOverlay.style.display !== 'none') {
+          requestAnimationFrame(injectMergedGroupTabs);
+        }
+      });
+    });
+    _soObserver.observe(_settingsOverlay, {attributes: true});
+  }
+
+  // Initial injection in case settings is already open
+  injectMergedGroupTabs();
+
+})(); // end svkSettingsMerge
 })(); // end IIFE
