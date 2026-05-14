@@ -1,0 +1,156 @@
+// shadow-agenda-fix.js
+// Patches SVK for Agenda view: correct date buckets, hide Group by, show all 7 buckets
+(function() {
+  'use strict';
+
+  var BUCKETS = [
+    {k:'Delayed',    c:'#e53e3e', e:'No delayed tasks'},
+    {k:'Today',      c:'#f59f00', e:'No tasks for today'},
+    {k:'Tomorrow',   c:'#fbbc04', e:'No tasks for tomorrow'},
+    {k:'This Week',  c:'#4285f4', e:'No tasks this week'},
+    {k:'This Month', c:'#34a853', e:'No tasks this month'},
+    {k:'Upcoming',   c:'#38a169', e:'No upcoming tasks'},
+    {k:'No Due Date',c:'#718096', e:'No tasks without due date'}
+  ];
+
+  function agendaKey(task) {
+    if (!task.dueDate) return 'No Due Date';
+    var today = new Date(); today.setHours(0,0,0,0);
+    var d = new Date(task.dueDate + 'T00:00:00');
+    if (d < today) return 'Delayed';
+    var tom = new Date(today); tom.setDate(tom.getDate()+1);
+    if (d.getTime() === today.getTime()) return 'Today';
+    if (d.getTime() === tom.getTime()) return 'Tomorrow';
+    var ew = new Date(today); ew.setDate(today.getDate()+7);
+    if (d <= ew) return 'This Week';
+    var em = new Date(today.getFullYear(), today.getMonth()+1, 0);
+    if (d <= em) return 'This Month';
+    var eu = new Date(today.getFullYear(), today.getMonth()+4, 0);
+    if (d <= eu) return 'Upcoming';
+    return 'No Due Date';
+  }
+
+  function groupByBuckets(tasks) {
+    var g = {}; BUCKETS.forEach(function(b){g[b.k]=[];});
+    tasks.forEach(function(t){ var k=agendaKey(t); if(g[k])g[k].push(t); else g['No Due Date'].push(t); });
+    return g;
+  }
+
+  function boot() {
+    var SVK = window.SVK || (window.SVK = {});
+    if (!SVK.renderBoard || !SVK.renderList) { setTimeout(boot, 200); return; }
+
+    // Patch getGroupingKey for dueDate to use Delayed instead of Overdue
+    var _origGK = SVK.getGroupingKey;
+    SVK.getGroupingKey = function(task, gb) {
+      if (gb === 'dueDate') return agendaKey(task);
+      return _origGK ? _origGK.call(this, task, gb) : 'All Tasks';
+    };
+
+    // Patch groupSortOrder for Delayed
+    var _origGSO = SVK.groupSortOrder;
+    SVK.groupSortOrder = function(key, gb) {
+      if (gb === 'dueDate') {
+        var o = {Delayed:0,Today:1,Tomorrow:2,'This Week':3,'This Month':4,Upcoming:5,'No Due Date':6};
+        return o.hasOwnProperty(key) ? o[key] : 99;
+      }
+      return _origGSO ? _origGSO.call(this, key, gb) : key;
+    };
+
+    // Patch getGroupColorByKey for Delayed
+    var _origGCK = SVK.getGroupColorByKey;
+    SVK.getGroupColorByKey = function(key, gb) {
+      if (gb === 'dueDate') {
+        var m={Delayed:'#e53e3e',Today:'#f59f00',Tomorrow:'#fbbc04','This Week':'#4285f4','This Month':'#34a853',Upcoming:'#38a169','No Due Date':'#718096'};
+        return m[key] || '#4285f4';
+      }
+      return _origGCK ? _origGCK.call(this, key, gb) : '#4285f4';
+    };
+
+    // Patch renderBoard for agenda: always show all 7 buckets
+    var _origRB = SVK.renderBoard;
+    SVK.renderBoard = function(container, tasks, ctx) {
+      var v = window.state && window.state.currentView;
+      if (v === 'agenda') {
+        var g = groupByBuckets(tasks);
+        var cols = BUCKETS.map(function(b) {
+          var ct = g[b.k] || [];
+          var cards = ct.map(function(t){return SVK.renderTaskCard(t,ctx);}).join('');
+          if (!cards) cards = '<div class="svk-col__empty">' + b.e + '</div>';
+          return '<div class="svk-col" data-group-key="' + SVK.esc(b.k) + '" data-groupby="dueDate">'
+            + '<div class="svk-col__header" style="border-top:4px solid ' + b.c + '">'
+              + '<div class="svk-col__header-top">'
+                + '<span class="svk-col__title">' + SVK.esc(b.k) + '</span>'
+                + '<span class="svk-col__count">' + ct.length + '</span>'
+              + '</div></div>'
+            + '<div class="svk-col__body" data-group-key="' + SVK.esc(b.k) + '">' + cards
+              + '<div class="svk-drop-zone" data-group-key="' + SVK.esc(b.k) + '"></div>'
+            + '</div></div>';
+        }).join('');
+        container.innerHTML = '<div class="svk-board">' + cols + '</div>';
+        SVK.bindBoardInteractions(container, ctx);
+        SVK.bindBoardDragDrop(container, ctx);
+        return;
+      }
+      _origRB.call(this, container, tasks, ctx);
+    };
+
+    // Patch renderList for agenda: always show all 7 buckets
+    var _origRL = SVK.renderList;
+    SVK.renderList = function(container, tasks, ctx) {
+      var v = window.state && window.state.currentView;
+      if (v === 'agenda') {
+        var s = window.state, u = s ? s.currentUserId : null;
+        var f = SVK.getFields('list');
+        var h = '<th>Task Title</th>';
+        if(f.assignee) h += '<th>Assignee</th>';
+        if(f.status) h += '<th>Status</th>';
+        if(f.dueDate) h += '<th>Due Date</th>';
+        if(f.priority) h += '<th>Priority</th>';
+        if(f.tags) h += '<th>Tags</th>';
+        if(f.subtasks) h += '<th>Subtasks</th>';
+        if(f.attachments) h += '<th>Attachments</th>';
+        if(f.category) h += '<th>Category</th>';
+        if(f.createdDate) h += '<th>Created</th>';
+        if(f.group) h += '<th>Group</th>';
+        var tc = 1+(f.assignee?1:0)+(f.status?1:0)+(f.dueDate?1:0)+(f.priority?1:0)+(f.tags?1:0)+(f.subtasks?1:0)+(f.attachments?1:0)+(f.category?1:0)+(f.createdDate?1:0)+(f.group?1:0);
+        var g = groupByBuckets(tasks);
+        var rows = BUCKETS.map(function(b) {
+          var ct = g[b.k] || [], cl = SVK.isGroupCollapsed(b.k, u);
+          var hdr = '<tr class="svk-list-group-header" style="--group-color:' + b.c + '">'
+            + '<td colspan="' + tc + '">'
+              + '<button class="svk-group-toggle-btn' + (cl?' collapsed':'') + '" data-group-key="' + SVK.esc(b.k) + '">'
+                + '<i class="fa-solid fa-chevron-down"></i></button>'
+              + '<span class="svk-group-label">'
+                + '<span class="svk-group-color-dot" style="background:' + b.c + '"></span>' + SVK.esc(b.k) + '</span>'
+              + '<span class="svk-group-count">' + ct.length + '</span>'
+            + '</td></tr>';
+          var r = cl ? '' : ct.map(function(t){return SVK.renderTaskRow(t,ctx,tc);}).join('');
+          return hdr + r;
+        }).join('');
+        container.innerHTML = '<div class="svk-list"><table class="svk-list-table">'
+          + '<thead class="svk-list-thead"><tr>' + h + '</tr></thead>'
+          + '<tbody>' + rows + '</tbody></table></div>';
+        SVK.bindListInteractions(container, ctx);
+        SVK.bindListDragDrop(container, ctx);
+        return;
+      }
+      _origRL.call(this, container, tasks, ctx);
+    };
+
+    // Hide Group by button when in agenda view
+    setInterval(function() {
+      var btn = document.getElementById('groupByBtn');
+      var v = window.state && window.state.currentView;
+      if (btn) btn.style.display = (v === 'agenda') ? 'none' : '';
+    }, 250);
+
+    console.log('[AgendaFix] Loaded');
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    setTimeout(boot, 500);
+  }
+})();
