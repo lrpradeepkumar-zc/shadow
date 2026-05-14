@@ -11,7 +11,7 @@ window.SVK = window.SVK || {};
 var SVK = window.SVK;
 
 // ── Escape helper ────────────────────────────────────────────
-SVK.esc = function (s) {
+SVK.esc = function (s) {h
   if (s == null) return '';
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 };
@@ -737,7 +737,7 @@ window.showManageFieldsDropdown = function () {
 
 // ── Wire into existing app ────────────────────────────────────
 // Patch ShadowAgenda to delegate group/unified/personal views to SVK
-var SVK_VIEWS = ['group','unified','createdbyme','assignedtome','sharedwithme','personal'];
+var SVK_VIEWS = ['group','unified','createdbyme','assignedtome','sharedwithme','personal','agenda'];
 
 function svkWire() {
   if (!window.ShadowAgenda) { setTimeout(svkWire, 200); return; }
