@@ -11,7 +11,7 @@ window.SVK = window.SVK || {};
 var SVK = window.SVK;
 
 // ── Escape helper ────────────────────────────────────────────
-SVK.esc = function (s) {h
+SVK.esc = function (s) {
   if (s == null) return '';
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 };
