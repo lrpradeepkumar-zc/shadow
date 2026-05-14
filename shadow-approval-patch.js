@@ -608,57 +608,47 @@ if (typeof ApprovalUI !== 'undefined') {
 }
 
 /* ═══════════════════════════════════════════════
-   PART 4 — Hook into showTaskDetail (C2+C3)
+   PART 4 — MutationObserver on taskDetailPanel (C2+C3)
+   Works regardless of how showTaskDetail is called (closure or global)
    ═══════════════════════════════════════════════ */
-function patchShowTaskDetail() {
-  var orig = window.showTaskDetail;
-  if (!orig || orig._approvalPatched) return;
-  window.showTaskDetail = async function(taskId, source) {
-    orig.apply(this, arguments);
-    // After task detail renders, inject approval UI
+function setupTaskDetailObserver() {
+  if (window._approvalObserverPatched) return;
+  window._approvalObserverPatched = true;
+  var panel = document.getElementById('taskDetailPanel');
+  if (!panel) { setTimeout(setupTaskDetailObserver, 500); return; }
+  var lastTaskId = null;
+  var obs = new MutationObserver(function() {
+    var isOpen = panel.classList.contains('open') || panel.style.display === 'flex';
+    if (!isOpen) { lastTaskId = null; return; }
+    var s = window.state;
+    var taskId = s && s.selectedTaskId;
+    if (!taskId || taskId === lastTaskId) return;
+    lastTaskId = taskId;
     setTimeout(async function() {
       try {
-        var panel = document.getElementById('taskDetailPanel');
-        if (!panel) return;
-        var s = window.state;
-        if (!s) return;
         var task = s.tasks && s.tasks.find(function(t){return t.id===taskId;});
-        if (!task) return;
-        var groupId = task.group;
-        if (!groupId) return;
-
-        // Remove old approval sections
-        panel.querySelectorAll('.approval-request-section,.approval-audit-trail,.approval-decision-panel,.task-lock-banner,.approval-status-strip').forEach(function(el){el.remove();});
-        var oldBtn = document.querySelector('.request-approval-header-btn,.approval-header-badge');
-        if (oldBtn) oldBtn.remove();
-
-        var settings = await ApprovalWorkflow.Settings.get(groupId);
+        if (!task || !task.group) return;
+        var settings = await ApprovalWorkflow.Settings.get(task.group);
         if (!settings.enabled) return;
-
-        // Insert approval section
-        var reqSection = ApprovalUI.renderRequestButton(task, groupId);
-        var detailBody = panel.querySelector('.detail-body');
-        if (detailBody) detailBody.insertBefore(reqSection, detailBody.firstChild);
-
-        // Insert audit trail
+        panel.querySelectorAll('.approval-request-section,.approval-audit-trail,.task-lock-banner,.approval-status-strip').forEach(function(el){el.remove();});
+        var hdr = document.querySelector('.approval-header-badge,.request-approval-header-btn');
+        if (hdr) hdr.remove();
+        var reqSec = ApprovalUI.renderRequestButton(task, task.group);
+        var db = panel.querySelector('.detail-body');
+        if (db) db.insertBefore(reqSec, db.firstChild);
         setTimeout(async function() {
-          var timelineSection = panel.querySelector('#timelineList');
-          if (timelineSection && timelineSection.parentNode) {
-            var existing = panel.querySelector('.approval-audit-trail');
-            if (existing) existing.remove();
-            var auditTrail = ApprovalUI.renderAuditTrail(taskId);
-            timelineSection.parentNode.insertBefore(auditTrail, timelineSection);
+          var tl = panel.querySelector('#timelineList');
+          if (tl && tl.parentNode) {
+            var ex = panel.querySelector('.approval-audit-trail'); if(ex) ex.remove();
+            tl.parentNode.insertBefore(ApprovalUI.renderAuditTrail(taskId), tl);
           }
-          // Apply field locks
           ApprovalUI.applyFieldLocks(panel, taskId);
-        }, 300);
-      } catch(e) {
-        console.warn('[ApprovalPatch] showTaskDetail hook error:', e.message);
-      }
-    }, 150);
-  };
-  window.showTaskDetail._approvalPatched = true;
-  console.log('[ApprovalPatch] showTaskDetail hooked');
+        }, 400);
+      } catch(e) { console.warn('[ApprovalPatch] observer error:', e.message); }
+    }, 200);
+  });
+  obs.observe(panel, {attributes:true, attributeFilter:['class','style']});
+  console.log('[ApprovalPatch] TaskDetail MutationObserver installed');
 }
 
 /* ═══════════════════════════════════════════════
@@ -836,7 +826,7 @@ function boot() {
     return;
   }
   try {
-    patchShowTaskDetail();
+    setupTaskDetailObserver();
     hookStatusChange();
     setupRefreshListener();
     initNotificationBell();
