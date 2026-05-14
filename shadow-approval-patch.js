@@ -337,7 +337,7 @@ if (typeof ApprovalUI !== 'undefined') {
         var isApprover = activeRequest.approverId === currentUser || activeRequest.approverId === currentUserId;
         container.innerHTML =
           '<div class="approval-status-strip pending">' +
-          '<span class="approval-status-strip-text"><i class="fa-solid fa-clock"></i> Approval Pending — waiting for <strong>' + activeRequest.approverId + '</strong></span>' +
+          '<span class="approval-status-strip-text"><i class="fa-solid fa-clock"></i> Approval Pending — waiting for <strong>' + (function(id){var ms=window.state&&window.state.members;var m=ms&&ms.find(function(x){return x.id===id||x.name===id;});return m?m.name:id;})(activeRequest.approverId) + '</strong></span>' +
           '</div>';
         injectBadge('pending');
         if (isApprover) container.appendChild(ApprovalUI.renderDecisionInterface(activeRequest));
