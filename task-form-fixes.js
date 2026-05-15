@@ -820,7 +820,6 @@
 
     setupStatusButton('modalStatusBtn', 'modalGroup');
     setupAssigneeSelect('modalAssignee');
-    setupPrioritySelect('modalPriority');
     setupTagsButton('modalTagBtn', 'modalTagsContainer',
       typeof state!=='undefined' ? state.modalTags : []);
     setupRepeatButton();
