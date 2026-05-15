@@ -2905,5 +2905,4 @@ function renderListView() {
     // No gate installed - run normally (dev/direct access)
     init();
   }
-  }
 })();
