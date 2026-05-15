@@ -1589,7 +1589,7 @@ function renderListView() {
       var list = $el('ntmGroupList'); if (!list) return;
       var q = (filter||'').toLowerCase();
       var groups = (window.state && window.state.groups) ? window.state.groups : [];
-      var all = [{id:'',name:'Personal tasks',isPersonal:true}].concat(groups);
+      var all = [{id:'',name:'Personal tasks',isPersonal:true}].concat(groups.filter(function(g){ return !g.isPersonal && g.type !== 'personal'; }));
       var filtered = all.filter(function(g){ return g.name.toLowerCase().includes(q); });
       list.innerHTML = filtered.map(function(g) {
         return '<div class="ntm-dropdown-item'+(g.id===selGroupId?' active':'')+'" data-gid="'+g.id+'">'
