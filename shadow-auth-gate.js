@@ -100,10 +100,10 @@
 
         // Tab bar
         '<div id="sag-tabs" style="display:flex;border-bottom:2px solid #f1f5f9;margin-bottom:24px;">',
-          '<button id="sag-tab-login" onclick="window._sagSwitch('login')" style="flex:1;padding:10px;border:none;',
+          '<button id="sag-tab-login" onclick="window._sagSwitch("login")" style="flex:1;padding:10px;border:none;',
             'background:none;font-size:14px;font-weight:600;cursor:pointer;color:#667eea;',
             'border-bottom:2px solid #667eea;margin-bottom:-2px;">Sign In</button>',
-          '<button id="sag-tab-register" onclick="window._sagSwitch('register')" style="flex:1;padding:10px;border:none;',
+          '<button id="sag-tab-register" onclick="window._sagSwitch("register")" style="flex:1;padding:10px;border:none;',
             'background:none;font-size:14px;font-weight:500;cursor:pointer;color:#94a3b8;">Register</button>',
         '</div>',
 
@@ -170,7 +170,7 @@
           '<button onclick="window._sagDoForgot()" style="width:100%;padding:12px;background:linear-gradient(135deg,#667eea,#764ba2);',
             'color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:8px;">',
             'Reset Password</button>',
-          '<button onclick="window._sagSwitch('login')" style="width:100%;padding:10px;background:none;',
+          '<button onclick="window._sagSwitch("login")" style="width:100%;padding:10px;background:none;',
             'border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;cursor:pointer;color:#64748b;">',
             'Back to Sign In</button>',
         '</div>',
