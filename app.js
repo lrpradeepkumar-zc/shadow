@@ -2886,9 +2886,24 @@ function renderListView() {
     renderBadge();
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
+  // Auth-gated startup: wait for shadow-auth-gate.js to confirm authentication
+  window._appInit = init;
+  window.addEventListener('shadow_app_ready', function(e) {
+    var user = e.detail && e.detail.user;
+    if (user && window.state) {
+      window.state.currentUserId   = user.id;
+      window.state.currentUserName = user.name;
+      window.state.currentUserRole = user.role;
+    }
     init();
+  });
+  // Fallback: if gate already fired before this script loaded
+  if (window._sagGateReady && window._sagAppStarted) {
+    var u = window.state;
+    // already handled by gate
+  } else if (document.readyState !== 'loading' && !window._sagGateReady) {
+    // No gate installed - run normally (dev/direct access)
+    init();
+  }
   }
 })();
