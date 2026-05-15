@@ -12,7 +12,7 @@
   function clearSession() { localStorage.removeItem(SESSION_KEY); }
   function getUsers() { try { return JSON.parse(localStorage.getItem(USERS_KEY) || '[]'); } catch(e) { return []; } }
   function saveUsers(u) { localStorage.setItem(USERS_KEY, JSON.stringify(u)); }
-  function hashPass(p) { var h=0; for(var i=0;i<p.length;i++){h=(Math.imul(31,h)+p.charCodeAt(i))|0;} return 'h_'+Math.abs(h).toString(36); }
+  function hashPass(p) { var h=0; for(var i=0;i<p.length;i++){h=(Math.imul(31,h)+p.charCodeAt(i))|0;} return 'h_'+(h>>>0).toString(16); }
   function genId() { return 'u_'+Date.now()+'_'+Math.random().toString(36).slice(2,7); }
   function getInitials(n) { return (n||'').trim().split(/\s+/).map(function(w){return w[0];}).join('').toUpperCase().slice(0,2)||'?'; }
   function seedAdmin() {
