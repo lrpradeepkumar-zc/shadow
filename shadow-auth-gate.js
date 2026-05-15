@@ -98,7 +98,7 @@
 
     _wall = document.createElement('div');
     _wall.id = 'sag-wall';
-    _wall.style.cssText = 'position:fixed;inset:0;z-index:99999;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;';
+    _wall.style.cssText = 'position:fixed;inset:0;z-index:999999;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;';
 
     // Card
     var card = document.createElement('div');
@@ -306,6 +306,7 @@
 
   function showLoginWall() {
     hideApp();
+    setInterval(function(){ var o=document.getElementById('shadow-auth-overlay'); if(o) o.style.display='none'; }, 200);
     if (document.body) { buildWall(); }
     else { document.addEventListener('DOMContentLoaded', function(){ buildWall(); }); }
   }
