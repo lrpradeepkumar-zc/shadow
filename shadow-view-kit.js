@@ -10,7 +10,7 @@
 window.SVK = window.SVK || {};
 var SVK = window.SVK;
 
-// ââ Escape helper ââââââââââââââââââââââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂ Escape helper Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 SVK.esc = function (s) {
   if (s == null) return '';
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
@@ -37,7 +37,7 @@ SVK.isDone = function (t) {
   return s === 'completed' || s === 'done' || s === 'closed' || s === 'fixed';
 };
 
-// ââ State persistence (per userId) âââââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂ State persistence (per userId) Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 SVK.STATE_KEY_PREFIX = 'svk_state_';
 SVK._collapsedGroups = {};
 SVK.getPersistedState = function (userId) {
@@ -76,7 +76,7 @@ SVK.initFromPersistedState = function (userId) {
   if (ps.collapsedGroups) Object.assign(SVK._collapsedGroups, ps.collapsedGroups);
 };
 
-// ââ Colors & Grouping Helpers ââââââââââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂ Colors & Grouping Helpers Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 SVK.DEFAULT_STATUSES = [
   {name:'Open',color:'#e53e3e'},{name:'In Progress',color:'#d69e2e'},
   {name:'Fixed',color:'#3182ce'},{name:'Completed',color:'#38a169'},
@@ -141,7 +141,7 @@ SVK.getGroupColorByKey = function (key, gb) {
   return '#4285f4';
 };
 
-// ââ Manage Fields âââââââââââââââââââââââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂ Manage Fields Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 SVK.FIELD_DEFS_BOARD = [
   {key:'assignee',label:'Assignee',icon:'fa-user'},{key:'status',label:'Status',icon:'fa-circle-half-stroke'},
   {key:'dueDate',label:'Due Date',icon:'fa-calendar'},{key:'priority',label:'Priority',icon:'fa-circle-exclamation'},
@@ -183,7 +183,7 @@ SVK.saveFields = function (viewType, fields) {
   }
 };
 
-// ââ CSS Injection âââââââââââââââââââââââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂ CSS Injection Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 if (!document.getElementById('svk-styles')) {
   var svkStyle = document.createElement('style');
   svkStyle.id = 'svk-styles';
@@ -258,7 +258,7 @@ if (!document.getElementById('svk-styles')) {
   document.head.appendChild(svkStyle);
 }
 
-// ââ TaskCard (Board) Renderer âââââââââââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂ TaskCard (Board) Renderer Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 SVK.renderTaskCard = function (task, ctx) {
   var fields = SVK.getFields('board');
   var s = window.state;
@@ -329,7 +329,7 @@ SVK.renderTaskCard = function (task, ctx) {
   +'</div>';
 };
 
-// ââ TaskRow (List) Renderer âââââââââââââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂ TaskRow (List) Renderer Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 SVK.renderTaskRow = function (task, ctx, totalCols) {
   var fields = SVK.getFields('list');
   var s = window.state;
@@ -377,7 +377,7 @@ SVK.renderTaskRow = function (task, ctx, totalCols) {
   return '<tr class="svk-list-row'+(isSelected?' active-row':'')+'" data-taskid="'+esc(task.id)+'" data-group="'+esc(gid)+'" draggable="true">'+cells+'</tr>';
 };
 
-// ââ Board View Renderer âââââââââââââââââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂ Board View Renderer Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 SVK.renderBoard = function (container, tasks, ctx) {
   if (!container) return;
   var s = window.state;
@@ -434,7 +434,7 @@ SVK.renderBoard = function (container, tasks, ctx) {
   SVK.bindBoardDragDrop(container, ctx);
 };
 
-// ââ List View Renderer ââââââââââââââââââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂ List View Renderer Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 SVK.renderList = function (container, tasks, ctx) {
   if (!container) return;
   var s = window.state;
@@ -506,13 +506,31 @@ SVK.renderList = function (container, tasks, ctx) {
   SVK.bindListDragDrop(container, ctx);
 };
 
-// ââ Board Interactions & Drag-Drop ââââââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂ Board Interactions & Drag-Drop Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 SVK.bindBoardInteractions = function (container, ctx) {
   var s = window.state;
   container.querySelectorAll('.svk-add-task-btn').forEach(function(btn) {
     btn.addEventListener('click', function(e) {
       e.stopPropagation();
-      if (typeof window.ntmResetAndOpen === 'function') window.ntmResetAndOpen();
+      var s = window.state || {};
+      var gb = (s.groupBy) || 'status';
+      var groupKey = btn.getAttribute('data-group-key') || '';
+      var opts = {};
+      if (s.currentView === 'group' && s.filterGroup) {
+        opts.groupId = s.filterGroup;
+      } else {
+        opts.groupId = '';
+      }
+      if (gb === 'status') {
+        opts.status = groupKey;
+      } else if (gb === 'category') {
+        opts.category = groupKey;
+      } else if (gb === 'group') {
+        var grp = (s.groups||[]).find(function(g){ return g.name === groupKey; });
+        if (grp) { opts.groupId = grp.id; }
+      }
+      if (typeof window.ntmResetAndOpenWith === 'function') window.ntmResetAndOpenWith(opts);
+      else if (typeof window.ntmResetAndOpen === 'function') window.ntmResetAndOpen();
       else if (document.getElementById('newTaskBtn')) document.getElementById('newTaskBtn').click();
     });
   });
@@ -585,7 +603,7 @@ SVK.bindBoardDragDrop = function (container, ctx) {
   });
 };
 
-// ââ List Interactions & Drag-Drop âââââââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂ List Interactions & Drag-Drop Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 SVK.bindListInteractions = function (container, ctx) {
   var s = window.state;
   var userId = s ? s.currentUserId : null;
@@ -613,7 +631,25 @@ SVK.bindListInteractions = function (container, ctx) {
   container.querySelectorAll('.svk-list-add-task-btn').forEach(function(btn) {
     btn.addEventListener('click', function(e) {
       e.stopPropagation();
-      if (typeof window.ntmResetAndOpen === 'function') window.ntmResetAndOpen();
+      var s = window.state || {};
+      var gb = (s.groupBy) || 'status';
+      var groupKey = btn.getAttribute('data-group-key') || '';
+      var opts = {};
+      if (s.currentView === 'group' && s.filterGroup) {
+        opts.groupId = s.filterGroup;
+      } else {
+        opts.groupId = '';
+      }
+      if (gb === 'status') {
+        opts.status = groupKey;
+      } else if (gb === 'category') {
+        opts.category = groupKey;
+      } else if (gb === 'group') {
+        var grp = (s.groups||[]).find(function(g){ return g.name === groupKey; });
+        if (grp) { opts.groupId = grp.id; }
+      }
+      if (typeof window.ntmResetAndOpenWith === 'function') window.ntmResetAndOpenWith(opts);
+      else if (typeof window.ntmResetAndOpen === 'function') window.ntmResetAndOpen();
       else if (document.getElementById('newTaskBtn')) document.getElementById('newTaskBtn').click();
     });
   });
@@ -697,7 +733,7 @@ SVK._applyGroupChange = async function (task, targetGroupKey, gb) {
   }
 };
 
-// ââ Enhanced Manage Fields Dropdown ââââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂ Enhanced Manage Fields Dropdown Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 window.showManageFieldsDropdown = function () {
   document.querySelectorAll('.dropdown-menu').forEach(function(m){m.remove();});
   var btn = document.getElementById('manageFieldsBtn');
@@ -761,7 +797,7 @@ window.showManageFieldsDropdown = function () {
   }, 10);
 };
 
-// ââ Wire into existing app ââââââââââââââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂ Wire into existing app Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 // Patch ShadowAgenda to delegate group/unified/personal views to SVK
 var SVK_VIEWS = ['group','unified','createdbyme','assignedtome','sharedwithme','personal','agenda'];
 
@@ -819,7 +855,7 @@ window.ShadowViewKit = {
   renderList: function(c,t,x){ SVK.renderList(c,t,x); }
 };
 
-// ââ Settings Merge: Group Settings â Master Settings âââââââââ
+// Ã¢ÂÂÃ¢ÂÂ Settings Merge: Group Settings Ã¢ÂÂ Master Settings Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 // Merges the small group settings modal into the master settings page.
 // Clicking the gear icon on a group now opens master settings,
 // navigates to the group, and lands on Task Settings.
