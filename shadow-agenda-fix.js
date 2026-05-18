@@ -119,7 +119,10 @@ return '<div class="svk-col" data-group-key="' + SVK.esc(b.k) + '" data-groupby=
 + '<div class="svk-col__header" style="border-top:4px solid ' + b.c + '">'
 + '<div class="svk-col__header-top">'
 + '<span class="svk-col__title">' + SVK.esc(b.k) + '</span>'
++ '<span style="display:flex;align-items:center;gap:6px">'
 + '<span class="svk-col__count">' + ct.length + '</span>'
++ '<button class="svk-add-task-btn" title="Add task" data-group-key="' + SVK.esc(b.k) + '"><i class="fa-solid fa-plus"></i></button>'
++ '</span>'
 + '</div></div>'
 + '<div class="svk-col__body" data-group-key="' + SVK.esc(b.k) + '">' + cards
 + '<div class="svk-drop-zone" data-group-key="' + SVK.esc(b.k) + '"></div>'
@@ -195,6 +198,7 @@ var hdr = '<tr class="svk-list-group-header" data-group-key="' + SVK.esc(b.k) + 
 + '<span class="svk-group-color-dot" style="background:' + b.c + '"></span>'
 + '<span>' + SVK.esc(b.k) + '</span>'
 + '<span class="svk-group-count">' + ct.length + '</span>'
++ '<button class="svk-list-add-task-btn" title="Add task" data-group-key="' + SVK.esc(b.k) + '"><i class="fa-solid fa-plus"></i> New task</button>'
 + '</div></td></tr>';
 var r = cl ? '' : ct.map(function(t){return SVK.renderTaskRow(t,ctx,tc);}).join('');
 return hdr + r;
