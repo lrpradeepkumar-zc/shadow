@@ -7,7 +7,7 @@
 (function() {
   'use strict';
 
-  // ─── CONSTANTS ────────────────────────────────────────
+  // âââ CONSTANTS ââââââââââââââââââââââââââââââââââââââââ
   const STORE_KEY   = 'shadow_templates';
   const MAX_DEPTH   = 2;   // Parent > Subtask only
   const MAX_SUB     = 20;  // max subtasks per template
@@ -15,7 +15,7 @@
   const MAX_NAME    = 100; // template name char limit
   const TMPL_VER    = 1;
 
-  // ─── STATE ────────────────────────────────────────────
+  // âââ STATE ââââââââââââââââââââââââââââââââââââââââââââ
   const TM = {
     templates   : [],   // all templates for current user
     activeFilter: 'all', // all | personal | shared | group
@@ -29,7 +29,7 @@
     init        : false
   };
 
-  // ─── UTILS ────────────────────────────────────────────
+  // âââ UTILS ââââââââââââââââââââââââââââââââââââââââââââ
   function uid() { return 'tm_' + Date.now() + '_' + Math.random().toString(36).slice(2,7); }
   function now() { return new Date().toISOString(); }
   function esc(s) { return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -38,7 +38,7 @@
   function getGroups()       { return window.state?.groups || []; }
   function getMembers()      { return window.state?.members || []; }
 
-  // ─── PERSISTENCE ──────────────────────────────────────
+  // âââ PERSISTENCE ââââââââââââââââââââââââââââââââââââââ
   function loadTemplates() {
     try {
       const raw = localStorage.getItem(STORE_KEY);
@@ -51,7 +51,7 @@
   function findTmpl(id) { return TM.templates.find(t => t.id === id); }
   function isOwner(tmpl) { return tmpl && tmpl.createdBy === currentUserId(); }
 
-  // ─── FILTERED + SORTED LIST ───────────────────────────
+  // âââ FILTERED + SORTED LIST âââââââââââââââââââââââââââ
   function getFilteredTemplates() {
     let list = TM.templates.slice();
     const uid = currentUserId();
@@ -91,7 +91,7 @@
     return list;
   }
 
-  // ─── FLOW 1: CREATE TEMPLATE ───────────────────────────
+  // âââ FLOW 1: CREATE TEMPLATE âââââââââââââââââââââââââââ
   // Extract template data from a task object (strips assignees/dueDates)
   function extractFromTask(task) {
     const subtasks = (task.subtasks || []).slice(0, MAX_SUB).map(st => ({
@@ -171,7 +171,7 @@
     if (tmpl) { tmpl.isFavourite = !tmpl.isFavourite; tmpl.updatedAt = now(); saveTemplates(); }
   }
 
-  // ─── FLOW 3: APPLY TEMPLATE ──────────────────────────────
+  // âââ FLOW 3: APPLY TEMPLATE ââââââââââââââââââââââââââââââ
   // Build apply-preview config from template + optional user overrides
   function buildApplyConfig(tmpl, overrides) {
     overrides = overrides || {};
@@ -229,13 +229,13 @@
       saveTemplates();
       // Push bell notification
       if (window.pushBellNotification) {
-        window.pushBellNotification(currentUserName() + ' applied template “' + tmpl.name + '” — ' + cfg.subtasks.length + ' subtask(s) created');
+        window.pushBellNotification(currentUserName() + ' applied template â' + tmpl.name + 'â â ' + cfg.subtasks.length + ' subtask(s) created');
       }
     }
     return task;
   }
 
-  // ─── FLOW 4: SHARE TEMPLATE ───────────────────────────────
+  // âââ FLOW 4: SHARE TEMPLATE âââââââââââââââââââââââââââââââ
   // AC5: max 50 users per share action, recipients are read-only
   function shareTemplate(tmplId, targets) {
     // targets = [{type:'user'|'group', id, name}, ...]
@@ -267,12 +267,12 @@
     saveTemplates();
   }
 
-  // ─── UI HELPERS ─────────────────────────────────────────
+  // âââ UI HELPERS âââââââââââââââââââââââââââââââââââââââââ
   function priColor(p) {
     return {High:'#ea4335',Medium:'#f59f00',Low:'#1a73e8',None:'#9ca3af'}[p] || '#9ca3af';
   }
   function priLabel(p) {
-    return {High:'● High',Medium:'● Medium',Low:'● Low',None:'— None'}[p] || p;
+    return {High:'â High',Medium:'â Medium',Low:'â Low',None:'â None'}[p] || p;
   }
   function taskCountLabel(tmpl) {
     const sub = tmpl.subtasks.length;
@@ -284,7 +284,7 @@
   }
   function isMine(tmpl) { return tmpl.createdBy === currentUserId(); }
 
-  // ─── SIDEBAR ENTRY ─────────────────────────────────────
+  // âââ SIDEBAR ENTRY âââââââââââââââââââââââââââââââââââââ
   function injectSidebarEntry() {
     if (document.getElementById('tm-sidebar-item')) return;
     const sidebar = document.querySelector('.sidebar');
@@ -862,7 +862,7 @@
       '<div class="tm-shared-current">' +
       tmpl.sharedWith.map(function(s){
         return '<span class="tm-shared-chip">' + esc(s.name) + ' ('+s.type+')' +
-          '<button class="tm-chip-remove" data-type="'+s.type+'" data-id="'+esc(s.id)+'">×</button></span>';
+          '<button class="tm-chip-remove" data-type="'+s.type+'" data-id="'+esc(s.id)+'">Ã</button></span>';
       }).join('') + '</div>' : '') +
       '</div>' +
       '<div class="tm-modal-footer">' +
@@ -1041,6 +1041,17 @@
           }
         });
         ntmObserver.observe(document.body, { childList: true, subtree: true });
+        // Watch for sidebar section being hidden by app re-renders
+        var sidebarObserver = new MutationObserver(function() {
+          var tmSec = document.getElementById('tm-sidebar-section');
+          if (tmSec) {
+            if (tmSec.style.display === 'none' || getComputedStyle(tmSec).display === 'none') {
+              tmSec.style.display = 'block';
+            }
+          } else { injectSidebarEntry(); }
+        });
+        var sbEl = document.querySelector('.sidebar');
+        if (sbEl) sidebarObserver.observe(sbEl, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
         // Also try immediately in case NTM already exists
         if (document.querySelector('.ntm-box')) injectNtmTemplateBtn();
       } else {
