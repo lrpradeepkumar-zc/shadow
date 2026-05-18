@@ -1,5 +1,14 @@
 // group-ui.js - create group + group-task flows.
 (function () {
+  // Inject CSS for group-name truncation and icon alignment
+  (function() {
+    if (!document.getElementById('group-ui-styles')) {
+      var st = document.createElement('style');
+      st.id = 'group-ui-styles';
+      st.textContent = '.group-item .group-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 110px; } .group-item .group-add-task, .group-item .group-settings-gear { flex-shrink: 0; }';
+      document.head.appendChild(st);
+    }
+  })();
         const ready = () => (window.ShadowDB && window.ShadowDB._sb);
         const getGid = (row) => row.dataset.group || row.dataset.groupId;
 
@@ -11,21 +20,14 @@
                          const add = document.createElement('i');
                          add.className = 'fa-solid fa-plus group-add-task';
                          add.title = 'New task in this group';
-                         add.style.cssText = 'margin-left:6px;cursor:pointer;opacity:.7;';
-                         add.addEventListener('click', async (e) => {
+                         add.style.cssText = 'margin-left:auto;cursor:pointer;opacity:.7;';
+                         add.addEventListener('click', function(e) {
                                        e.stopPropagation();
-                                       const title = (prompt('New task title:') || '').trim();
-                                       if (!title) return;
-                                       try {
-                                                       await ShadowDB.Tasks.create({
-                                                                         id: 't_' + Date.now().toString(36),
-                                                                         title: title, group: gid, status: 'todo', priority: 'P3',
-                                                                         createdAt: new Date().toISOString()
-                                                       });
-                                                       if (window.state) window.state.tasks = await ShadowDB.Tasks.getAll();
-                                                       if (typeof window.renderView === 'function') window.renderView();
-                                                       if (typeof window.renderSidebar === 'function') window.renderSidebar();
-                                       } catch (err) { alert('Could not create task: ' + err.message); }
+                                       if (typeof window.ntmResetAndOpenWith === 'function') {
+                                         window.ntmResetAndOpenWith({ groupId: gid });
+                                       } else if (typeof window.ntmResetAndOpen === 'function') {
+                                         window.ntmResetAndOpen();
+                                       }
                          });
                          row.appendChild(add);
     
@@ -34,7 +36,7 @@
             const gear = document.createElement("i");
             gear.className = "fa-solid fa-gear group-settings-gear";
             gear.title = "Group settings (Workflows & Rules)";
-            gear.style.cssText = "margin-left:6px;cursor:pointer;opacity:.6;";
+            gear.style.cssText = "margin-left:4px;cursor:pointer;opacity:.6;";
             gear.addEventListener("mouseenter", () => gear.style.opacity = "1");
             gear.addEventListener("mouseleave", () => gear.style.opacity = ".6");
             gear.addEventListener("click", (ev) => {
@@ -92,7 +94,7 @@
 
 
   // ---------------------------------------------------------------------------
-  // Group Settings modal — opens a lightweight modal with tabs. Currently wires
+  // Group Settings modal â opens a lightweight modal with tabs. Currently wires
   // the "Workflows & Rules" tab: lists rules mapped to the group (via
   // WorkflowEngine.getRulesByGroup) and offers a "+ New Rule" button that
   // launches the builder pre-bound to this group.
@@ -138,7 +140,7 @@
     // Update title
     var group = findGroup(groupId);
     var title = overlay.querySelector("#grpSettingsTitle");
-    if (title) title.textContent = (group ? group.name : "Group") + " — settings";
+    if (title) title.textContent = (group ? group.name : "Group") + " â settings";
     // Activate the requested tab
     var tabBtn = overlay.querySelector('.tab-btn[data-tab="' + initialTab + '"]');
     overlay.querySelectorAll(".tab-btn").forEach(function (x) { x.classList.remove("active"); });
@@ -189,7 +191,7 @@
         var rows = allGroupUserIds.length === 0
           ? '<div style="padding:16px;text-align:center;color:var(--text-secondary,#64748b);font-size:13px;">No members yet.</div>'
           : allGroupUserIds.map(function(uid){
-              var u = mockUsers.find(function(x){ return x.id === uid; }) || { id: uid, name: uid, email: "—" };
+              var u = mockUsers.find(function(x){ return x.id === uid; }) || { id: uid, name: uid, email: "â" };
               var isAdmin = adminIds.indexOf(uid) >= 0;
               var roleLabel = isAdmin ? "Group Admin" : "Group Member";
               var roleColor = isAdmin ? "#f59e0b" : "#10b981";
@@ -210,7 +212,7 @@
           ? '<div class="gs-members-toolbar">' +
             '  <div style="font-size:12px;color:var(--text-secondary,#64748b);">' + allGroupUserIds.length + ' member(s)</div>' +
             '  <div style="display:flex;gap:6px;">' +
-            '    <select id="gsAddMemberSelect" style="font-size:12px;padding:4px 6px;"><option value="">Add member…</option>' +
+            '    <select id="gsAddMemberSelect" style="font-size:12px;padding:4px 6px;"><option value="">Add memberâ¦</option>' +
                  mockUsers.filter(function(u){ return allGroupUserIds.indexOf(u.id) < 0; })
                           .map(function(u){ return '<option value="' + escapeAttr(u.id) + '">' + escapeHtml(u.name) + '</option>'; }).join("") +
             '    </select>' +
@@ -271,7 +273,7 @@
         var disabled = canManage ? "" : " disabled";
         body.innerHTML =
           '<div style="display:flex;flex-direction:column;gap:14px;">' +
-          (canManage ? '' : '<div><span class="rbac-readonly-pill"><i class="fa-solid fa-lock"></i> read-only — Group Admin or Org Admin only</span></div>') +
+          (canManage ? '' : '<div><span class="rbac-readonly-pill"><i class="fa-solid fa-lock"></i> read-only â Group Admin or Org Admin only</span></div>') +
           '  <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;">' +
           '    <span style="color:var(--text-secondary,#64748b);">Group name</span>' +
           '    <input id="gsPrefName" type="text" value="' + escapeAttr(group.name || "") + '"' + disabled + ' style="padding:6px 8px;border:1px solid var(--border-color,#334155);background:var(--bg-secondary,#0f172a);color:inherit;border-radius:6px;">' +
@@ -301,7 +303,7 @@
               if (typeof window.renderSidebar === "function") window.renderSidebar();
             } catch(e) { alert("Could not save: " + e.message); return; }
             var t = document.getElementById("grpSettingsTitle");
-            if (t) t.textContent = group.name + " — settings";
+            if (t) t.textContent = group.name + " â settings";
             alert("Preferences saved.");
           });
         }
