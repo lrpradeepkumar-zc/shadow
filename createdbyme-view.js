@@ -5,6 +5,15 @@
 (function(){
   'use strict';
 
+  (function(){
+    var s = document.getElementById('cbm-add-task-styles');
+    if (s) return;
+    s = document.createElement('style');
+    s.id = 'cbm-add-task-styles';
+    s.textContent = '.cbm-add-task-btn{background:none;border:none;cursor:pointer;color:#888;padding:2px 7px;border-radius:4px;font-size:12px;display:inline-flex;align-items:center;gap:4px;line-height:1;transition:color .15s,background .15s;margin-left:4px}.cbm-add-task-btn:hover{color:#1a73e8;background:rgba(26,115,232,.12)}';
+    document.head.appendChild(s);
+  })();
+
   const STATUS_BUCKETS = ['Open','In Progress','Pending Review','Completed'];
   const STATUS_COLORS = {
     'Open': '#fce4e4',
@@ -137,7 +146,7 @@
     STATUS_BUCKETS.forEach(b=>{
       const list = groups[b]||[];
       html.push('<div class="cbm-col" data-status="'+escapeHtml(b)+'">');
-      html.push('<div class="cbm-col-head" data-status="'+escapeHtml(b)+'"><span class="cbm-col-title">'+escapeHtml(b)+'</span><span class="cbm-col-count">'+list.length+'</span></div>');
+      html.push('<div class="cbm-col-head" data-status="'+escapeHtml(b)+'"><span class="cbm-col-title">'+escapeHtml(b)+'</span><span style="display:flex;align-items:center;gap:6px"><span class="cbm-col-count">'+list.length+'</span><button class="cbm-add-task-btn" title="Add task" data-status="'+escapeHtml(b)+'" type="button"><i class="fa-solid fa-plus"></i></button></span></div>');
       html.push('<div class="cbm-col-body" data-status="'+escapeHtml(b)+'">');
       list.forEach(t=>{ html.push(boardCard(t,ctx)); });
       html.push('<div class="cbm-drop-end" data-status="'+escapeHtml(b)+'"></div>');
@@ -175,7 +184,7 @@
       const list = groups[b]||[];
       if (!list.length) return;
       html.push('<div class="cbm-list-section" data-status="'+escapeHtml(b)+'">');
-      html.push('<div class="cbm-sec-head" data-toggle="'+escapeHtml(b)+'"><span class="cbm-sec-caret"><i class="fa-solid fa-chevron-down"></i></span><span class="cbm-sec-dot" style="background:'+STATUS_TEXT[b]+'"></span><span class="cbm-sec-title">'+escapeHtml(b)+'</span><span class="cbm-sec-count">'+list.length+'</span></div>');
+      html.push('<div class="cbm-sec-head" data-toggle="'+escapeHtml(b)+'"><span class="cbm-sec-caret"><i class="fa-solid fa-chevron-down"></i></span><span class="cbm-sec-dot" style="background:'+STATUS_TEXT[b]+'"></span><span class="cbm-sec-title">'+escapeHtml(b)+'</span><span class="cbm-sec-count">'+list.length+'</span><button class="cbm-add-task-btn" title="Add task" data-status="'+escapeHtml(b)+'" type="button"><i class="fa-solid fa-plus"></i> New task</button></div>');
       html.push('<div class="cbm-sec-body" data-status="'+escapeHtml(b)+'">');
       list.forEach(t=>{ html.push(listRow(t, ctx)); });
       html.push('<div class="cbm-drop-end cbm-row-drop" data-status="'+escapeHtml(b)+'"></div>');
@@ -271,6 +280,13 @@ function emptyState(ctx){
 
   // --- Board wiring ---
   function wireBoard(container, ctx){
+    container.querySelectorAll('.cbm-add-task-btn').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        if (typeof window.ntmResetAndOpen === 'function') window.ntmResetAndOpen();
+        else if (document.getElementById('newTaskBtn')) document.getElementById('newTaskBtn').click();
+      });
+    });
     container.querySelectorAll('.cbm-card').forEach(card=>{
       card.addEventListener('click', (e)=>{
         if (e.target.closest('[data-act]')) return;
@@ -305,6 +321,13 @@ function emptyState(ctx){
 
   // --- List wiring ---
   function wireList(container, ctx){
+    container.querySelectorAll('.cbm-add-task-btn').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        if (typeof window.ntmResetAndOpen === 'function') window.ntmResetAndOpen();
+        else if (document.getElementById('newTaskBtn')) document.getElementById('newTaskBtn').click();
+      });
+    });
     container.querySelectorAll('.cbm-sec-head').forEach(h=>{
       h.addEventListener('click', ()=>{
         const sec = h.parentElement;
