@@ -283,7 +283,12 @@ function emptyState(ctx){
     container.querySelectorAll('.cbm-add-task-btn').forEach(btn=>{
       btn.addEventListener('click', (e)=>{
         e.stopPropagation();
-        if (typeof window.ntmResetAndOpen === 'function') window.ntmResetAndOpen();
+        var s = window.state || {};
+        var statusKey = btn.getAttribute('data-status') || '';
+        var opts = { groupId: (s.currentView === 'group' && s.filterGroup) ? s.filterGroup : '' };
+        if (statusKey) opts.status = statusKey;
+        if (typeof window.ntmResetAndOpenWith === 'function') window.ntmResetAndOpenWith(opts);
+        else if (typeof window.ntmResetAndOpen === 'function') window.ntmResetAndOpen();
         else if (document.getElementById('newTaskBtn')) document.getElementById('newTaskBtn').click();
       });
     });
@@ -324,7 +329,12 @@ function emptyState(ctx){
     container.querySelectorAll('.cbm-add-task-btn').forEach(btn=>{
       btn.addEventListener('click', (e)=>{
         e.stopPropagation();
-        if (typeof window.ntmResetAndOpen === 'function') window.ntmResetAndOpen();
+        var s = window.state || {};
+        var statusKey = btn.getAttribute('data-status') || '';
+        var opts = { groupId: (s.currentView === 'group' && s.filterGroup) ? s.filterGroup : '' };
+        if (statusKey) opts.status = statusKey;
+        if (typeof window.ntmResetAndOpenWith === 'function') window.ntmResetAndOpenWith(opts);
+        else if (typeof window.ntmResetAndOpen === 'function') window.ntmResetAndOpen();
         else if (document.getElementById('newTaskBtn')) document.getElementById('newTaskBtn').click();
       });
     });
