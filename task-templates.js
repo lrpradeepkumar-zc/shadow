@@ -1,1069 +1,652 @@
-/* =======================================================
-   task-templates.js  -  Shadow ToDo  -  Task Templates
-   Flows: Create | Library | Apply | Share | Edit
-   Persistence: localStorage (shadow_templates)
-   AC: AC1-AC6 | TC: TC1-TC10
-======================================================= */
-(function() {
+(function () {
   'use strict';
-
-  // Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ CONSTANTS Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
-  const STORE_KEY   = 'shadow_templates';
-  const MAX_DEPTH   = 2;   // Parent > Subtask only
-  const MAX_SUB     = 20;  // max subtasks per template
-  const MAX_SHARE   = 50;  // max users per share action
-  const MAX_NAME    = 100; // template name char limit
-  const TMPL_VER    = 1;
-
-  // Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ STATE Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
-  const TM = {
-    templates   : [],   // all templates for current user
-    activeFilter: 'all', // all | personal | shared | group
-    activeSort  : 'recent', // recent | favourite
-    searchQuery : '',
-    previewId   : null,
-    editingId   : null,
-    shareTargetId: null,
-    applyingId  : null,
-    dragSrc     : null,
-    init        : false
-  };
-
-  // Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ UTILS Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
-  function uid() { return 'tm_' + Date.now() + '_' + Math.random().toString(36).slice(2,7); }
-  function now() { return new Date().toISOString(); }
-  function esc(s) { return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-  function currentUserId()   { return window.state?.currentUserId  || 'u_unknown'; }
-  function currentUserName() { return window.state?.currentUserName || 'User'; }
-  function getGroups()       { return window.state?.groups || []; }
-  function getMembers()      { return window.state?.members || []; }
-
-  // Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ PERSISTENCE Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
-  function loadTemplates() {
-    try {
-      const raw = localStorage.getItem(STORE_KEY);
-      TM.templates = raw ? JSON.parse(raw) : [];
-    } catch(e) { TM.templates = []; }
+  const STORE_KEY='shadow_templates',MAX_DEPTH=2,MAX_SUB=20,MAX_SHARE=50,MAX_NAME=100;
+  const PRESET_CATEGORIES=[
+    {id:'featured',label:'Featured',icon:'\u2B50'},
+    {id:'work',label:'Work',icon:'\uD83D\uDCBC'},
+    {id:'development',label:'Development',icon:'\uD83D\uDCBB'},
+    {id:'design',label:'Design & Product',icon:'\uD83C\uDFA8'},
+    {id:'personal',label:'Personal',icon:'\uD83C\uDFE0'},
+    {id:'management',label:'Management',icon:'\uD83D\uDCCA'},
+  ];
+  const PRESET_TEMPLATES=[
+    {id:'preset_weekly_review',name:'Weekly Review',category:'featured',emoji:'\uD83D\uDCC5',
+     description:'A GTD-friendly checklist to review your week and plan ahead.',
+     priority:'medium',tags:['Weekly','Review'],
+     subtasks:[
+      {id:'ps1',order:0,title:'Review completed tasks from last week',priority:'medium',tags:[],description:''},
+      {id:'ps2',order:1,title:'Clear and process inbox',priority:'medium',tags:[],description:''},
+      {id:'ps3',order:2,title:'Update project statuses',priority:'high',tags:[],description:''},
+      {id:'ps4',order:3,title:'Set top 3 priorities for next week',priority:'high',tags:[],description:''},
+      {id:'ps5',order:4,title:'Schedule key meetings and deadlines',priority:'medium',tags:[],description:''},
+    ]},
+    {id:'preset_project_kickoff',name:'Project Kickoff',category:'featured',emoji:'\uD83D\uDE80',
+     description:'Everything you need to launch a new project successfully.',
+     priority:'high',tags:['Project','Planning'],
+     subtasks:[
+      {id:'pk1',order:0,title:'Define project scope and objectives',priority:'high',tags:[],description:''},
+      {id:'pk2',order:1,title:'Identify stakeholders and team members',priority:'high',tags:[],description:''},
+      {id:'pk3',order:2,title:'Create project timeline and milestones',priority:'high',tags:[],description:''},
+      {id:'pk4',order:3,title:'Set up communication channels',priority:'medium',tags:[],description:''},
+      {id:'pk5',order:4,title:'Schedule kickoff meeting',priority:'medium',tags:[],description:''},
+      {id:'pk6',order:5,title:'Prepare initial risk assessment',priority:'medium',tags:[],description:''},
+    ]},
+    {id:'preset_meeting_prep',name:'Meeting Preparation',category:'work',emoji:'\uD83D\uDCCB',
+     description:'Prepare effectively for any important meeting.',
+     priority:'medium',tags:['Meeting'],
+     subtasks:[
+      {id:'mp1',order:0,title:'Define meeting agenda and goals',priority:'high',tags:[],description:''},
+      {id:'mp2',order:1,title:'Send calendar invites to attendees',priority:'medium',tags:[],description:''},
+      {id:'mp3',order:2,title:'Prepare supporting materials and slides',priority:'medium',tags:[],description:''},
+      {id:'mp4',order:3,title:'Review action items from previous meeting',priority:'low',tags:[],description:''},
+      {id:'mp5',order:4,title:'Send follow-up notes and action items',priority:'medium',tags:[],description:''},
+    ]},
+    {id:'preset_onboarding',name:'New Employee Onboarding',category:'work',emoji:'\uD83D\uDC4B',
+     description:'Onboard a new team member smoothly and efficiently.',
+     priority:'high',tags:['HR','Onboarding'],
+     subtasks:[
+      {id:'ob1',order:0,title:'Set up accounts and access credentials',priority:'high',tags:[],description:''},
+      {id:'ob2',order:1,title:'Provide equipment and workspace setup',priority:'high',tags:[],description:''},
+      {id:'ob3',order:2,title:'Schedule intro meetings with team',priority:'medium',tags:[],description:''},
+      {id:'ob4',order:3,title:'Share team processes and documentation',priority:'medium',tags:[],description:''},
+      {id:'ob5',order:4,title:'Assign first project or task',priority:'medium',tags:[],description:''},
+      {id:'ob6',order:5,title:'30-day check-in scheduled',priority:'low',tags:[],description:''},
+    ]},
+    {id:'preset_bug_fix',name:'Bug Fix Workflow',category:'development',emoji:'\uD83D\uDC1B',
+     description:'A structured workflow for investigating and fixing bugs.',
+     priority:'high',tags:['Bug','Dev'],
+     subtasks:[
+      {id:'bf1',order:0,title:'Reproduce the bug consistently',priority:'high',tags:[],description:''},
+      {id:'bf2',order:1,title:'Identify root cause',priority:'high',tags:[],description:''},
+      {id:'bf3',order:2,title:'Implement the fix',priority:'high',tags:[],description:''},
+      {id:'bf4',order:3,title:'Write or update unit tests',priority:'medium',tags:[],description:''},
+      {id:'bf5',order:4,title:'Code review',priority:'medium',tags:[],description:''},
+      {id:'bf6',order:5,title:'Deploy to staging and verify fix',priority:'medium',tags:[],description:''},
+    ]},
+    {id:'preset_feature_release',name:'Feature Release',category:'development',emoji:'\uD83C\uDF89',
+     description:'Steps to ship a new feature safely to production.',
+     priority:'high',tags:['Dev','Release'],
+     subtasks:[
+      {id:'fr1',order:0,title:'Feature complete and code reviewed',priority:'high',tags:[],description:''},
+      {id:'fr2',order:1,title:'QA testing passed',priority:'high',tags:[],description:''},
+      {id:'fr3',order:2,title:'Update documentation',priority:'medium',tags:[],description:''},
+      {id:'fr4',order:3,title:'Prepare release notes',priority:'medium',tags:[],description:''},
+      {id:'fr5',order:4,title:'Deploy to production',priority:'high',tags:[],description:''},
+      {id:'fr6',order:5,title:'Monitor metrics post-release',priority:'medium',tags:[],description:''},
+    ]},
+    {id:'preset_code_review',name:'Code Review Checklist',category:'development',emoji:'\uD83D\uDD0D',
+     description:'Thorough checklist for reviewing pull requests.',
+     priority:'medium',tags:['Dev','Review'],
+     subtasks:[
+      {id:'cr1',order:0,title:'Check code logic and correctness',priority:'high',tags:[],description:''},
+      {id:'cr2',order:1,title:'Review for edge cases and error handling',priority:'high',tags:[],description:''},
+      {id:'cr3',order:2,title:'Verify test coverage',priority:'medium',tags:[],description:''},
+      {id:'cr4',order:3,title:'Check naming conventions and readability',priority:'low',tags:[],description:''},
+      {id:'cr5',order:4,title:'Approve or request changes',priority:'medium',tags:[],description:''},
+    ]},
+    {id:'preset_design_sprint',name:'Design Sprint',category:'design',emoji:'\u270F\uFE0F',
+     description:'A 5-day sprint process to design and test solutions.',
+     priority:'high',tags:['Design','Sprint'],
+     subtasks:[
+      {id:'ds1',order:0,title:'Understand: map problem and user journey',priority:'high',tags:[],description:''},
+      {id:'ds2',order:1,title:'Diverge: sketch competing solutions',priority:'medium',tags:[],description:''},
+      {id:'ds3',order:2,title:'Decide: choose best solution',priority:'high',tags:[],description:''},
+      {id:'ds4',order:3,title:'Prototype: build realistic prototype',priority:'high',tags:[],description:''},
+      {id:'ds5',order:4,title:'Test: validate with real users',priority:'high',tags:[],description:''},
+    ]},
+    {id:'preset_travel_plan',name:'Trip Planning',category:'personal',emoji:'\u2708\uFE0F',
+     description:'Everything you need to plan a stress-free trip.',
+     priority:'medium',tags:['Travel','Personal'],
+     subtasks:[
+      {id:'tp1',order:0,title:'Book flights and accommodation',priority:'high',tags:[],description:''},
+      {id:'tp2',order:1,title:'Research destination and activities',priority:'medium',tags:[],description:''},
+      {id:'tp3',order:2,title:'Pack essentials checklist',priority:'medium',tags:[],description:''},
+      {id:'tp4',order:3,title:'Arrange travel insurance',priority:'medium',tags:[],description:''},
+      {id:'tp5',order:4,title:'Notify bank of travel dates',priority:'low',tags:[],description:''},
+    ]},
+    {id:'preset_sprint_planning',name:'Sprint Planning',category:'management',emoji:'\uD83D\uDCCA',
+     description:'Plan and kick off a productive development sprint.',
+     priority:'high',tags:['Sprint','Agile'],
+     subtasks:[
+      {id:'sp1',order:0,title:'Review and prioritize backlog',priority:'high',tags:[],description:''},
+      {id:'sp2',order:1,title:'Define sprint goal',priority:'high',tags:[],description:''},
+      {id:'sp3',order:2,title:'Assign tasks to team members',priority:'medium',tags:[],description:''},
+      {id:'sp4',order:3,title:'Estimate story points',priority:'medium',tags:[],description:''},
+      {id:'sp5',order:4,title:'Set up sprint board',priority:'low',tags:[],description:''},
+    ]},
+    {id:'preset_retro',name:'Sprint Retrospective',category:'management',emoji:'\uD83D\uDD04',
+     description:'Reflect on the sprint and continuously improve.',
+     priority:'medium',tags:['Sprint','Agile'],
+     subtasks:[
+      {id:'rt1',order:0,title:'Gather team feedback (What went well?)',priority:'medium',tags:[],description:''},
+      {id:'rt2',order:1,title:'Identify improvements (What to change?)',priority:'high',tags:[],description:''},
+      {id:'rt3',order:2,title:'Create action items from feedback',priority:'high',tags:[],description:''},
+      {id:'rt4',order:3,title:'Update team processes documentation',priority:'low',tags:[],description:''},
+    ]},
+  ];
+  const TM={templates:[],activeFilter:'all',activeSort:'recent',searchQuery:'',previewId:null,editingId:null,shareTargetId:null,applyingId:null,dragSrc:null,activePresetCat:'featured',init:false};
+  function loadTemplates(){try{TM.templates=JSON.parse(localStorage.getItem(STORE_KEY))||[];}catch(e){TM.templates=[];}}
+  function saveTemplates(){localStorage.setItem(STORE_KEY,JSON.stringify(TM.templates));}
+  function uid(){return 'tm_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);}
+  function currentUserId(){return (window.state&&window.state.currentUserId)||'user_1';}
+  function currentUserName(){return (window.state&&window.state.currentUserName)||'Admin';}
+  function isOwner(tpl){return tpl.createdBy===currentUserId();}
+  function getGroups(){return (window.state&&window.state.groups)||[];}
+  function getMembers(){return (window.state&&window.state.members)||[];}
+  function priColor(p){return p==='high'?'var(--priority-high,#e53935)':p==='medium'?'var(--priority-medium,#f59e0b)':p==='low'?'var(--priority-low,#10b981)':'var(--text-muted,#aaa)';}
+  function taskCountLabel(n){return n+' task'+(n!==1?'s':'');}
+  function sharedLabel(tpl){if(!tpl.sharedWith||!tpl.sharedWith.length)return '';return tpl.sharedWith.length+' shared';}
+  function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+  function showToast(msg,type){
+    const el=document.createElement('div');
+    el.className='tm-toast'+(type==='error'?' tm-toast--error':'');
+    el.textContent=msg;
+    document.body.appendChild(el);
+    requestAnimationFrame(()=>{el.classList.add('tm-toast--show');});
+    setTimeout(()=>{el.classList.remove('tm-toast--show');setTimeout(()=>el.remove(),400);},2800);
   }
-  function saveTemplates() {
-    localStorage.setItem(STORE_KEY, JSON.stringify(TM.templates));
+  function createTemplate(data){
+    if(!data.name||!data.name.trim()){showToast('Template name is required','error');return null;}
+    if(data.name.length>MAX_NAME){showToast('Name too long (max '+MAX_NAME+' chars)','error');return null;}
+    const subs=(data.subtasks||[]).slice(0,MAX_SUB);
+    if((data.subtasks||[]).length>MAX_SUB){showToast('Capped at '+MAX_SUB+' subtasks','error');}
+    const tpl={id:uid(),version:1,name:data.name.trim(),parentTitle:data.parentTitle||data.name.trim(),
+      priority:data.priority||'none',tags:Array.isArray(data.tags)?data.tags:[],description:data.description||'',
+      subtasks:subs.map((s,i)=>({id:s.id||uid(),order:i,title:s.title||'',priority:s.priority||'none',tags:s.tags||[],description:s.description||''})),
+      createdBy:currentUserId(),createdByName:currentUserName(),createdAt:Date.now(),updatedAt:Date.now(),
+      isFavourite:false,sharedWith:[],usageCount:0};
+    TM.templates.unshift(tpl);saveTemplates();updateSidebarCount();return tpl;
   }
-  function findTmpl(id) { return TM.templates.find(t => t.id === id); }
-  function isOwner(tmpl) { return tmpl && tmpl.createdBy === currentUserId(); }
-
-  // Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ FILTERED + SORTED LIST Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
-  function getFilteredTemplates() {
-    let list = TM.templates.slice();
-    const uid = currentUserId();
-
-    // filter by scope
-    if (TM.activeFilter === 'personal') {
-      list = list.filter(t => t.createdBy === uid && (!t.sharedWith || t.sharedWith.length === 0));
-    } else if (TM.activeFilter === 'shared') {
-      list = list.filter(t => t.createdBy !== uid && t.sharedWith &&
-        t.sharedWith.some(s => s.type === 'user' && s.id === uid));
-    } else if (TM.activeFilter === 'group') {
-      const myGroupIds = getGroups().filter(g => g.memberIds?.includes(uid) || g.adminIds?.includes(uid)).map(g => g.id);
-      list = list.filter(t => t.sharedWith &&
-        t.sharedWith.some(s => s.type === 'group' && myGroupIds.includes(s.id)));
-    } else { // all - show own + shared to me
-      list = list.filter(t => t.createdBy === uid ||
-        (t.sharedWith && t.sharedWith.some(s =>
-          (s.type === 'user' && s.id === uid) ||
-          (s.type === 'group' && getGroups().some(g => g.id === s.id && (g.memberIds?.includes(uid) || g.adminIds?.includes(uid))))
-        ))
-      );
-    }
-
-    // search
-    if (TM.searchQuery) {
-      const q = TM.searchQuery.toLowerCase();
-      list = list.filter(t => t.name.toLowerCase().includes(q));
-    }
-
-    // sort
-    if (TM.activeSort === 'favourite') {
-      list.sort((a,b) => (b.isFavourite?1:0) - (a.isFavourite?1:0) || new Date(b.createdAt) - new Date(a.createdAt));
-    } else {
-      list.sort((a,b) => new Date(b.updatedAt||b.createdAt) - new Date(a.updatedAt||a.createdAt));
-    }
-
+  function updateTemplate(id,patch){
+    const tpl=TM.templates.find(t=>t.id===id);if(!tpl)return;
+    Object.assign(tpl,patch,{updatedAt:Date.now()});
+    if(patch.subtasks)tpl.subtasks=patch.subtasks.map((s,i)=>Object.assign({},s,{order:i}));
+    saveTemplates();
+  }
+  function deleteTemplate(id){TM.templates=TM.templates.filter(t=>t.id!==id);saveTemplates();updateSidebarCount();}
+  function toggleFavourite(id){const tpl=TM.templates.find(t=>t.id===id);if(tpl){tpl.isFavourite=!tpl.isFavourite;saveTemplates();}}
+  function extractFromTask(taskId){
+    if(!window.ShadowDB||!window.ShadowDB.Tasks)return null;
+    const task=window.ShadowDB.Tasks.get(taskId);if(!task)return null;
+    return{name:task.title||'Untitled Template',parentTitle:task.title||'',priority:task.priority||'none',
+      tags:task.tags||'',description:task.description||'',
+      subtasks:(task.subtasks||[]).slice(0,MAX_SUB).map((s,i)=>({id:uid(),order:i,title:s.title||'',priority:s.priority||'none',tags:s.tags||[],description:s.description||''}))};
+  }
+  function buildApplyConfig(tpl,overrides){
+    return{title:overrides.title||tpl.parentTitle||tpl.name,priority:overrides.priority||tpl.priority,
+      tags:overrides.tags||tpl.tags,groupId:overrides.groupId||null,assignee:null,dueDate:null,
+      subtasks:tpl.subtasks.slice().sort((a,b)=>a.order-b.order).map(s=>({title:s.title,priority:s.priority,tags:s.tags,description:s.description,assignee:null,dueDate:null}))};
+  }
+  function applyTemplate(tplId,overrides){
+    const tpl=TM.templates.find(t=>t.id===tplId)||PRESET_TEMPLATES.find(t=>t.id===tplId);
+    if(!tpl)return;
+    if(!window.ShadowDB||!window.ShadowDB.Tasks){showToast('DB not ready','error');return;}
+    const cfg=buildApplyConfig(tpl,overrides||{});
+    window.ShadowDB.Tasks.create({title:cfg.title,priority:cfg.priority,tags:cfg.tags,description:tpl.description||'',
+      assignee:null,dueDate:null,groupId:cfg.groupId,subtasks:cfg.subtasks,fromTemplate:tplId});
+    if(tpl.id&&!tpl.id.startsWith('preset_'))updateTemplate(tpl.id,{usageCount:(tpl.usageCount||0)+1});
+    showToast('\u2705 Template applied! Tasks created.');
+    if(window.pushBellNotification)window.pushBellNotification({type:'template',title:'Template Applied',body:cfg.title+' created from template'});
+  }
+  function shareTemplate(tplId,targets){
+    const tpl=TM.templates.find(t=>t.id===tplId);
+    if(!tpl||!isOwner(tpl)){showToast('Only the creator can share','error');return;}
+    if(!targets||targets.length===0){showToast('Select at least one recipient','error');return;}
+    if(targets.length>MAX_SHARE){showToast('Max '+MAX_SHARE+' recipients per share','error');return;}
+    const now=Date.now();
+    targets.forEach(t=>{const exists=tpl.sharedWith.find(s=>s.id===t.id&&s.type===t.type);if(!exists)tpl.sharedWith.push({type:t.type,id:t.id,name:t.name,sharedAt:now});});
+    saveTemplates();showToast('\uD83D\uDCE4 Template shared with '+targets.length+' recipient(s)');
+  }
+  function unshareTemplate(tplId,targetId){
+    const tpl=TM.templates.find(t=>t.id===tplId);
+    if(!tpl||!isOwner(tpl))return;
+    tpl.sharedWith=tpl.sharedWith.filter(s=>s.id!==targetId);saveTemplates();
+  }
+  function injectSidebarSection(){
+    if(document.getElementById('tm-sidebar-section'))return;
+    const sidebar=document.querySelector('nav.sidebar,.sidebar');if(!sidebar)return;
+    const sec=document.createElement('div');
+    sec.id='tm-sidebar-section';sec.className='sidebar-section';
+    sec.style.cssText='display:block !important;margin-top:8px;';
+    sec.innerHTML='<div class="sidebar-section-header" style="display:flex;align-items:center;justify-content:space-between;padding:6px 12px;font-size:11px;font-weight:600;color:var(--text-muted,#888);text-transform:uppercase;letter-spacing:.06em;">'+
+      '<span>Templates</span><span id="tm-sidebar-count" style="background:var(--accent-blue,#2563eb);color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700;display:none;">0</span></div>'+
+      '<div id="tm-sidebar-links" style="padding:2px 8px;">'+
+      '<div class="nav-item" data-view="templates" id="tm-library-link" style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer;font-size:13px;color:var(--text-primary,#222);">'+
+      '<i class="fa-solid fa-layer-group" style="width:16px;text-align:center;color:var(--accent-blue,#2563eb);"></i><span>Browse Templates</span></div>'+
+      '<div class="nav-item" data-view="new-template" id="tm-new-link" style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer;font-size:13px;color:var(--text-primary,#222);">'+
+      '<i class="fa-solid fa-plus" style="width:16px;text-align:center;color:var(--accent-blue,#2563eb);"></i><span>New Template</span></div></div>';
+    sidebar.appendChild(sec);
+    sec.querySelector('#tm-library-link').addEventListener('click',openLibrary);
+    sec.querySelector('#tm-new-link').addEventListener('click',openCreateModal);
+  }
+  function updateSidebarCount(){const el=document.getElementById('tm-sidebar-count');if(!el)return;const n=TM.templates.length;el.textContent=n;el.style.display=n>0?'inline-block':'none';}
+  function forceShowSidebar(){const el=document.getElementById('tm-sidebar-section');if(el)el.style.cssText='display:block !important;margin-top:8px;';}
+  function openLibrary(){closeLibrary();TM.activePresetCat='featured';
+    const overlay=document.createElement('div');overlay.id='tm-library-overlay';overlay.className='tm-library-overlay';
+    overlay.innerHTML=renderLibraryHTML();document.body.appendChild(overlay);wireLibrary(overlay);
+  }
+  function closeLibrary(){const el=document.getElementById('tm-library-overlay');if(el)el.remove();TM.previewId=null;}
+  function renderLibraryHTML(){
+    return '<div class="tm-lib-panel">'+
+      '<div class="tm-lib-sidebar">'+
+      '<div class="tm-lib-sidebar-title">Templates</div>'+
+      '<div class="tm-lib-search"><i class="fa-solid fa-magnifying-glass"></i><input type="text" placeholder="Search templates" id="tm-lib-search-input"></div>'+
+      '<div class="tm-lib-sidebar-section-label">MY TEMPLATES</div>'+
+      '<div class="tm-lib-nav-item tm-lib-nav-mine" data-view="my"><i class="fa-solid fa-user"></i>&nbsp;My Templates&nbsp;<span class="tm-lib-nav-count" id="tm-mine-count">0</span></div>'+
+      '<div class="tm-lib-sidebar-section-label" style="margin-top:16px;">CATEGORIES</div>'+
+      PRESET_CATEGORIES.map(cat=>'<div class="tm-lib-nav-item tm-lib-nav-cat'+(cat.id==='featured'?' active':'')+'        '" data-cat="'+cat.id+'">'+cat.icon+' '+escHtml(cat.label)+'</div>').join('')+
+      '</div>'+
+      '<div class="tm-lib-main">'+
+      '<div class="tm-lib-main-header">'+
+      '<div><div id="tm-lib-main-title" class="tm-lib-main-title">Featured</div>'+
+      '<div id="tm-lib-main-subtitle" class="tm-lib-main-subtitle">Start with our most popular templates</div></div>'+
+      '<button class="tm-lib-close" id="tm-lib-close-btn" title="Close">&times;</button></div>'+
+      '<div id="tm-lib-content" class="tm-lib-content">'+renderLibraryContent('featured')+'</div>'+
+      '</div>'+
+      '<div class="tm-lib-preview" id="tm-lib-preview">'+renderPreviewEmpty()+'</div>'+
+      '</div>';
+  }
+  function renderLibraryContent(view){
+    if(view==='my')return renderMyTemplates();
+    const presets=PRESET_TEMPLATES.filter(p=>p.category===view||(view==='featured'&&(p.category==='featured')));
+    if(!presets.length)return '<div class="tm-lib-empty"><i class="fa-solid fa-layer-group"></i><p>No templates in this category yet.</p></div>';
+    return '<div class="tm-preset-grid">'+presets.map(p=>renderPresetCard(p)).join('')+'</div>';
+  }
+  function renderPresetCard(p){
+    const subCount=(p.subtasks||[]).length;
+    const priDot=p.priority!=='none'?'<span style="color:'+priColor(p.priority)+';font-size:11px;">\u25CF '+p.priority+'</span>':'';
+    const tags=(p.tags||[]).map(t=>'<span class="tm-tag">'+escHtml(t)+'</span>').join('');
+    return '<div class="tm-preset-card" data-preset-id="'+p.id+'">'+
+      '<div class="tm-preset-card-emoji">'+(p.emoji||'\uD83D\uDCCB')+'</div>'+
+      '<div class="tm-preset-card-body">'+
+      '<div class="tm-preset-card-name">'+escHtml(p.name)+'</div>'+
+      '<div class="tm-preset-card-desc">'+escHtml(p.description||'')+'</div>'+
+      '<div class="tm-preset-card-meta">'+priDot+'<i class="fa-solid fa-list-check" style="margin-left:6px;"></i> '+subCount+' tasks '+tags+'</div>'+
+      '</div>'+
+      '<div class="tm-preset-card-actions">'+
+      '<button class="tm-btn-secondary tm-preset-preview-btn" data-preset-id="'+p.id+'">Preview</button>'+
+      '<button class="tm-btn-primary tm-preset-apply-btn" data-preset-id="'+p.id+'">Apply</button>'+
+      '</div></div>';
+  }
+  function getFilteredMyTemplates(){
+    let list=TM.templates.slice();
+    const q=TM.searchQuery.toLowerCase().trim();
+    if(q)list=list.filter(t=>t.name.toLowerCase().includes(q));
+    if(TM.activeFilter==='personal')list=list.filter(t=>!t.sharedWith||!t.sharedWith.length);
+    if(TM.activeFilter==='shared')list=list.filter(t=>t.sharedWith&&t.sharedWith.some(s=>s.type==='user'));
+    if(TM.activeFilter==='group')list=list.filter(t=>t.sharedWith&&t.sharedWith.some(s=>s.type==='group'));
+    if(TM.activeSort==='favourite')list.sort((a,b)=>(b.isFavourite?1:0)-(a.isFavourite?1:0));
+    else list.sort((a,b)=>b.updatedAt-a.updatedAt);
     return list;
   }
-
-  // Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ FLOW 1: CREATE TEMPLATE Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
-  // Extract template data from a task object (strips assignees/dueDates)
-  function extractFromTask(task) {
-    const subtasks = (task.subtasks || []).slice(0, MAX_SUB).map(st => ({
-      title      : st.title || st.name || '',
-      priority   : st.priority || 'None',
-      tags       : (st.tags || []).slice(),
-      description: st.description || ''
-      // no assignee, no dueDate
-    }));
-    return {
-      parentTitle: task.title || '',
-      priority   : task.priority || 'None',
-      tags       : (task.tags || []).slice(),
-      description: task.description || '',
-      subtasks
-    };
-  }
-
-  // Main create function called from Save-As-Template dialog
-  function createTemplate(name, taskData, options) {
-    name = (name || '').trim();
-    if (!name)               { alert('Template name is required.'); return null; }
-    if (name.length > MAX_NAME) { alert('Template name must be ' + MAX_NAME + ' characters or fewer.'); return null; }
-    const subCount = (taskData.subtasks || []).length;
-    if (subCount > MAX_SUB) {
-      alert('This task has ' + subCount + ' subtasks. Templates support a maximum of ' + MAX_SUB + ' subtasks. Please reduce subtasks before saving as template.'); // TC1
-      return null;
-    }
-    const tmpl = {
-      id          : uid(),
-      version     : TMPL_VER,
-      name,
-      parentTitle : taskData.parentTitle || '',
-      priority    : taskData.priority    || 'None',
-      tags        : taskData.tags        || [],
-      description : taskData.description || '',
-      subtasks    : (taskData.subtasks   || []).map((st, i) => ({
-        id         : uid(),
-        order      : i,
-        title      : st.title || '',
-        priority   : st.priority || 'None',
-        tags       : st.tags   || [],
-        description: st.description || ''
-      })),
-      createdBy   : currentUserId(),
-      createdByName: currentUserName(),
-      createdAt   : now(),
-      updatedAt   : now(),
-      isFavourite : false,
-      sharedWith  : [],  // {type:'user'|'group', id, name}
-      usageCount  : 0
-    };
-    TM.templates.push(tmpl);
-    saveTemplates();
-    return tmpl;
-  }
-
-  // Update an existing template (edit flow) - AC6: does NOT alter previously created tasks
-  function updateTemplate(id, changes) {
-    const tmpl = findTmpl(id);
-    if (!tmpl || !isOwner(tmpl)) return false;
-    Object.assign(tmpl, changes, { updatedAt: now() });
-    saveTemplates();
-    return true;
-  }
-
-  function deleteTemplate(id) {
-    const idx = TM.templates.findIndex(t => t.id === id);
-    if (idx === -1) return;
-    if (!isOwner(TM.templates[idx])) return;
-    TM.templates.splice(idx, 1);
-    saveTemplates();
-  }
-
-  function toggleFavourite(id) {
-    const tmpl = findTmpl(id);
-    if (tmpl) { tmpl.isFavourite = !tmpl.isFavourite; tmpl.updatedAt = now(); saveTemplates(); }
-  }
-
-  // Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ FLOW 3: APPLY TEMPLATE Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
-  // Build apply-preview config from template + optional user overrides
-  function buildApplyConfig(tmpl, overrides) {
-    overrides = overrides || {};
-    return {
-      title      : overrides.title       || tmpl.parentTitle || tmpl.name,
-      priority   : overrides.priority    || tmpl.priority,
-      tags       : overrides.tags        || tmpl.tags.slice(),
-      description: overrides.description || tmpl.description,
-      group      : overrides.group       || null, // user selects at apply time
-      category   : overrides.category    || null,
-      subtasks   : tmpl.subtasks.map((st, i) => ({
-        title      : (overrides.subtasks && overrides.subtasks[i]?.title) || st.title,
-        priority   : (overrides.subtasks && overrides.subtasks[i]?.priority) || st.priority,
-        tags       : (overrides.subtasks && overrides.subtasks[i]?.tags)  || st.tags.slice(),
-        description: (overrides.subtasks && overrides.subtasks[i]?.description) || st.description
-      }))
-      // Note: assignee and dueDate are NEVER copied from template (TC2)
-    };
-  }
-
-  // Actually apply a template - creates parent task + subtasks via ShadowDB
-  function applyTemplate(tmplId, overrides, groupId) {
-    const tmpl = findTmpl(tmplId);
-    if (!tmpl) return;
-    const cfg = buildApplyConfig(tmpl, overrides);
-    if (!window.ShadowDB || !window.ShadowDB.Tasks) { alert('Task system not ready.'); return; }
-
-    const parentData = {
-      title      : cfg.title,
-      priority   : cfg.priority,
-      tags       : cfg.tags,
-      description: cfg.description,
-      group      : groupId || null,
-      category   : cfg.category || 'General',
-      status     : 'Open',
-      assignee   : null,  // stripped - TC2
-      assignees  : [],    // stripped - TC2
-      dueDate    : null,  // stripped - TC2
-      startDate  : null,
-      subtasks   : cfg.subtasks.map(st => ({
-        title      : st.title,
-        priority   : st.priority,
-        tags       : st.tags,
-        description: st.description,
-        status     : 'Open',
-        done       : false
-      })),
-      fromTemplate: tmplId  // audit trail
-    };
-
-    const task = window.ShadowDB.Tasks.create(parentData);
-    if (task) {
-      tmpl.usageCount = (tmpl.usageCount || 0) + 1;
-      tmpl.updatedAt = now();
-      saveTemplates();
-      // Push bell notification
-      if (window.pushBellNotification) {
-        window.pushBellNotification(currentUserName() + ' applied template Ã¢ÂÂ' + tmpl.name + 'Ã¢ÂÂ Ã¢ÂÂ ' + cfg.subtasks.length + ' subtask(s) created');
-      }
-    }
-    return task;
-  }
-
-  // Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ FLOW 4: SHARE TEMPLATE Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
-  // AC5: max 50 users per share action, recipients are read-only
-  function shareTemplate(tmplId, targets) {
-    // targets = [{type:'user'|'group', id, name}, ...]
-    const tmpl = findTmpl(tmplId);
-    if (!tmpl || !isOwner(tmpl)) { alert('Only the template owner can share it.'); return false; }
-
-    // count users in this action (TC8)
-    const userTargets = targets.filter(t => t.type === 'user');
-    if (userTargets.length > MAX_SHARE) {
-      alert('You can share with a maximum of ' + MAX_SHARE + ' users per action. Selected: ' + userTargets.length); // TC8
-      return false;
-    }
-
-    // merge without dupes
-    targets.forEach(target => {
-      const exists = tmpl.sharedWith.find(s => s.type === target.type && s.id === target.id);
-      if (!exists) tmpl.sharedWith.push({ type: target.type, id: target.id, name: target.name, sharedAt: now() });
-    });
-    tmpl.updatedAt = now();
-    saveTemplates();
-    return true;
-  }
-
-  function unshareTemplate(tmplId, type, targetId) {
-    const tmpl = findTmpl(tmplId);
-    if (!tmpl || !isOwner(tmpl)) return;
-    tmpl.sharedWith = tmpl.sharedWith.filter(s => !(s.type === type && s.id === targetId));
-    tmpl.updatedAt = now();
-    saveTemplates();
-  }
-
-  // Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ UI HELPERS Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
-  function priColor(p) {
-    return {High:'#ea4335',Medium:'#f59f00',Low:'#1a73e8',None:'#9ca3af'}[p] || '#9ca3af';
-  }
-  function priLabel(p) {
-    return {High:'Ã¢ÂÂ High',Medium:'Ã¢ÂÂ Medium',Low:'Ã¢ÂÂ Low',None:'Ã¢ÂÂ None'}[p] || p;
-  }
-  function taskCountLabel(tmpl) {
-    const sub = tmpl.subtasks.length;
-    return 1 + sub + ' task' + (1+sub !== 1 ? 's':'') + (sub > 0 ? ' (1 parent + '+sub+' subtasks)':'');
-  }
-  function sharedLabel(tmpl) {
-    if (!tmpl.sharedWith || !tmpl.sharedWith.length) return '';
-    return 'Shared with ' + tmpl.sharedWith.length + ' recipient(s)';
-  }
-  function isMine(tmpl) { return tmpl.createdBy === currentUserId(); }
-
-  // Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ SIDEBAR ENTRY Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
-  function injectSidebarEntry() {
-    if (document.getElementById('tm-sidebar-item')) return;
-    const sidebar = document.querySelector('.sidebar');
-    if (!sidebar) return;
-
-    // Find or create TEMPLATES section
-    const section = document.createElement('div');
-    section.className = 'sidebar-section';
-    section.id = 'tm-sidebar-section';
-    section.innerHTML =
-      '<div class="section-title">TEMPLATES</div>' +
-      '<div class="nav-item" id="tm-sidebar-item" data-view="templates">' +
-      '  <i class="fa-solid fa-file-lines"></i> Templates' +
-      '  <span class="count" id="tm-sidebar-count">0</span>' +
-      '</div>' +
-      '<div class="nav-item" id="tm-new-blank-item" title="Create blank template">' +
-      '  <i class="fa-regular fa-file-plus" style="color:#1a73e8"></i>' +
-      '  <span style="color:#1a73e8;font-size:12px;margin-left:4px">New Template</span>' +
+  function renderMyTemplates(){
+    const filtered=getFilteredMyTemplates();
+    if(!filtered.length)return '<div class="tm-lib-empty-my">'+
+      '<div class="tm-lib-empty-icon">\uD83D\uDCCB</div>'+
+      '<div class="tm-lib-empty-title">No templates yet</div>'+
+      '<div class="tm-lib-empty-sub">Save a task as a template, or start from a preset in the categories on the left.</div>'+
+      '<button class="tm-btn-primary" id="tm-empty-create-btn" style="margin-top:16px;">+ Create Template</button>'+
+      '<div style="margin-top:12px;font-size:12px;color:var(--text-muted);">Tip: Right-click any task card \u2192 Save as Template</div>'+
       '</div>';
-
-    // Insert before TAGS section or append
-    const tagsSection = [...sidebar.querySelectorAll('.sidebar-section')]
-      .find(s => s.querySelector('.section-title')?.textContent?.includes('TAGS'));
-    if (tagsSection) sidebar.insertBefore(section, tagsSection);
-    else sidebar.appendChild(section);
-
-    // Wire clicks
-    document.getElementById('tm-sidebar-item').onclick = () => openLibrary();
-    document.getElementById('tm-new-blank-item').onclick = () => openCreateModal(null);
-    updateSidebarCount();
+    return '<div class="tm-my-grid">'+filtered.map(t=>renderMyTemplateCard(t)).join('')+'</div>';
   }
-
-  function updateSidebarCount() {
-    const el = document.getElementById('tm-sidebar-count');
-    if (el) el.textContent = getFilteredTemplates().length;
-  }
-
-  // --- FLOW 2: LIBRARY PANEL
-  function openLibrary() {
-    document.querySelectorAll('[id^=tm-]:not(#tm-library)').forEach(el => el.style && (el.style.display='none'));
-    var panel = document.getElementById('tm-library');
-    if (!panel) {
-      panel = document.createElement('div');
-      panel.id = 'tm-library';
-      panel.className = 'tm-library-panel';
-      document.body.appendChild(panel);
-    }
-    panel.style.display = 'flex';
-    renderLibrary(panel);
-    document.querySelectorAll('.nav-item').forEach(function(el){el.classList.remove('active');});
-    var si = document.getElementById('tm-sidebar-item');
-    if (si) si.classList.add('active');
-  }
-
-  function renderLibrary(panel) {
-    var list = getFilteredTemplates();
-    var cardsHTML = list.length ? list.map(renderTemplateCard).join('') :
-      '<div class="tm-empty"><i class="fa-regular fa-folder-open"></i><p>No templates found. Create one to get started!</p></div>';
-    panel.innerHTML =
-      '<div class="tm-library-header">' +
-      '<div class="tm-library-title"><i class="fa-solid fa-file-lines"></i> Task Templates</div>' +
-      '<div class="tm-library-actions">' +
-      '<button class="tm-btn tm-btn-primary" id="tm-create-blank-btn"><i class="fa-solid fa-plus"></i> New Template</button>' +
-      '<button class="tm-icon-btn" id="tm-library-close"><i class="fa-solid fa-xmark"></i></button>' +
-      '</div></div>' +
-      '<div class="tm-library-toolbar">' +
-      '<div class="tm-search-wrap"><i class="fa-solid fa-magnifying-glass"></i>' +
-      '<input class="tm-search-input" id="tm-lib-search" placeholder="Search templates..." value="' + esc(TM.searchQuery) + '">'  +
-      '</div>' +
-      '<select class="tm-select" id="tm-lib-sort">' +
-      '<option value="recent"' + (TM.activeSort==='recent'?' selected':'') + '>Most Recent</option>' +
-      '<option value="favourite"' + (TM.activeSort==='favourite'?' selected':'') + '>Favourites First</option>' +
-      '</select></div>' +
-      '<div class="tm-filter-tabs">' +
-      ['all','personal','shared','group'].map(function(f){
-        return '<button class="tm-tab' + (TM.activeFilter===f?' active':'') + '" data-filter="' + f + '">' + f.charAt(0).toUpperCase()+f.slice(1) + '</button>';
-      }).join('') +
-      '</div>' +
-      '<div class="tm-library-body">' +
-      '<div class="tm-card-grid" id="tm-card-grid">' + cardsHTML + '</div>' +
-      '<div class="tm-preview-panel" id="tm-preview-panel" style="display:none">' +
-      '<div class="tm-preview-header"><span id="tm-preview-title">Preview</span>' +
-      '<button class="tm-icon-btn" id="tm-preview-close"><i class="fa-solid fa-xmark"></i></button></div>' +
-      '<div class="tm-preview-body" id="tm-preview-body"></div>' +
-      '<div class="tm-preview-footer">' +
-      '<button class="tm-btn tm-btn-primary" id="tm-preview-apply-btn"><i class="fa-solid fa-bolt"></i> Apply Template</button>' +
-      '<button class="tm-btn tm-btn-secondary" id="tm-preview-edit-btn"><i class="fa-solid fa-pen"></i> Edit</button>' +
-      '<button class="tm-btn tm-btn-secondary" id="tm-preview-share-btn"><i class="fa-solid fa-share-nodes"></i> Share</button>' +
-      '</div></div></div>';
-    wireLibraryEvents(panel);
-  }
-
-  function wireLibraryEvents(panel) {
-    var closeBtn = document.getElementById('tm-library-close');
-    if (closeBtn) closeBtn.onclick = function(){ closeLibrary(); };
-    var createBtn = document.getElementById('tm-create-blank-btn');
-    if (createBtn) createBtn.onclick = function(){ openCreateModal(null); };
-    var searchEl = document.getElementById('tm-lib-search');
-    if (searchEl) searchEl.oninput = function(e){ TM.searchQuery = e.target.value; renderLibrary(panel); };
-    var sortEl = document.getElementById('tm-lib-sort');
-    if (sortEl) sortEl.onchange = function(e){ TM.activeSort = e.target.value; renderLibrary(panel); };
-    panel.querySelectorAll('.tm-tab').forEach(function(btn){
-      btn.onclick = function(){ TM.activeFilter = btn.dataset.filter; renderLibrary(panel); };
-    });
-    panel.querySelectorAll('.tm-card').forEach(function(card){
-      var tid = card.dataset.id;
-      var preBtn = card.querySelector('.tm-card-preview-btn');
-      var appBtn = card.querySelector('.tm-card-apply-btn');
-      var favBtn = card.querySelector('.tm-card-fav-btn');
-      var edtBtn = card.querySelector('.tm-card-edit-btn');
-      var shrBtn = card.querySelector('.tm-card-share-btn');
-      var delBtn = card.querySelector('.tm-card-delete-btn');
-      if (preBtn) preBtn.onclick = function(e){ e.stopPropagation(); openPreview(tid, panel); };
-      if (appBtn) appBtn.onclick = function(e){ e.stopPropagation(); openApplyModal(tid); };
-      if (favBtn) favBtn.onclick = function(e){ e.stopPropagation(); toggleFavourite(tid); renderLibrary(panel); };
-      if (edtBtn) edtBtn.onclick = function(e){ e.stopPropagation(); openEditModal(tid); };
-      if (shrBtn) shrBtn.onclick = function(e){ e.stopPropagation(); openShareModal(tid); };
-      if (delBtn) delBtn.onclick = function(e){ e.stopPropagation(); confirmDeleteTemplate(tid, panel); };
-    });
-  }
-
-  function closeLibrary() {
-    var p = document.getElementById('tm-library'); if (p) p.style.display = 'none';
-  }
-  // --- Template Card HTML renderer
-  function renderTemplateCard(tmpl) {
-    var mine = isMine(tmpl);
-    var shared = sharedLabel(tmpl);
-    var fav = tmpl.isFavourite;
-    return '<div class="tm-card' + (fav?' tm-card--fav':'') + '" data-id="' + esc(tmpl.id) + '">'
-      + '<div class="tm-card-header">' 
-      + '<div class="tm-card-name">' + esc(tmpl.name) + '</div>'
-      + '<button class="tm-icon-btn tm-card-fav-btn" title="' + (fav?'Remove from Favourites':'Add to Favourites') + '">'
-      + '<i class="' + (fav?'fa-solid':'fa-regular') + ' fa-star"></i></button>'
-      + '</div>'
-      + '<div class="tm-card-meta">' + esc(taskCountLabel(tmpl)) + '</div>'
-      + '<div class="tm-card-pri" style="color:' + priColor(tmpl.priority) + '">'
-      + priLabel(tmpl.priority) + '</div>'
-      + (tmpl.tags.length ? '<div class="tm-card-tags">' + tmpl.tags.map(function(t){return '<span class="tm-tag">'+esc(t)+'</span>';}).join('') + '</div>' : '') 
-      + (shared ? '<div class="tm-card-shared"><i class="fa-solid fa-share-nodes"></i> ' + esc(shared) + '</div>' : '') 
-      + '<div class="tm-card-footer">' 
-      + '<button class="tm-btn tm-btn-primary tm-card-apply-btn"><i class="fa-solid fa-bolt"></i> Apply</button>'
-      + '<button class="tm-btn tm-btn-secondary tm-card-preview-btn"><i class="fa-regular fa-eye"></i> Preview</button>'
-      + (mine ? '<button class="tm-icon-btn tm-card-edit-btn" title="Edit"><i class="fa-solid fa-pen"></i></button>' : '') 
-      + (mine ? '<button class="tm-icon-btn tm-card-share-btn" title="Share"><i class="fa-solid fa-share-nodes"></i></button>' : '') 
-      + (mine ? '<button class="tm-icon-btn tm-card-delete-btn tm-danger" title="Delete"><i class="fa-solid fa-trash"></i></button>' : '') 
-      + '</div>' 
-      + '</div>';
-  }
-
-  // --- Preview Panel (TC5)
-  function openPreview(tmplId, panel) {
-    var tmpl = findTmpl(tmplId);
-    if (!tmpl) return;
-    TM.previewId = tmplId;
-    var previewPanel = document.getElementById('tm-preview-panel');
-    var previewBody  = document.getElementById('tm-preview-body');
-    var previewTitle = document.getElementById('tm-preview-title');
-    if (!previewPanel) return;
-    previewTitle.textContent = esc(tmpl.name);
-    previewBody.innerHTML = renderPreviewBody(tmpl);
-    previewPanel.style.display = 'flex';
-    // Wire preview buttons
-    var applyBtn = document.getElementById('tm-preview-apply-btn');
-    var editBtn  = document.getElementById('tm-preview-edit-btn');
-    var shareBtn = document.getElementById('tm-preview-share-btn');
-    var closeBtn = document.getElementById('tm-preview-close');
-    if (applyBtn) applyBtn.onclick = function(){ openApplyModal(tmplId); };
-    if (editBtn)  editBtn.onclick  = function(){ openEditModal(tmplId); };
-    if (shareBtn) shareBtn.onclick = function(){ openShareModal(tmplId); };
-    if (closeBtn) closeBtn.onclick = function(){ previewPanel.style.display='none'; TM.previewId=null; };
-    // show/hide edit+share only for owner
-    var mine = isMine(tmpl);
-    if (editBtn)  editBtn.style.display  = mine ? ''  : 'none';
-    if (shareBtn) shareBtn.style.display = mine ? ''  : 'none';
-  }
-
-  function renderPreviewBody(tmpl) {
-    var html = '<div class="tm-preview-task tm-preview-parent">'
-      + '<div class="tm-preview-task-title"><i class="fa-regular fa-circle-dot"></i> ' + esc(tmpl.parentTitle || tmpl.name) + '</div>'
-      + '<div class="tm-preview-task-meta">'
-      + '<span class="tm-preview-pri" style="color:' + priColor(tmpl.priority) + '">'+ priLabel(tmpl.priority) +'</span>'
-      + (tmpl.tags.length ? '<span class="tm-preview-tags">' + tmpl.tags.map(function(t){return '<span class="tm-tag">'+esc(t)+'</span>';}).join('') + '</span>' : '') 
-      + '</div>' 
-      + (tmpl.description ? '<div class="tm-preview-desc">' + esc(tmpl.description) + '</div>' : '') 
-      + '</div>';
-    if (tmpl.subtasks.length) {
-      html += '<div class="tm-preview-subtasks">'
-        + '<div class="tm-preview-sub-label">Subtasks (' + tmpl.subtasks.length + ')</div>';
-      tmpl.subtasks.forEach(function(st){
-        html += '<div class="tm-preview-task tm-preview-sub">' 
-          + '<div class="tm-preview-task-title"><i class="fa-regular fa-circle"></i> ' + esc(st.title) + '</div>'
-          + '<div class="tm-preview-task-meta">'
-          + '<span class="tm-preview-pri" style="color:' + priColor(st.priority) + '">'+ priLabel(st.priority) +'</span>'
-          + (st.tags.length ? '<span class="tm-preview-tags">' + st.tags.map(function(t){return '<span class="tm-tag">'+esc(t)+'</span>';}).join('') + '</span>' : '') 
-          + '</div></div>';
-      });
-      html += '</div>';
-    }
-    html += '<div class="tm-preview-footer-meta">' 
-      + '<span>Created by ' + esc(tmpl.createdByName) + '</span>' 
-      + '<span>Used ' + (tmpl.usageCount||0) + ' time(s)</span>' 
-      + '</div>';
-    return html;
-  }
-  // --- FLOW 1: CREATE TEMPLATE MODAL
-  function openCreateModal(taskId) {
-    var existing = null;
-    if (taskId) {
-      var t = (window.state && window.state.tasks) ? window.state.tasks.find(function(t){return t.id===taskId;}) : null;
-      existing = t ? extractFromTask(t) : null;
-    }
-    renderCreateModal(existing);
-  }
-
-  function renderCreateModal(prefill) {
-    removeTmModal('tm-create-modal');
-    prefill = prefill || { parentTitle:'', priority:'None', tags:[], description:'', subtasks:[] };
-
-    // Warn if too many subtasks (TC1)
-    var subList = (prefill.subtasks || []).slice(0, MAX_SUB);
-    var truncated = (prefill.subtasks||[]).length > MAX_SUB;
-
-    var el = document.createElement('div');
-    el.id = 'tm-create-modal';
-    el.className = 'tm-modal-overlay';
-    el.innerHTML =
-      '<div class="tm-modal">' +
-      '<div class="tm-modal-header"><h3><i class="fa-solid fa-file-plus"></i> Create Template</h3>' +
-      '<button class="tm-icon-btn tm-modal-close"><i class="fa-solid fa-xmark"></i></button></div>' +
-      (truncated ? '<div class="tm-alert tm-alert-warn"><i class="fa-solid fa-triangle-exclamation"></i> This task has more than 20 subtasks. Only the first 20 will be saved.</div>' : '') +
-      '<div class="tm-modal-body">' +
-      '<label class="tm-label">Template Name <span class="tm-required">*</span></label>' +
-      '<input id="tm-crt-name" class="tm-input" maxlength="' + MAX_NAME + '" placeholder="e.g. Bug Fix Workflow" value="' + esc(prefill.parentTitle) + '">'  +
-      '<div class="tm-char-limit" id="tm-crt-charlimit">' + (prefill.parentTitle||''). length + '/ ' + MAX_NAME + '</div>' +
-      '<label class="tm-label">Parent Task Title</label>' +
-      '<input id="tm-crt-parent" class="tm-input" placeholder="Parent task title" value="' + esc(prefill.parentTitle) + '">'  +
-      '<label class="tm-label">Priority</label>' +
-      '<select id="tm-crt-pri" class="tm-select">'  +
-      ['None','Low','Medium','High'].map(function(p){
-        return '<option value="'+p+'"' + (prefill.priority===p?' selected':'') + '>'+p+'</option>';
-      }).join('') +
-      '</select>' +
-      '<label class="tm-label">Tags (comma-separated)</label>' +
-      '<input id="tm-crt-tags" class="tm-input" placeholder="e.g. backend, urgent" value="' + esc((prefill.tags||[]).join(', ')) + '">'  +
-      '<label class="tm-label">Description</label>' +
-      '<textarea id="tm-crt-desc" class="tm-textarea" placeholder="Optional description...">' + esc(prefill.description) + '</textarea>' +
-      '<label class="tm-label">Subtasks (' + subList.length + '/ ' + MAX_SUB + ')</label>' +
-      '<div id="tm-crt-subtasks" class="tm-subtask-list">' +
-      subList.map(function(st, i){
-        return '<div class="tm-subtask-row" data-idx="'+i+'">'
-          + '<input class="tm-input tm-sub-title" data-idx="'+i+'" placeholder="Subtask title" value="' + esc(st.title) + '">'
-          + '<select class="tm-select tm-sub-pri" data-idx="'+i+'">'
-          + ['None','Low','Medium','High'].map(function(p){return '<option value="'+p+'"' + (st.priority===p?' selected':'') + '>'+p+'</option>';}).join('') 
-          + '</select>' 
-          + '<button class="tm-icon-btn tm-remove-sub tm-danger" data-idx="'+i+'"><i class="fa-solid fa-minus"></i></button></div>';
-      }).join('') +
-      '</div>' +
-      (subList.length < MAX_SUB ? '<button class="tm-btn tm-btn-outline" id="tm-crt-add-sub"><i class="fa-solid fa-plus"></i> Add Subtask</button>' : '') +
-      '</div>' +
-      '<div class="tm-modal-footer">' +
-      '<button class="tm-btn tm-btn-primary" id="tm-crt-save">Save Template</button>' +
-      '<button class="tm-btn tm-btn-secondary" id="tm-crt-cancel">Cancel</button>' +
+  function renderMyTemplateCard(t){
+    const subCount=(t.subtasks||[]).length;
+    const tags=(t.tags||[]).map(tag=>'<span class="tm-tag">'+escHtml(tag)+'</span>').join('');
+    const favIcon=t.isFavourite?'\u2605':'\u2606';
+    const shared=sharedLabel(t);
+    return '<div class="tm-my-card" data-tpl-id="'+t.id+'">'+
+      '<div class="tm-my-card-header"><div class="tm-my-card-name">'+escHtml(t.name)+'</div>'+
+      '<button class="tm-fav-btn" data-tpl-id="'+t.id+'" title="Favourite" style="color:'+(t.isFavourite?'#f59e0b':'var(--text-muted)')+'">'+favIcon+'</button></div>'+
+      '<div class="tm-my-card-meta"><span style="color:'+priColor(t.priority)+';">\u25CF '+(t.priority||'none')+'</span>&nbsp;\u00B7&nbsp;<i class="fa-solid fa-list-check"></i> '+taskCountLabel(subCount)+
+      (shared?'&nbsp;\u00B7&nbsp;<i class="fa-solid fa-share-nodes"></i> '+shared:'')+'</div>'+
+      '<div class="tm-my-card-tags">'+tags+'</div>'+
+      '<div class="tm-my-card-actions">'+
+      '<button class="tm-btn-secondary tm-my-preview-btn" data-tpl-id="'+t.id+'">Preview</button>'+
+      '<button class="tm-btn-primary tm-my-apply-btn" data-tpl-id="'+t.id+'">Apply</button>'+
+      '<button class="tm-icon-btn tm-my-edit-btn" data-tpl-id="'+t.id+'" title="Edit"><i class="fa-solid fa-pen"></i></button>'+
+      '<button class="tm-icon-btn tm-my-share-btn" data-tpl-id="'+t.id+'" title="Share"><i class="fa-solid fa-share-nodes"></i></button>'+
+      '<button class="tm-icon-btn tm-my-del-btn" data-tpl-id="'+t.id+'" title="Delete" style="color:#e53935;"><i class="fa-solid fa-trash"></i></button>'+
       '</div></div>';
-
-    document.body.appendChild(el);
-    wireCreateModal(el, prefill);
   }
-
-  function wireCreateModal(el, prefill) {
-    el.querySelector('.tm-modal-close').onclick = function(){ removeTmModal('tm-create-modal'); };
-    el.querySelector('#tm-crt-cancel').onclick  = function(){ removeTmModal('tm-create-modal'); };
-    el.querySelector('#tm-crt-name').oninput = function(e){
-      var lbl = el.querySelector('#tm-crt-charlimit');
-      if (lbl) lbl.textContent = e.target.value.length + ' / ' + MAX_NAME;
-    };
-    el.onclick = function(e){ if (e.target === el) removeTmModal('tm-create-modal'); };
-
-    // Add subtask button
-    var addSubBtn = el.querySelector('#tm-crt-add-sub');
-    if (addSubBtn) {
-      addSubBtn.onclick = function() {
-        var list = el.querySelector('#tm-crt-subtasks');
-        var rows = list.querySelectorAll('.tm-subtask-row');
-        if (rows.length >= MAX_SUB) return;
-        var idx = rows.length;
-        var row = document.createElement('div');
-        row.className = 'tm-subtask-row';
-        row.dataset.idx = idx;
-        row.innerHTML = '<input class="tm-input tm-sub-title" data-idx="'+idx+'" placeholder="Subtask title" value="">' 
-          + '<select class="tm-select tm-sub-pri" data-idx="'+idx+'">'
-          + ['None','Low','Medium','High'].map(function(p){return '<option>'+p+'</option>';}).join('') + '</select>'
-          + '<button class="tm-icon-btn tm-remove-sub tm-danger" data-idx="'+idx+'"><i class="fa-solid fa-minus"></i></button>';
-        list.appendChild(row);
-        wireRemoveSubBtns(el);
-        var countLbl = el.querySelector('.tm-label:last-of-type');
-        // hide add btn if at limit
-        if (list.querySelectorAll('.tm-subtask-row').length >= MAX_SUB) addSubBtn.style.display='none';
-      };
-    }
-    wireRemoveSubBtns(el);
-
-    el.querySelector('#tm-crt-save').onclick = function() {
-      var name    = el.querySelector('#tm-crt-name').value.trim();
-      var parent  = el.querySelector('#tm-crt-parent').value.trim();
-      var pri     = el.querySelector('#tm-crt-pri').value;
-      var tagsRaw = el.querySelector('#tm-crt-tags').value;
-      var desc    = el.querySelector('#tm-crt-desc').value.trim();
-      var tags    = tagsRaw.split(',').map(function(t){return t.trim();}).filter(Boolean);
-      var rows    = el.querySelectorAll('.tm-subtask-row');
-      var subtasks = [];
-      rows.forEach(function(row){
-        var title = row.querySelector('.tm-sub-title').value.trim();
-        var pri2  = row.querySelector('.tm-sub-pri').value;
-        if (title) subtasks.push({ title: title, priority: pri2, tags:[], description:''});
+  function renderPreviewEmpty(){
+    return '<div class="tm-preview-empty"><i class="fa-solid fa-eye" style="font-size:28px;color:var(--text-muted,#aaa);margin-bottom:10px;"></i><div style="color:var(--text-muted,#aaa);font-size:13px;">Click a template to preview</div></div>';
+  }
+  function renderPreviewPanel(tpl,isPreset){
+    const subs=(tpl.subtasks||[]).slice().sort((a,b)=>a.order-b.order);
+    const subRows=subs.map(s=>'<div class="tm-prev-sub"><i class="fa-solid fa-circle-dot" style="color:var(--text-muted);font-size:10px;margin-right:6px;"></i><span>'+escHtml(s.title)+'</span><span style="color:'+priColor(s.priority)+';font-size:10px;margin-left:auto;">\u25CF '+s.priority+'</span></div>').join('');
+    const tags=(tpl.tags||[]).map(t=>'<span class="tm-tag">'+escHtml(t)+'</span>').join('');
+    const ownerLine=isPreset?'<span>Built-in</span>':'<span>by '+escHtml(tpl.createdByName||'You')+'</span>';
+    const canEdit=!isPreset&&tpl.createdBy===currentUserId();
+    return '<div class="tm-preview-content">'+
+      '<div class="tm-prev-header"><div class="tm-prev-emoji">'+(tpl.emoji||'\uD83D\uDCCB')+'</div>'+
+      '<div><div class="tm-prev-name">'+escHtml(tpl.name)+'</div><div class="tm-prev-meta">'+ownerLine+'&nbsp;\u00B7&nbsp;<i class="fa-solid fa-list-check"></i> '+(tpl.subtasks||[]).length+' tasks</div></div></div>'+
+      (tpl.description?'<div class="tm-prev-desc">'+escHtml(tpl.description)+'</div>':'')+
+      '<div class="tm-prev-tags">'+tags+'</div>'+
+      '<div class="tm-prev-task-list"><div class="tm-prev-parent"><i class="fa-solid fa-square-check" style="color:var(--accent-blue,#2563eb);margin-right:6px;"></i>'+escHtml(tpl.parentTitle||tpl.name)+'</div>'+subRows+'</div>'+
+      '<div class="tm-prev-footer">'+
+      (canEdit?'<button class="tm-btn-secondary tm-prev-edit-btn" data-tpl-id="'+tpl.id+'">Edit</button>':'')+
+      '<button class="tm-btn-primary tm-prev-apply-btn" data-tpl-id="'+tpl.id+'"'+(isPreset?' data-preset="true"':'')+'>Apply Template</button>'+
+      '</div></div>';
+  }
+  function wireLibrary(overlay){
+    const root=overlay.querySelector('.tm-lib-panel');if(!root)return;
+    overlay.querySelector('#tm-lib-close-btn').addEventListener('click',closeLibrary);
+    const titleMap={featured:['Featured','Start with our most popular templates'],
+      work:['Work','Stay on top of your projects and meetings'],
+      development:['Development','Streamline your engineering workflows'],
+      design:['Design & Product','Templates for designers and product teams'],
+      personal:['Personal','Organize your personal life'],
+      management:['Management','Lead your team with structured workflows']};
+    root.querySelectorAll('.tm-lib-nav-cat').forEach(el=>{
+      el.addEventListener('click',()=>{
+        root.querySelectorAll('.tm-lib-nav-cat,.tm-lib-nav-mine').forEach(e=>e.classList.remove('active'));
+        el.classList.add('active');
+        const cat=el.dataset.cat;TM.activePresetCat=cat;
+        const[title,sub]=titleMap[cat]||[cat,''];
+        overlay.querySelector('#tm-lib-main-title').textContent=title;
+        overlay.querySelector('#tm-lib-main-subtitle').textContent=sub;
+        overlay.querySelector('#tm-lib-content').innerHTML=renderLibraryContent(cat);
+        wireContentEvents(overlay);
+        overlay.querySelector('#tm-lib-preview').innerHTML=renderPreviewEmpty();
       });
-      var tmpl = createTemplate(name, { parentTitle: parent||name, priority: pri, tags: tags, description: desc, subtasks: subtasks });
-      if (tmpl) {
-        removeTmModal('tm-create-modal');
-        updateSidebarCount();
-        var lib = document.getElementById('tm-library');
-        if (lib && lib.style.display !== 'none') renderLibrary(lib);
-        showToast('Template "' + tmpl.name + '" created!');
-      }
-    };
+    });
+    root.querySelector('.tm-lib-nav-mine').addEventListener('click',()=>{
+      root.querySelectorAll('.tm-lib-nav-cat,.tm-lib-nav-mine').forEach(e=>e.classList.remove('active'));
+      root.querySelector('.tm-lib-nav-mine').classList.add('active');
+      overlay.querySelector('#tm-lib-main-title').textContent='My Templates';
+      overlay.querySelector('#tm-lib-main-subtitle').textContent='Templates you have created';
+      overlay.querySelector('#tm-lib-content').innerHTML=renderMyTemplates();
+      wireContentEvents(overlay);
+    });
+    overlay.querySelector('#tm-lib-search-input').addEventListener('input',e=>{
+      TM.searchQuery=e.target.value;
+      const active=root.querySelector('.tm-lib-nav-mine.active');
+      if(active){overlay.querySelector('#tm-lib-content').innerHTML=renderMyTemplates();wireContentEvents(overlay);}
+    });
+    const mineCount=overlay.querySelector('#tm-mine-count');
+    if(mineCount)mineCount.textContent=TM.templates.length;
+    wireContentEvents(overlay);
   }
-
-  function wireRemoveSubBtns(el) {
-    el.querySelectorAll('.tm-remove-sub').forEach(function(btn){
-      btn.onclick = function(){
+  function wireContentEvents(overlay){
+    const content=overlay.querySelector('#tm-lib-content');if(!content)return;
+    content.querySelectorAll('.tm-preset-preview-btn').forEach(btn=>{
+      btn.addEventListener('click',()=>{const tpl=PRESET_TEMPLATES.find(p=>p.id===btn.dataset.presetId);if(tpl){overlay.querySelector('#tm-lib-preview').innerHTML=renderPreviewPanel(tpl,true);wirePrevFooter(overlay,true);}});
+    });
+    content.querySelectorAll('.tm-preset-apply-btn').forEach(btn=>{
+      btn.addEventListener('click',()=>{const tpl=PRESET_TEMPLATES.find(p=>p.id===btn.dataset.presetId);if(tpl)openApplyModal(tpl,true);});
+    });
+    content.querySelectorAll('.tm-my-preview-btn').forEach(btn=>{
+      btn.addEventListener('click',()=>{const tpl=TM.templates.find(t=>t.id===btn.dataset.tplId);if(tpl){overlay.querySelector('#tm-lib-preview').innerHTML=renderPreviewPanel(tpl,false);wirePrevFooter(overlay,false);}});
+    });
+    content.querySelectorAll('.tm-my-apply-btn').forEach(btn=>{btn.addEventListener('click',()=>{const tpl=TM.templates.find(t=>t.id===btn.dataset.tplId);if(tpl)openApplyModal(tpl,false);});});
+    content.querySelectorAll('.tm-my-edit-btn').forEach(btn=>{btn.addEventListener('click',()=>{const tpl=TM.templates.find(t=>t.id===btn.dataset.tplId);if(tpl)openEditModal(tpl);});});
+    content.querySelectorAll('.tm-my-share-btn').forEach(btn=>{btn.addEventListener('click',()=>{const tpl=TM.templates.find(t=>t.id===btn.dataset.tplId);if(tpl)openShareModal(tpl);});});
+    content.querySelectorAll('.tm-my-del-btn').forEach(btn=>{btn.addEventListener('click',()=>confirmDelete(btn.dataset.tplId,overlay));});
+    content.querySelectorAll('.tm-fav-btn').forEach(btn=>{
+      btn.addEventListener('click',()=>{toggleFavourite(btn.dataset.tplId);const active=overlay.querySelector('.tm-lib-nav-mine.active');if(active){overlay.querySelector('#tm-lib-content').innerHTML=renderMyTemplates();wireContentEvents(overlay);}});
+    });
+    const createBtn=content.querySelector('#tm-empty-create-btn');
+    if(createBtn)createBtn.addEventListener('click',()=>{closeLibrary();openCreateModal();});
+  }
+  function wirePrevFooter(overlay,isPreset){
+    const prev=overlay.querySelector('#tm-lib-preview');if(!prev)return;
+    const applyBtn=prev.querySelector('.tm-prev-apply-btn');
+    if(applyBtn)applyBtn.addEventListener('click',()=>{const id=applyBtn.dataset.tplId;const tpl=isPreset?PRESET_TEMPLATES.find(p=>p.id===id):TM.templates.find(t=>t.id===id);if(tpl)openApplyModal(tpl,isPreset);});
+    const editBtn=prev.querySelector('.tm-prev-edit-btn');
+    if(editBtn)editBtn.addEventListener('click',()=>{const tpl=TM.templates.find(t=>t.id===editBtn.dataset.tplId);if(tpl)openEditModal(tpl);});
+  }
+  function confirmDelete(tplId,overlay){
+    const tpl=TM.templates.find(t=>t.id===tplId);if(!tpl)return;
+    if(!confirm('Delete template "'+tpl.name+'"? This cannot be undone.'))return;
+    deleteTemplate(tplId);overlay.querySelector('#tm-lib-content').innerHTML=renderMyTemplates();wireContentEvents(overlay);showToast('Template deleted');
+  }
+  function openApplyModal(tpl,isPreset){
+    const overlay=document.createElement('div');overlay.className='tm-modal-overlay';overlay.id='tm-apply-overlay';
+    const groups=getGroups();
+    const groupOptions=groups.map(g=>'<option value="'+g.id+'">'+escHtml(g.name)+'</option>').join('');
+    const subs=(tpl.subtasks||[]).slice().sort((a,b)=>a.order-b.order);
+    const subList=subs.map(s=>'<div class="tm-prow"><i class="fa-solid fa-circle-dot" style="color:var(--text-muted);margin-right:6px;"></i>'+escHtml(s.title)+'</div>').join('');
+    overlay.innerHTML='<div class="tm-modal tm-modal--wide">'+
+      '<div class="tm-modal-header"><span class="tm-modal-title">Apply Template: '+escHtml(tpl.name)+'</span><button class="tm-modal-close" id="tm-apply-close">&times;</button></div>'+
+      '<div class="tm-modal-body">'+
+      '<div class="tm-alert-info"><i class="fa-solid fa-circle-info"></i> Assignee and Due Date will not be set \u2014 apply them after creating tasks.</div>'+
+      '<div class="tm-field-row"><label class="tm-label">Task Title</label><input type="text" class="tm-input" id="tm-apply-title" value="'+escHtml(tpl.parentTitle||tpl.name)+'"></div>'+
+      '<div class="tm-field-row"><label class="tm-label">Group</label><select class="tm-select" id="tm-apply-group"><option value="">-- Personal tasks --</option>'+groupOptions+'</select></div>'+
+      '<div class="tm-field-row"><label class="tm-label">Priority</label><select class="tm-select" id="tm-apply-priority">'+
+      '<option value="none"'+(tpl.priority==='none'?' selected':'')+'>None</option>'+
+      '<option value="low"'+(tpl.priority==='low'?' selected':'')+'>Low</option>'+
+      '<option value="medium"'+(tpl.priority==='medium'?' selected':'')+'>Medium</option>'+
+      '<option value="high"'+(tpl.priority==='high'?' selected':'')+'>High</option>'+
+      '</select></div>'+
+      '<div class="tm-field-row"><label class="tm-label">Subtasks ('+subs.length+')</label>'+
+      '<div class="tm-apply-preview">'+(subList||'<em style="color:var(--text-muted);">No subtasks</em>')+'</div></div>'+
+      '</div>'+
+      '<div class="tm-modal-footer"><button class="tm-btn-secondary" id="tm-apply-cancel">Cancel</button><button class="tm-btn-primary" id="tm-apply-confirm"><i class="fa-solid fa-bolt"></i> Create Tasks</button></div>'+
+      '</div>';
+    document.body.appendChild(overlay);
+    overlay.querySelector('#tm-apply-close').addEventListener('click',()=>overlay.remove());
+    overlay.querySelector('#tm-apply-cancel').addEventListener('click',()=>overlay.remove());
+    overlay.querySelector('#tm-apply-confirm').addEventListener('click',()=>{
+      const title=overlay.querySelector('#tm-apply-title').value.trim();
+      const groupId=overlay.querySelector('#tm-apply-group').value||null;
+      const priority=overlay.querySelector('#tm-apply-priority').value;
+      if(!title){showToast('Task title is required','error');return;}
+      applyTemplate(tpl.id,{title,groupId,priority});overlay.remove();closeLibrary();
+    });
+  }
+  function renderSubRow(s,i){
+    return '<div class="tm-subtask-row" data-sub-idx="'+i+'">'+
+      '<i class="fa-solid fa-grip-lines tm-drag-handle"></i>'+
+      '<input type="text" class="tm-input tm-sub-title" value="'+escHtml(s.title||'')+'        '" placeholder="Subtask title...">'+
+      '<select class="tm-select tm-sub-priority">'+
+      '<option value="none"'+(s.priority==='none'?' selected':'')+'>\u2014</option>'+
+      '<option value="low"'+(s.priority==='low'?' selected':'')+'>Low</option>'+
+      '<option value="medium"'+(s.priority==='medium'?' selected':'')+'>Med</option>'+
+      '<option value="high"'+(s.priority==='high'?' selected':'')+'>High</option>'+
+      '</select>'+
+      '<button class="tm-icon-btn tm-remove-sub-btn" style="color:#e53935;"><i class="fa-solid fa-xmark"></i></button>'+
+      '</div>';
+  }
+  function openCreateModal(prefill){
+    const overlay=document.createElement('div');overlay.className='tm-modal-overlay';overlay.id='tm-create-overlay';
+    const data=prefill||{name:'',priority:'none',tags:[],description:'',subtasks:[]};
+    const subs=(data.subtasks||[]).map((s,i)=>renderSubRow(s,i)).join('');
+    overlay.innerHTML='<div class="tm-modal tm-modal--wide">'+
+      '<div class="tm-modal-header"><span class="tm-modal-title">Create Template</span><button class="tm-modal-close" id="tm-create-close">&times;</button></div>'+
+      '<div class="tm-modal-body">'+
+      '<div class="tm-field-row"><label class="tm-label">Template Name <span id="tm-name-count" style="color:var(--text-muted);font-size:11px;">0/'+MAX_NAME+'</span></label>'+
+      '<input type="text" class="tm-input" id="tm-create-name" maxlength="'+MAX_NAME+'" value="'+escHtml(data.name)+'" placeholder="e.g. Bug Fix Workflow"></div>'+
+      '<div class="tm-field-row"><label class="tm-label">Priority</label><select class="tm-select" id="tm-create-priority">'+
+      '<option value="none"'+(data.priority==='none'?' selected':'')+'>None</option>'+
+      '<option value="low"'+(data.priority==='low'?' selected':'')+'>Low</option>'+
+      '<option value="medium"'+(data.priority==='medium'?' selected':'')+'>Medium</option>'+
+      '<option value="high"'+(data.priority==='high'?' selected':'')+'>High</option>'+
+      '</select></div>'+
+      '<div class="tm-field-row"><label class="tm-label">Tags (comma-separated)</label><input type="text" class="tm-input" id="tm-create-tags" value="'+escHtml((data.tags||[]).join(', '))+'" placeholder="Bug, Backend"></div>'+
+      '<div class="tm-field-row"><label class="tm-label">Description</label><textarea class="tm-textarea" id="tm-create-desc" rows="2" placeholder="Optional description...">'+escHtml(data.description||'')+'</textarea></div>'+
+      '<div class="tm-field-row"><label class="tm-label">Subtasks <span id="tm-sub-count" style="color:var(--text-muted);font-size:11px;">(0/'+MAX_SUB+')</span></label>'+
+      '<div id="tm-create-subs">'+subs+'</div>'+
+      '<button class="tm-btn-outline" id="tm-add-sub-btn" style="margin-top:8px;"><i class="fa-solid fa-plus"></i> Add Subtask</button></div>'+
+      '<div class="tm-alert-info" style="margin-top:12px;"><i class="fa-solid fa-circle-info"></i> Assignees and Due Dates are stripped \u2014 set them when you apply.</div>'+
+      '</div>'+
+      '<div class="tm-modal-footer"><button class="tm-btn-secondary" id="tm-create-cancel">Cancel</button><button class="tm-btn-primary" id="tm-create-save">Save Template</button></div>'+
+      '</div>';
+    document.body.appendChild(overlay);
+    overlay.querySelector('#tm-create-close').addEventListener('click',()=>overlay.remove());
+    overlay.querySelector('#tm-create-cancel').addEventListener('click',()=>overlay.remove());
+    const nameInput=overlay.querySelector('#tm-create-name');
+    const nameCount=overlay.querySelector('#tm-name-count');
+    nameInput.addEventListener('input',()=>{nameCount.textContent=nameInput.value.length+'/'+MAX_NAME;});
+    overlay.querySelector('#tm-add-sub-btn').addEventListener('click',()=>{
+      const container=overlay.querySelector('#tm-create-subs');
+      const idx=container.querySelectorAll('.tm-subtask-row').length;
+      if(idx>=MAX_SUB){showToast('Max '+MAX_SUB+' subtasks','error');return;}
+      const div=document.createElement('div');
+      div.innerHTML=renderSubRow({title:'',priority:'none'},idx);
+      container.appendChild(div.firstElementChild);
+      const cnt=overlay.querySelector('#tm-sub-count');
+      if(cnt)cnt.textContent='('+container.querySelectorAll('.tm-subtask-row').length+'/'+MAX_SUB+')';
+      wireRemoveSubs(overlay,'#tm-create-subs');
+    });
+    wireRemoveSubs(overlay,'#tm-create-subs');
+    overlay.querySelector('#tm-create-save').addEventListener('click',()=>{
+      const name=nameInput.value.trim();
+      if(!name){showToast('Name required','error');nameInput.focus();return;}
+      const priority=overlay.querySelector('#tm-create-priority').value;
+      const tags=overlay.querySelector('#tm-create-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
+      const desc=overlay.querySelector('#tm-create-desc').value.trim();
+      const subEls=overlay.querySelectorAll('#tm-create-subs .tm-subtask-row');
+      const subtasks=Array.from(subEls).map((r,i)=>({id:uid(),order:i,title:r.querySelector('.tm-sub-title').value.trim(),priority:r.querySelector('.tm-sub-priority').value,tags:[],description:''})).filter(s=>s.title);
+      const tpl=createTemplate({name,priority,tags,description:desc,subtasks});
+      if(tpl){overlay.remove();showToast('\uD83D\uDCCB Template saved: '+tpl.name);}
+    });
+  }
+  function wireRemoveSubs(overlay,containerSel){
+    overlay.querySelectorAll(containerSel+' .tm-remove-sub-btn').forEach(btn=>{
+      btn.addEventListener('click',()=>{
         btn.closest('.tm-subtask-row').remove();
-        var addSubBtn = el.querySelector('#tm-crt-add-sub');
-        if (addSubBtn) addSubBtn.style.display = '';
-      };
-    });
-  }
-  // --- FLOW 3: APPLY TEMPLATE MODAL
-  function openApplyModal(tmplId) {
-    var tmpl = findTmpl(tmplId);
-    if (!tmpl) return;
-    TM.applyingId = tmplId;
-    removeTmModal('tm-apply-modal');
-    var groups = getGroups();
-    var el = document.createElement('div');
-    el.id = 'tm-apply-modal';
-    el.className = 'tm-modal-overlay';
-    el.innerHTML =
-      '<div class="tm-modal">' +
-      '<div class="tm-modal-header"><h3><i class="fa-solid fa-bolt"></i> Apply Template: ' + esc(tmpl.name) + '</h3>' +
-      '<button class="tm-icon-btn tm-modal-close"><i class="fa-solid fa-xmark"></i></button></div>' +
-      '<div class="tm-modal-body">' +
-      '<div class="tm-alert tm-alert-info"><i class="fa-solid fa-info-circle"></i> Assignee and Due Date will not be set (they can be added after creation).</div>' +
-      '<label class="tm-label">Task Title</label>' +
-      '<input id="tm-apl-title" class="tm-input" value="' + esc(tmpl.parentTitle || tmpl.name) + '">'  +
-      '<label class="tm-label">Group</label>' +
-      '<select id="tm-apl-group" class="tm-select">' +
-      '<option value="">No Group (Personal)</option>' +
-      groups.map(function(g){return '<option value="'+esc(g.id)+'">'+ esc(g.name) +'</option>';}).join('') +
-      '</select>' +
-      '<label class="tm-label">Priority</label>' +
-      '<select id="tm-apl-pri" class="tm-select">' +
-      ['None','Low','Medium','High'].map(function(p){return '<option value="'+p+'"' + (tmpl.priority===p?' selected':'') + '>'+p+'</option>';}).join('') +
-      '</select>' +
-      '<div class="tm-apply-preview">' +
-      '<div class="tm-label">Preview (' + (1+tmpl.subtasks.length) + ' tasks will be created)</div>' +
-      '<div class="tm-preview-mini">' +
-      '<div class="tm-prow tm-prow--parent"><i class="fa-regular fa-circle-dot"></i> ' + esc(tmpl.parentTitle||tmpl.name) + '</div>' +
-      tmpl.subtasks.map(function(st){
-        return '<div class="tm-prow tm-prow--sub"><i class="fa-regular fa-circle"></i> ' + esc(st.title) + '</div>';
-      }).join('') + '</div></div>' +
-      '</div>' +
-      '<div class="tm-modal-footer">' +
-      '<button class="tm-btn tm-btn-primary" id="tm-apl-confirm"><i class="fa-solid fa-bolt"></i> Apply &amp; Create Tasks</button>' +
-      '<button class="tm-btn tm-btn-secondary" id="tm-apl-cancel">Cancel</button>' +
-      '</div></div>';
-    document.body.appendChild(el);
-    el.querySelector('.tm-modal-close').onclick = function(){ removeTmModal('tm-apply-modal'); };
-    el.querySelector('#tm-apl-cancel').onclick  = function(){ removeTmModal('tm-apply-modal'); };
-    el.onclick = function(e){ if (e.target===el) removeTmModal('tm-apply-modal'); };
-    el.querySelector('#tm-apl-confirm').onclick = function() {
-      var title = el.querySelector('#tm-apl-title').value.trim();
-      var group = el.querySelector('#tm-apl-group').value;
-      var pri   = el.querySelector('#tm-apl-pri').value;
-      if (!title) { alert('Task title is required.'); return; }
-      var task = applyTemplate(tmplId, { title: title, priority: pri }, group || null);
-      if (task) {
-        removeTmModal('tm-apply-modal');
-        var lib = document.getElementById('tm-library');
-        if (lib && lib.style.display !== 'none') renderLibrary(lib);
-        showToast('Template applied! ' + (1+tmpl.subtasks.length) + ' task(s) created.');
-        // Trigger app refresh
-        if (window.ShadowDB) window.ShadowDB.emit('tasks:updated', {});
-        if (typeof renderCurrentView === 'function') renderCurrentView();
-      }
-    };
-  }
-  // --- FLOW 5: EDIT TEMPLATE MODAL (AC6: only affects future, not past tasks)
-  function openEditModal(tmplId) {
-    var tmpl = findTmpl(tmplId);
-    if (!tmpl) return;
-    if (!isMine(tmpl)) { showToast('Only the template owner can edit it.'); return; }
-    TM.editingId = tmplId;
-    removeTmModal('tm-edit-modal');
-    var el = document.createElement('div');
-    el.id = 'tm-edit-modal';
-    el.className = 'tm-modal-overlay';
-    el.innerHTML =
-      '<div class="tm-modal tm-modal--wide">' +
-      '<div class="tm-modal-header">' +
-      '<h3><i class="fa-solid fa-pen"></i> Edit Template</h3>' +
-      '<button class="tm-icon-btn tm-modal-close"><i class="fa-solid fa-xmark"></i></button></div>' +
-      '<div class="tm-alert tm-alert-info"><i class="fa-solid fa-info-circle"></i> Changes only affect future uses. Tasks already created from this template are unchanged. (AC6)</div>' +
-      '<div class="tm-modal-body">' +
-      '<label class="tm-label">Template Name <span class="tm-required">*</span></label>' +
-      '<input id="tm-edt-name" class="tm-input" maxlength="' + MAX_NAME + '" value="' + esc(tmpl.name) + '">'  +
-      '<label class="tm-label">Parent Task Title</label>' +
-      '<input id="tm-edt-parent" class="tm-input" value="' + esc(tmpl.parentTitle) + '">'  +
-      '<label class="tm-label">Priority</label>' +
-      '<select id="tm-edt-pri" class="tm-select">' +
-      ['None','Low','Medium','High'].map(function(p){return '<option value="'+p+'"' + (tmpl.priority===p?' selected':'') + '>'+p+'</option>';}).join('') + '</select>' +
-      '<label class="tm-label">Tags (comma-separated)</label>' +
-      '<input id="tm-edt-tags" class="tm-input" value="' + esc(tmpl.tags.join(', ')) + '">'  +
-      '<label class="tm-label">Description</label>' +
-      '<textarea id="tm-edt-desc" class="tm-textarea">' + esc(tmpl.description) + '</textarea>' +
-      '<label class="tm-label">Subtasks (drag to reorder) &mdash; ' + tmpl.subtasks.length + '/ ' + MAX_SUB + '</label>' +
-      '<div id="tm-edt-subtasks" class="tm-subtask-list tm-drag-list">'  +
-      tmpl.subtasks.map(function(st, i){
-        return '<div class="tm-subtask-row tm-drag-item" draggable="true" data-idx="'+i+'">'
-          + '<span class="tm-drag-handle" title="Drag to reorder"><i class="fa-solid fa-grip-vertical"></i></span>'
-          + '<input class="tm-input tm-sub-title" data-idx="'+i+'" value="' + esc(st.title) + '">'
-          + '<select class="tm-select tm-sub-pri" data-idx="'+i+'">'
-          + ['None','Low','Medium','High'].map(function(p){return '<option value="'+p+'"' + (st.priority===p?' selected':'') + '>'+p+'</option>';}).join('') 
-          + '</select>' 
-          + '<button class="tm-icon-btn tm-remove-sub tm-danger" data-idx="'+i+'"><i class="fa-solid fa-minus"></i></button></div>';
-      }).join('') + '</div>' +
-      (tmpl.subtasks.length < MAX_SUB ? '<button class="tm-btn tm-btn-outline" id="tm-edt-add-sub"><i class="fa-solid fa-plus"></i> Add Subtask</button>' : '') +
-      '</div>' +
-      '<div class="tm-modal-footer">' +
-      '<button class="tm-btn tm-btn-primary" id="tm-edt-save">Save Changes</button>' +
-      '<button class="tm-btn tm-btn-secondary" id="tm-edt-cancel">Cancel</button>' +
-      '</div></div>';
-    document.body.appendChild(el);
-    wireEditModal(el, tmpl);
-    initDragDrop(el.querySelector('#tm-edt-subtasks'));
-  }
-
-  function wireEditModal(el, tmpl) {
-    el.querySelector('.tm-modal-close').onclick = function(){ removeTmModal('tm-edit-modal'); };
-    el.querySelector('#tm-edt-cancel').onclick  = function(){ removeTmModal('tm-edit-modal'); };
-    el.onclick = function(e){ if (e.target===el) removeTmModal('tm-edit-modal'); };
-    var addSubBtn = el.querySelector('#tm-edt-add-sub');
-    if (addSubBtn) {
-      addSubBtn.onclick = function() {
-        var list = el.querySelector('#tm-edt-subtasks');
-        if (list.querySelectorAll('.tm-subtask-row').length >= MAX_SUB) return;
-        var idx = list.querySelectorAll('.tm-subtask-row').length;
-        var row = document.createElement('div');
-        row.className = 'tm-subtask-row tm-drag-item';
-        row.draggable = true;
-        row.dataset.idx = idx;
-        row.innerHTML = '<span class="tm-drag-handle"><i class="fa-solid fa-grip-vertical"></i></span>'
-          + '<input class="tm-input tm-sub-title" data-idx="'+idx+'" placeholder="Subtask title" value="">' 
-          + '<select class="tm-select tm-sub-pri">'
-          + ['None','Low','Medium','High'].map(function(p){return '<option>'+p+'</option>';}).join('') + '</select>'
-          + '<button class="tm-icon-btn tm-remove-sub tm-danger"><i class="fa-solid fa-minus"></i></button>';
-        list.appendChild(row);
-        wireRemoveSubBtnsEdit(el);
-        initDragDrop(list);
-      };
-    }
-    wireRemoveSubBtnsEdit(el);
-    el.querySelector('#tm-edt-save').onclick = function() {
-      var name    = el.querySelector('#tm-edt-name').value.trim();
-      var parent  = el.querySelector('#tm-edt-parent').value.trim();
-      var pri     = el.querySelector('#tm-edt-pri').value;
-      var tagsRaw = el.querySelector('#tm-edt-tags').value;
-      var desc    = el.querySelector('#tm-edt-desc').value.trim();
-      var tags    = tagsRaw.split(',').map(function(t){return t.trim();}).filter(Boolean);
-      var rows    = el.querySelectorAll('.tm-subtask-row');
-      var subtasks = [];
-      rows.forEach(function(row, i){
-        var title = row.querySelector('.tm-sub-title').value.trim();
-        var p2    = row.querySelector('.tm-sub-pri').value;
-        subtasks.push({ id: uid(), order: i, title: title, priority: p2, tags:[], description:''});
+        const cnt=overlay.querySelector('#tm-sub-count');
+        if(cnt){const n=overlay.querySelectorAll(containerSel+' .tm-subtask-row').length;cnt.textContent='('+n+'/'+MAX_SUB+')';}
       });
-      var ok = updateTemplate(tmpl.id, { name:name, parentTitle:parent||name, priority:pri, tags:tags, description:desc, subtasks:subtasks });
-      if (ok) {
-        removeTmModal('tm-edit-modal');
-        var lib = document.getElementById('tm-library');
-        if (lib && lib.style.display !== 'none') renderLibrary(lib);
-        showToast('Template updated (future uses only).');
-      }
-    };
-  }
-
-  function wireRemoveSubBtnsEdit(el) {
-    el.querySelectorAll('.tm-remove-sub').forEach(function(btn){
-      btn.onclick = function(){
-        btn.closest('.tm-subtask-row').remove();
-        var addSubBtn = el.querySelector('#tm-edt-add-sub');
-        if (addSubBtn) addSubBtn.style.display = '';
-      };
     });
   }
-  // --- Drag & Drop (TC10)
-  function initDragDrop(list) {
-    if (!list) return;
-    var items = list.querySelectorAll('.tm-drag-item');
-    items.forEach(function(item) {
-      item.ondragstart = function(e) {
-        TM.dragSrc = item;
-        e.dataTransfer.effectAllowed = 'move';
-        item.classList.add('tm-dragging');
-      };
-      item.ondragend = function() {
-        item.classList.remove('tm-dragging');
-        list.querySelectorAll('.tm-drag-over').forEach(function(el){ el.classList.remove('tm-drag-over'); });
-        TM.dragSrc = null;
-      };
-      item.ondragover = function(e) {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-        if (TM.dragSrc && TM.dragSrc !== item) item.classList.add('tm-drag-over');
-        return false;
-      };
-      item.ondragleave = function() { item.classList.remove('tm-drag-over'); };
-      item.ondrop = function(e) {
-        e.stopPropagation();
-        if (TM.dragSrc && TM.dragSrc !== item) {
-          var allItems = [...list.querySelectorAll('.tm-drag-item')];
-          var srcIdx  = allItems.indexOf(TM.dragSrc);
-          var destIdx = allItems.indexOf(item);
-          if (srcIdx < destIdx) list.insertBefore(TM.dragSrc, item.nextSibling);
-          else list.insertBefore(TM.dragSrc, item);
-          initDragDrop(list); // re-wire
-        }
-        item.classList.remove('tm-drag-over');
-        return false;
-      };
+  function openEditModal(tpl){
+    if(!isOwner(tpl)){showToast('Only the creator can edit','error');return;}
+    const overlay=document.createElement('div');overlay.className='tm-modal-overlay';overlay.id='tm-edit-overlay';
+    const subs=(tpl.subtasks||[]).slice().sort((a,b)=>a.order-b.order);
+    const subRows=subs.map((s,i)=>renderSubRow(s,i)).join('');
+    overlay.innerHTML='<div class="tm-modal tm-modal--wide">'+
+      '<div class="tm-modal-header"><span class="tm-modal-title">Edit Template</span><button class="tm-modal-close" id="tm-edit-close">&times;</button></div>'+
+      '<div class="tm-modal-body">'+
+      '<div class="tm-alert-warn"><i class="fa-solid fa-triangle-exclamation"></i> Changes only affect future uses. Tasks already created are unchanged.</div>'+
+      '<div class="tm-field-row"><label class="tm-label">Template Name</label><input type="text" class="tm-input" id="tm-edit-name" maxlength="'+MAX_NAME+'" value="'+escHtml(tpl.name)+'"></div>'+
+      '<div class="tm-field-row"><label class="tm-label">Priority</label><select class="tm-select" id="tm-edit-priority">'+
+      '<option value="none"'+(tpl.priority==='none'?' selected':'')+'>None</option>'+
+      '<option value="low"'+(tpl.priority==='low'?' selected':'')+'>Low</option>'+
+      '<option value="medium"'+(tpl.priority==='medium'?' selected':'')+'>Medium</option>'+
+      '<option value="high"'+(tpl.priority==='high'?' selected':'')+'>High</option>'+
+      '</select></div>'+
+      '<div class="tm-field-row"><label class="tm-label">Tags (comma-separated)</label><input type="text" class="tm-input" id="tm-edit-tags" value="'+escHtml((tpl.tags||[]).join(', '))+'"></div>'+
+      '<div class="tm-field-row"><label class="tm-label">Description</label><textarea class="tm-textarea" id="tm-edit-desc" rows="2">'+escHtml(tpl.description||'')+'</textarea></div>'+
+      '<div class="tm-field-row"><label class="tm-label">Subtasks (drag to reorder)</label>'+
+      '<div id="tm-edit-subs">'+subRows+'</div>'+
+      '<button class="tm-btn-outline" id="tm-edit-add-sub" style="margin-top:8px;"><i class="fa-solid fa-plus"></i> Add Subtask</button></div>'+
+      '</div>'+
+      '<div class="tm-modal-footer"><button class="tm-btn-secondary" id="tm-edit-cancel">Cancel</button><button class="tm-btn-primary" id="tm-edit-save">Save Changes</button></div>'+
+      '</div>';
+    document.body.appendChild(overlay);
+    overlay.querySelector('#tm-edit-close').addEventListener('click',()=>overlay.remove());
+    overlay.querySelector('#tm-edit-cancel').addEventListener('click',()=>overlay.remove());
+    overlay.querySelector('#tm-edit-add-sub').addEventListener('click',()=>{
+      const container=overlay.querySelector('#tm-edit-subs');
+      const idx=container.querySelectorAll('.tm-subtask-row').length;
+      if(idx>=MAX_SUB){showToast('Max '+MAX_SUB+' subtasks','error');return;}
+      const div=document.createElement('div');
+      div.innerHTML=renderSubRow({title:'',priority:'none'},idx);
+      container.appendChild(div.firstElementChild);
+      wireRemoveSubs(overlay,'#tm-edit-subs');
+      initDragDrop(container);
+    });
+    wireRemoveSubs(overlay,'#tm-edit-subs');
+    overlay.querySelector('#tm-edit-save').addEventListener('click',()=>{
+      const name=overlay.querySelector('#tm-edit-name').value.trim();
+      if(!name){showToast('Name required','error');return;}
+      const priority=overlay.querySelector('#tm-edit-priority').value;
+      const tags=overlay.querySelector('#tm-edit-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
+      const desc=overlay.querySelector('#tm-edit-desc').value.trim();
+      const subEls=overlay.querySelectorAll('#tm-edit-subs .tm-subtask-row');
+      const subtasks=Array.from(subEls).map((r,i)=>({id:uid(),order:i,title:r.querySelector('.tm-sub-title').value.trim(),priority:r.querySelector('.tm-sub-priority').value,tags:[],description:''})).filter(s=>s.title);
+      updateTemplate(tpl.id,{name,priority,tags,description:desc,subtasks});overlay.remove();showToast('Template updated');
+    });
+    initDragDrop(overlay.querySelector('#tm-edit-subs'));
+  }
+  function initDragDrop(container){
+    if(!container)return;
+    container.querySelectorAll('.tm-subtask-row').forEach(row=>{
+      row.setAttribute('draggable','true');
+      row.addEventListener('dragstart',()=>{TM.dragSrc=row;row.classList.add('tm-dragging');});
+      row.addEventListener('dragend',()=>{TM.dragSrc=null;row.classList.remove('tm-dragging');container.querySelectorAll('.tm-drag-over').forEach(r=>r.classList.remove('tm-drag-over'));});
+      row.addEventListener('dragover',e=>{e.preventDefault();row.classList.add('tm-drag-over');});
+      row.addEventListener('dragleave',()=>row.classList.remove('tm-drag-over'));
+      row.addEventListener('drop',e=>{e.preventDefault();row.classList.remove('tm-drag-over');if(TM.dragSrc&&TM.dragSrc!==row){const allRows=Array.from(container.querySelectorAll('.tm-subtask-row'));const srcIdx=allRows.indexOf(TM.dragSrc);const tgtIdx=allRows.indexOf(row);if(srcIdx<tgtIdx)container.insertBefore(TM.dragSrc,row.nextSibling);else container.insertBefore(TM.dragSrc,row);}});
     });
   }
-
-  // --- FLOW 4: SHARE TEMPLATE MODAL
-  function openShareModal(tmplId) {
-    var tmpl = findTmpl(tmplId);
-    if (!tmpl) return;
-    if (!isMine(tmpl)) { showToast('Only the owner can share this template.'); return; }
-    removeTmModal('tm-share-modal');
-    var members = getMembers();
-    var groups  = getGroups().filter(function(g){ return !g.isPersonal; });
-    var el = document.createElement('div');
-    el.id = 'tm-share-modal';
-    el.className = 'tm-modal-overlay';
-    el.innerHTML =
-      '<div class="tm-modal">' +
-      '<div class="tm-modal-header"><h3><i class="fa-solid fa-share-nodes"></i> Share Template: ' + esc(tmpl.name) + '</h3>' +
-      '<button class="tm-icon-btn tm-modal-close"><i class="fa-solid fa-xmark"></i></button></div>' +
-      '<div class="tm-modal-body">' +
-      '<div class="tm-alert tm-alert-info"><i class="fa-solid fa-info-circle"></i> Recipients receive read-only access. Max ' + MAX_SHARE + ' users per action. (AC5)</div>' +
-      '<label class="tm-label">Share with Groups</label>' +
-      '<div class="tm-share-group-list">' +
-      groups.map(function(g){
-        var already = tmpl.sharedWith.some(function(s){ return s.type==='group' && s.id===g.id; });
-        return '<label class="tm-share-item"><input type="checkbox" value="'+esc(g.id)+'" data-name="'+esc(g.name)+'" data-type="group" ' + (already?'checked':'') + '> '+esc(g.name)+'</label>';
-      }).join('') +
-      '</div>' +
-      '<label class="tm-label">Share with Users <span class="tm-hint">(max ' + MAX_SHARE + ' per action)</span></label>' +
-      '<div class="tm-share-user-list">' +
-      members.filter(function(m){ return m.id !== currentUserId(); }).map(function(m){
-        var already = tmpl.sharedWith.some(function(s){ return s.type==='user' && s.id===m.id; });
-        return '<label class="tm-share-item"><input type="checkbox" value="'+esc(m.id)+'" data-name="'+esc(m.name)+'" data-type="user" ' + (already?'checked':'') + '> '+esc(m.name)+' ('+esc(m.email)+')</label>';
-      }).join('') +
-      '</div>' +
-      (tmpl.sharedWith.length ? '<label class="tm-label" style="margin-top:12px">Currently Shared With</label>' +
-      '<div class="tm-shared-current">' +
-      tmpl.sharedWith.map(function(s){
-        return '<span class="tm-shared-chip">' + esc(s.name) + ' ('+s.type+')' +
-          '<button class="tm-chip-remove" data-type="'+s.type+'" data-id="'+esc(s.id)+'">ÃÂ</button></span>';
-      }).join('') + '</div>' : '') +
-      '</div>' +
-      '<div class="tm-modal-footer">' +
-      '<button class="tm-btn tm-btn-primary" id="tm-shr-confirm"><i class="fa-solid fa-share-nodes"></i> Share</button>' +
-      '<button class="tm-btn tm-btn-secondary" id="tm-shr-cancel">Cancel</button>' +
-      '</div></div>';
-    document.body.appendChild(el);
-    el.querySelector('.tm-modal-close').onclick = function(){ removeTmModal('tm-share-modal'); };
-    el.querySelector('#tm-shr-cancel').onclick  = function(){ removeTmModal('tm-share-modal'); };
-    el.onclick = function(e){ if (e.target===el) removeTmModal('tm-share-modal'); };
-    // Remove existing share
-    el.querySelectorAll('.tm-chip-remove').forEach(function(btn){
-      btn.onclick = function(e){
-        e.preventDefault();
-        unshareTemplate(tmplId, btn.dataset.type, btn.dataset.id);
-        openShareModal(tmplId); // re-render
-      };
+  function openShareModal(tpl){
+    if(!isOwner(tpl)){showToast('Only the creator can share','error');return;}
+    const overlay=document.createElement('div');overlay.className='tm-modal-overlay';overlay.id='tm-share-overlay';
+    const members=getMembers().filter(m=>m.id!==currentUserId());
+    const groups=getGroups();
+    const memberOpts=members.map(m=>'<option value="u:'+m.id+'">'+escHtml(m.name||m.displayName||m.id)+'</option>').join('');
+    const groupOpts=groups.map(g=>'<option value="g:'+g.id+'">'+escHtml(g.name)+'</option>').join('');
+    const sharedChips=(tpl.sharedWith||[]).map(s=>'<div class="tm-shared-chip"><i class="fa-solid '+(s.type==='group'?'fa-users':'fa-user')+'"></i> '+escHtml(s.name)+'<button class="tm-chip-remove" data-sid="'+s.id+'">\u00D7</button></div>').join('');
+    overlay.innerHTML='<div class="tm-modal">'+
+      '<div class="tm-modal-header"><span class="tm-modal-title">Share Template</span><button class="tm-modal-close" id="tm-share-close">&times;</button></div>'+
+      '<div class="tm-modal-body">'+
+      '<div class="tm-alert-info"><i class="fa-solid fa-lock"></i> Recipients have read-only access. Max '+MAX_SHARE+' per action.</div>'+
+      '<div class="tm-field-row"><label class="tm-label">Share with (Groups or Users)</label>'+
+      '<select multiple class="tm-select" id="tm-share-select" style="height:120px;">'+
+      (groupOpts?'<optgroup label="Groups">'+groupOpts+'</optgroup>':'')+
+      (memberOpts?'<optgroup label="Members">'+memberOpts+'</optgroup>':'')+
+      '</select></div>'+
+      (sharedChips?'<div class="tm-field-row"><label class="tm-label">Currently shared with</label><div class="tm-shared-chips" id="tm-shared-chips">'+sharedChips+'</div></div>':'')+
+      '</div>'+
+      '<div class="tm-modal-footer"><button class="tm-btn-secondary" id="tm-share-cancel">Cancel</button><button class="tm-btn-primary" id="tm-share-confirm">Share</button></div>'+
+      '</div>';
+    document.body.appendChild(overlay);
+    overlay.querySelector('#tm-share-close').addEventListener('click',()=>overlay.remove());
+    overlay.querySelector('#tm-share-cancel').addEventListener('click',()=>overlay.remove());
+    overlay.querySelectorAll('.tm-chip-remove').forEach(btn=>{btn.addEventListener('click',()=>{unshareTemplate(tpl.id,btn.dataset.sid);overlay.remove();const t2=TM.templates.find(t=>t.id===tpl.id);if(t2)openShareModal(t2);});});
+    overlay.querySelector('#tm-share-confirm').addEventListener('click',()=>{
+      const sel=overlay.querySelector('#tm-share-select');
+      const chosen=Array.from(sel.selectedOptions).map(opt=>{const[type,id]=opt.value.split(':');return{type:type==='g'?'group':'user',id,name:opt.text};});
+      if(!chosen.length){showToast('Select at least one recipient','error');return;}
+      shareTemplate(tpl.id,chosen);overlay.remove();
     });
-    el.querySelector('#tm-shr-confirm').onclick = function() {
-      var checked = [...el.querySelectorAll('input[type=checkbox]:checked')];
-      var targets = checked.map(function(cb){ return { type: cb.dataset.type, id: cb.value, name: cb.dataset.name }; });
-      // De-dup against already shared
-      targets = targets.filter(function(t){
-        return !tmpl.sharedWith.some(function(s){ return s.type===t.type && s.id===t.id; });
-      });
-      if (targets.length === 0) { showToast('No new recipients selected.'); return; }
-      var ok = shareTemplate(tmplId, targets);
-      if (ok) {
-        removeTmModal('tm-share-modal');
-        var lib = document.getElementById('tm-library');
-        if (lib && lib.style.display !== 'none') renderLibrary(lib);
-        showToast('Template shared successfully.');
-      }
-    };
   }
-  // --- CONTEXT MENU: "Save as Template" on task card right-click (AC1)
-  function hookTaskContextMenu() {
-    document.addEventListener('contextmenu', function(e) {
-      var card = e.target.closest('.svk-card, .list-row, [data-task-id], [data-taskid]');
-      if (!card) return;
-      var taskId = card.dataset.taskid || card.dataset.taskId || card.dataset.id;
-      if (!taskId) return;
-      e.preventDefault();
-      var existing = document.getElementById('tm-ctx-menu');
-      if (existing) existing.remove();
-      var menu = document.createElement('div');
-      menu.id = 'tm-ctx-menu';
-      menu.className = 'tm-ctx-menu';
-      menu.style.left = e.pageX + 'px';
-      menu.style.top  = e.pageY + 'px';
-      menu.innerHTML = '<div class="tm-ctx-item" id="tm-ctx-save"><i class="fa-solid fa-file-plus"></i> Save as Template</div>';
+  function injectContextMenu(){
+    document.addEventListener('contextmenu',e=>{
+      const card=e.target.closest('.svk-card,.list-row,[data-task-id],[data-taskid]');
+      if(!card)return;
+      const taskId=card.dataset.taskid||card.dataset.taskId;
+      if(!taskId)return;
+      e.preventDefault();removeCtxMenu();
+      const menu=document.createElement('div');
+      menu.id='tm-ctx-menu';menu.className='tm-ctx-menu';
+      menu.style.cssText='position:fixed;top:'+e.clientY+'px;left:'+e.clientX+'px;z-index:99999;';
+      menu.innerHTML='<div class="tm-ctx-item" id="tm-ctx-save"><i class="fa-solid fa-layer-group"></i> Save as Template</div>';
       document.body.appendChild(menu);
-      menu.querySelector('#tm-ctx-save').onclick = function() {
-        menu.remove();
-        var task = window.state && window.state.tasks ? window.state.tasks.find(function(t){return t.id===taskId;}) : null;
-        if (!task) { showToast('Task not found.'); return; }
-        // TC1: check subtask count
-        var subCount = (task.subtasks||[]).length;
-        if (subCount > MAX_SUB) {
-          if (!confirm('This task has ' + subCount + ' subtasks (max ' + MAX_SUB + ' allowed). Only the first 20 will be saved. Continue?')) return;
-        }
-        var prefill = extractFromTask(task);
-        renderCreateModal(prefill);
-      };
-      // Close on outside click
-      function closeMenu(ev) {
-        if (!menu.contains(ev.target)) { menu.remove(); document.removeEventListener('click', closeMenu); }
-      }
-      setTimeout(function(){ document.addEventListener('click', closeMenu); }, 10);
-    }, true);
-  }
-
-  // --- NTM (New Task Modal) "Apply Template" button injection
-  function injectNtmTemplateBtn() {
-    if (document.getElementById('ntm-tmpl-btn')) return;
-    var ntmActions = document.querySelector('.ntm-topbar-actions');
-    if (!ntmActions) return;
-    var btn = document.createElement('button');
-    btn.id = 'ntm-tmpl-btn';
-    btn.className = 'ntm-icon-btn';
-    btn.title = 'Apply Template';
-    btn.innerHTML = '<i class="fa-solid fa-file-lines"></i>';
-    ntmActions.insertBefore(btn, ntmActions.firstChild);
-    btn.onclick = function(e) {
-      e.stopPropagation();
-      openTemplatePickerForNtm();
-    };
-  }
-
-  function openTemplatePickerForNtm() {
-    var list = getFilteredTemplates();
-    removeTmModal('tm-ntm-picker');
-    if (!list.length) { showToast('No templates available. Create one first!'); return; }
-    var el = document.createElement('div');
-    el.id = 'tm-ntm-picker';
-    el.className = 'tm-modal-overlay';
-    el.innerHTML = '<div class="tm-modal"><div class="tm-modal-header"><h3><i class="fa-solid fa-file-lines"></i> Choose a Template</h3>' +
-      '<button class="tm-icon-btn tm-modal-close"><i class="fa-solid fa-xmark"></i></button></div>' +
-      '<div class="tm-modal-body">' +
-      '<input class="tm-input" id="tm-ntm-search" placeholder="Search templates..." style="margin-bottom:12px">' +
-      '<div id="tm-ntm-list">' +
-      list.map(function(t){
-        return '<div class="tm-ntm-item" data-id="'+esc(t.id)+'">' +
-          '<div class="tm-ntm-name">' + esc(t.name) + '</div>' +
-          '<div class="tm-ntm-meta">' + esc(taskCountLabel(t)) + '</div></div>';
-      }).join('') +
-      '</div></div></div>';
-    document.body.appendChild(el);
-    el.querySelector('.tm-modal-close').onclick = function(){ removeTmModal('tm-ntm-picker'); };
-    el.onclick = function(e){ if(e.target===el) removeTmModal('tm-ntm-picker'); };
-    el.querySelector('#tm-ntm-search').oninput = function(e){
-      var q = e.target.value.toLowerCase();
-      el.querySelectorAll('.tm-ntm-item').forEach(function(item){
-        item.style.display = item.querySelector('.tm-ntm-name').textContent.toLowerCase().includes(q) ? '':'none';
+      menu.querySelector('#tm-ctx-save').addEventListener('click',()=>{
+        const data=extractFromTask(taskId);
+        if(data)openCreateModal(data);else showToast('Could not extract task data','error');
+        removeCtxMenu();
       });
-    };
-    el.querySelectorAll('.tm-ntm-item').forEach(function(item){
-      item.onclick = function() {
-        removeTmModal('tm-ntm-picker');
-        openApplyModal(item.dataset.id);
-      };
+      document.addEventListener('click',removeCtxMenu,{once:true});
     });
   }
-  // --- TOAST NOTIFICATION
-  function showToast(msg) {
-    var t = document.createElement('div');
-    t.className = 'tm-toast';
-    t.textContent = msg;
-    document.body.appendChild(t);
-    requestAnimationFrame(function(){ t.classList.add('tm-toast--show'); });
-    setTimeout(function(){ t.classList.remove('tm-toast--show'); setTimeout(function(){ t.remove(); }, 400); }, 3000);
+  function removeCtxMenu(){const m=document.getElementById('tm-ctx-menu');if(m)m.remove();}
+  function tryInjectNTMButton(){
+    const topbar=document.querySelector('.ntm-topbar-actions,.ntm-actions');
+    if(!topbar||topbar.querySelector('#tm-ntm-btn'))return;
+    const btn=document.createElement('button');
+    btn.id='tm-ntm-btn';btn.className='tm-ntm-item';btn.title='Apply Template';
+    btn.innerHTML='<i class="fa-solid fa-layer-group"></i>';
+    btn.addEventListener('click',()=>openLibrary());
+    topbar.insertBefore(btn,topbar.firstChild);
   }
-
-  function removeTmModal(id) {
-    var el = document.getElementById(id); if (el) el.remove();
+  function watchNTM(){const observer=new MutationObserver(()=>tryInjectNTMButton());observer.observe(document.body,{childList:true,subtree:true});}
+  function watchSidebar(){
+    const sidebar=document.querySelector('nav.sidebar,.sidebar');if(!sidebar)return;
+    const obs=new MutationObserver(()=>{forceShowSidebar();if(!document.getElementById('tm-sidebar-section'))injectSidebarSection();});
+    obs.observe(sidebar,{childList:true,subtree:true,attributes:true});
   }
-
-  function confirmDeleteTemplate(tmplId, panel) {
-    var tmpl = findTmpl(tmplId);
-    if (!tmpl) return;
-    if (!confirm('Delete template "' + tmpl.name + '"? This cannot be undone.')) return;
-    deleteTemplate(tmplId);
-    updateSidebarCount();
-    if (panel) renderLibrary(panel);
-    showToast('Template deleted.');
+  function init(){
+    if(window._tmInitDone)return;window._tmInitDone=true;
+    loadTemplates();injectSidebarSection();updateSidebarCount();
+    injectContextMenu();watchNTM();watchSidebar();
+    console.log('[TaskTemplates] v2 Initialized. Templates:',TM.templates.length,'Presets:',PRESET_TEMPLATES.length);
   }
-
-  // --- PUBLIC API
-  window.TaskTemplates = {
-    openLibrary       : openLibrary,
-    openCreateModal   : openCreateModal,
-    openApplyModal    : openApplyModal,
-    openEditModal     : openEditModal,
-    openShareModal    : openShareModal,
-    createTemplate    : createTemplate,
-    applyTemplate     : applyTemplate,
-    shareTemplate     : shareTemplate,
-    getTemplates      : function() { return TM.templates.slice(); },
-    getFiltered       : getFilteredTemplates
-  };
-
-  // --- INIT
-  function init() {
-    if (window._tmInitDone) return;
-    window._tmInitDone = true;
-    loadTemplates();
-    // Wait for DOM + app to be ready
-    function tryInject() {
-      if (document.querySelector('.sidebar')) {
-        injectSidebarEntry();
-        hookTaskContextMenu();
-        // Watch for NTM box appearing
-        var ntmObserver = new MutationObserver(function() {
-          if (document.querySelector('.ntm-box') && !document.getElementById('ntm-tmpl-btn')) {
-            injectNtmTemplateBtn();
-          }
-        });
-        ntmObserver.observe(document.body, { childList: true, subtree: true });
-        // Watch for sidebar section being hidden by app re-renders
-        var sidebarObserver = new MutationObserver(function() {
-          var tmSec = document.getElementById('tm-sidebar-section');
-          if (tmSec) {
-            if (tmSec.style.display === 'none' || getComputedStyle(tmSec).display === 'none') {
-              tmSec.style.display = 'block';
-            }
-          } else { injectSidebarEntry(); }
-        });
-        var sbEl = document.querySelector('.sidebar');
-        if (sbEl) sidebarObserver.observe(sbEl, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
-        // Also try immediately in case NTM already exists
-        if (document.querySelector('.ntm-box')) injectNtmTemplateBtn();
-      } else {
-        setTimeout(tryInject, 300);
-      }
-    }
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', tryInject);
-    } else {
-      tryInject();
-    }
-  }
-
-  init();
-})(); // end IIFE
+  window.TaskTemplates={open:openLibrary,create:openCreateModal,getTemplates:()=>TM.templates.slice(),getPresets:()=>PRESET_TEMPLATES.slice(),apply:applyTemplate};
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);
+  else setTimeout(init,200);
+}());
