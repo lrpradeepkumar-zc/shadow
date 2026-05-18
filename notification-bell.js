@@ -1,7 +1,7 @@
 /**
  * notification-bell.js
- * Wires the header notification bell with real task-lifecycle notifications.
- * Works with the existing NotificationsModule in app.js (pushNotification / state.notifications).
+ * Wires the header notification bell (#notifBellBtn) with real task-lifecycle notifications.
+ * Works with the existing NotificationsModule in app.js (state.notifications + notifications:updated event).
  *
  * Features:
  *  - Persists notifications to localStorage (survives page refresh)
@@ -9,6 +9,7 @@
  *  - Intercepts ShadowDB.Tasks.update  -> detects status/priority/dueDate/assignee changes
  *  - Hooks comment submit button       -> "Comment Added" notification
  *  - Seeds overdue / due-soon alerts from existing tasks on boot
+ *  - Re-wires the bell click handler (fallback in case NotificationsModule init races)
  */
 (function NotificationBell() {
   'use strict';
@@ -68,6 +69,155 @@
     }, 100);
   }
 
+  /* ── Wire the bell button click (re-wire fallback) ────────────────────── */
+  function wireBellClick() {
+    var tries = 0;
+    var iv = setInterval(function() {
+      var btn   = document.getElementById('notifBellBtn');
+      var panel = document.getElementById('notifPanel');
+      if (btn && panel) {
+        clearInterval(iv);
+
+        function togglePanel(force) {
+          var willOpen = typeof force === 'boolean' ? force : panel.hidden;
+          panel.hidden = !willOpen;
+          btn.setAttribute('aria-expanded', String(willOpen));
+          if (willOpen) {
+            renderPanel();
+            updateBadge();
+          }
+        }
+
+        function updateBadge() {
+          var badge = document.getElementById('notifBadge');
+          if (!badge) return;
+          var items = loadFromStorage();
+          var unread = items.filter(function(n){ return !n.read; }).length;
+          badge.textContent = unread;
+          badge.hidden = unread === 0;
+        }
+
+        function timeAgo(iso) {
+          var diff = Math.max(0, Date.now() - new Date(iso).getTime());
+          var m = Math.floor(diff / 60000);
+          if (m < 1) return 'just now';
+          if (m < 60) return m + 'm ago';
+          var h = Math.floor(m / 60);
+          if (h < 24) return h + 'h ago';
+          return Math.floor(h / 24) + 'd ago';
+        }
+
+        function iconFor(type) {
+          var map = {
+            'invite': 'fa-user-plus',
+            'comment': 'fa-comment',
+            'status': 'fa-circle-check',
+            'task_created': 'fa-plus-circle',
+            'priority': 'fa-flag',
+            'due_date': 'fa-calendar',
+            'assignee': 'fa-user',
+            'overdue': 'fa-clock',
+            'due_soon': 'fa-bell'
+          };
+          return map[type] || 'fa-bell';
+        }
+
+        function esc(s) {
+          return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        function renderPanel() {
+          var listEl = document.getElementById('notifList');
+          var emptyEl = document.getElementById('notifEmpty');
+          if (!listEl || !emptyEl) return;
+          var items = loadFromStorage();
+          if (!items.length) {
+            listEl.innerHTML = '';
+            emptyEl.style.display = 'block';
+            return;
+          }
+          emptyEl.style.display = 'none';
+          listEl.innerHTML = items.map(function(n) {
+            return '<li class="notif-item ' + (n.read ? '' : 'unread') + '" ' +
+                   'data-id="' + esc(n.id) + '" data-task="' + esc(n.taskId) + '" data-type="' + esc(n.type) + '" role="menuitem">' +
+                   '<div class="n-icon"><i class="fa-solid ' + iconFor(n.type) + '"></i></div>' +
+                   '<div><div class="n-body">' + esc(n.message) + '</div>' +
+                   '<div class="n-time">' + timeAgo(n.time) + '</div></div></li>';
+          }).join('');
+        }
+
+        // Attach click to bell
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          togglePanel();
+        });
+
+        // Close on outside click
+        document.addEventListener('click', function(e) {
+          if (!panel.hidden && !(e.target.closest && e.target.closest('.notif-wrap'))) {
+            togglePanel(false);
+          }
+        });
+
+        // Close on Escape
+        document.addEventListener('keydown', function(e) {
+          if (e.key === 'Escape') togglePanel(false);
+        });
+
+        // Mark all read
+        var markAll = document.getElementById('notifMarkAllRead');
+        if (markAll) markAll.addEventListener('click', function(e) {
+          e.stopPropagation();
+          var stored = loadFromStorage();
+          stored.forEach(function(n){ n.read = true; });
+          saveToStorage(stored);
+          if (window.state) state.notifications = stored;
+          updateBadge();
+          renderPanel();
+        });
+
+        // Clear all
+        var clearAll = document.getElementById('notifClearAll');
+        if (clearAll) clearAll.addEventListener('click', function(e) {
+          e.stopPropagation();
+          saveToStorage([]);
+          if (window.state) state.notifications = [];
+          updateBadge();
+          renderPanel();
+        });
+
+        // Item click -> open task
+        var listEl2 = document.getElementById('notifList');
+        if (listEl2) listEl2.addEventListener('click', function(e) {
+          var li = e.target.closest && e.target.closest('.notif-item');
+          if (!li) return;
+          var id = li.dataset.id;
+          var taskId = li.dataset.task;
+          var stored = loadFromStorage();
+          var item = stored.find(function(n){ return n.id === id; });
+          if (item) { item.read = true; saveToStorage(stored); if (window.state) state.notifications = stored; }
+          updateBadge();
+          renderPanel();
+          if (taskId) {
+            var opener = (typeof window.openTaskDetail === 'function' && window.openTaskDetail) ||
+                         (typeof window.showTaskDetail === 'function' && window.showTaskDetail);
+            if (opener) { togglePanel(false); opener(taskId, 'notification'); }
+          }
+        });
+
+        // React to notifications:updated
+        document.addEventListener('notifications:updated', function() {
+          updateBadge();
+          if (!panel.hidden) renderPanel();
+        });
+
+        // Initial badge render
+        updateBadge();
+
+      } else if (++tries > 80) { clearInterval(iv); }
+    }, 150);
+  }
+
   /* patch ShadowDB.Tasks.create */
   function patchCreate() {
     var tries = 0;
@@ -94,10 +244,10 @@
   function snapshotTask(task) {
     if (!task || !task.id) return;
     _snap[task.id] = {
-      status:       task.status,
-      priority:     task.priority,
-      dueDate:      task.dueDate,
-      assigneeId:   task.assigneeId || task.assignee || ''
+      status:     task.status,
+      priority:   task.priority,
+      dueDate:    task.dueDate,
+      assigneeId: task.assigneeId || task.assignee || ''
     };
   }
 
@@ -131,7 +281,6 @@
             return result;
           });
         };
-        /* snapshot existing loaded tasks */
         if (window.state && state.tasks) state.tasks.forEach(snapshotTask);
         document.addEventListener('tasks:loaded', function() {
           if (state.tasks) state.tasks.forEach(snapshotTask);
@@ -160,7 +309,7 @@
     });
   }
 
-  /* seed overdue / due-soon alerts (only once per session via storage check) */
+  /* seed overdue / due-soon alerts */
   function seedAlerts() {
     if (!window.state || !state.tasks || !state.tasks.length) return;
     var stored = loadFromStorage();
@@ -189,32 +338,16 @@
     }, 300);
   }
 
-  /* sync read flags back to storage after mark-all-read / clear-all */
-  function hookMarkClear() {
-    document.addEventListener('click', function(e) {
-      if (e.target && e.target.id === 'notifMarkAllRead') {
-        setTimeout(function() {
-          var stored = loadFromStorage();
-          stored.forEach(function(n) { n.read = true; });
-          saveToStorage(stored);
-        }, 50);
-      }
-      if (e.target && e.target.id === 'notifClearAll') {
-        setTimeout(function() { saveToStorage([]); }, 50);
-      }
-    });
-  }
-
   /* expose globally */
   window.pushBellNotification = push;
 
   /* boot */
   function boot() {
     restoreFromStorage();
+    wireBellClick();
     patchCreate();
     patchUpdate();
     hookCommentBtn();
-    hookMarkClear();
     waitForTasksAndSeed();
   }
 
