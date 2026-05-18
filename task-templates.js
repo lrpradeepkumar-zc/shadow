@@ -234,7 +234,7 @@
       '<div class="tm-lib-sidebar-section-label">MY TEMPLATES</div>'+
       '<div class="tm-lib-nav-item tm-lib-nav-mine" data-view="my"><i class="fa-solid fa-user"></i>&nbsp;My Templates&nbsp;<span class="tm-lib-nav-count" id="tm-mine-count">0</span></div>'+
       '<div class="tm-lib-sidebar-section-label" style="margin-top:16px;">CATEGORIES</div>'+
-      PRESET_CATEGORIES.map(cat=>'<div class="tm-lib-nav-item tm-lib-nav-cat'+(cat.id==='featured'?' active':'')+'" data-cat="'+cat.id+'">'+cat.icon+' '+escHtml(cat.label)+'</div>').join('')+
+      PRESET_CATEGORIES.map(cat=>'<div class="tm-lib-nav-item tm-lib-nav-cat'+(cat.id==='featured'?' active':'')+' '" data-cat="'+cat.id+'">'+cat.icon+' '+escHtml(cat.label)+'</div>').join('')+
       '</div>'+
       '<div class="tm-lib-main">'+
       '<div class="tm-lib-main-header">'+
@@ -438,7 +438,7 @@
   function renderSubRow(s,i){
     return '<div class="tm-subtask-row" data-sub-idx="'+i+'">'+
       '<i class="fa-solid fa-grip-lines tm-drag-handle"></i>'+
-      '<input type="text" class="tm-input tm-sub-title" value="'+escHtml(s.title||'')+'" placeholder="Subtask title...">'+
+      '<input type="text" class="tm-input tm-sub-title" value="'+escHtml(s.title||'')+' '" placeholder="Subtask title...">'+
       '<select class="tm-select tm-sub-priority">'+
       '<option value="none"'+(s.priority==='none'?' selected':'')+'>\u2014</option>'+
       '<option value="low"'+(s.priority==='low'?' selected':'')+'>Low</option>'+
