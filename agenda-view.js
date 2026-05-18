@@ -171,6 +171,7 @@
         '<header class="agenda-section__header" style="border-left:3px solid ' + sec.color + '">' +
           '<span class="agenda-section__title">' + esc(sec.label) + '</span>' +
           '<span class="agenda-section__count">' + tasks.length + '</span>' +
+          '<button class="agenda-add-task-btn" title="Add task" type="button"><i class="fa-solid fa-plus"></i> New task</button>' +
         '</header>' +
         '<div class="agenda-section__body" role="list">' + rows + '</div>' +
       '</section>';
@@ -184,7 +185,10 @@
       '<div class="agenda-col" data-section="' + sec.key + '">' +
         '<div class="agenda-col__header" style="border-top:3px solid ' + sec.color + '">' +
           '<span class="agenda-col__title">' + esc(sec.label) + '</span>' +
-          '<span class="agenda-col__count">' + tasks.length + '</span>' +
+          '<span style="display:flex;align-items:center;gap:6px">' +
+            '<span class="agenda-col__count">' + tasks.length + '</span>' +
+            '<button class="agenda-add-task-btn" title="Add task" type="button"><i class="fa-solid fa-plus"></i></button>' +
+          '</span>' +
         '</div>' +
         '<div class="agenda-col__body">' + cards + '</div>' +
       '</div>';
@@ -243,6 +247,13 @@
   }
   // ---- INTERACTIONS -------------------------------------------
   function bindInteractions(root, ctx) {
+    root.querySelectorAll('.agenda-add-task-btn').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (typeof window.ntmResetAndOpen === 'function') window.ntmResetAndOpen();
+        else if (document.getElementById('newTaskBtn')) document.getElementById('newTaskBtn').click();
+      });
+    });
     root.querySelectorAll('.agenda-check').forEach(function (cb) {
       cb.addEventListener('click', function (e) { e.stopPropagation(); });
       cb.addEventListener('change', function (e) {
@@ -271,6 +282,15 @@
   }
 
   // ---- PUBLIC API ---------------------------------------------
+  (function(){
+    var s = document.getElementById('agenda-add-task-styles');
+    if (s) return;
+    s = document.createElement('style');
+    s.id = 'agenda-add-task-styles';
+    s.textContent = '.agenda-add-task-btn{background:none;border:none;cursor:pointer;color:#888;padding:2px 7px;border-radius:4px;font-size:12px;display:inline-flex;align-items:center;gap:4px;line-height:1;transition:color .15s,background .15s;margin-left:auto}.agenda-add-task-btn:hover{color:#1a73e8;background:rgba(26,115,232,.12)}.agenda-section__header{display:flex!important;align-items:center!important;gap:8px!important}.agenda-col__header{display:flex!important;align-items:center!important;justify-content:space-between!important}';
+    document.head.appendChild(s);
+  })();
+
   window.ShadowAgenda = {
     BUCKETS: BUCKETS,
     getBuckets: getBuckets,
