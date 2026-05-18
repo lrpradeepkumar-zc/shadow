@@ -7,7 +7,7 @@
 (function() {
   'use strict';
 
-  // âââ CONSTANTS ââââââââââââââââââââââââââââââââââââââââ
+  // Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ CONSTANTS Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
   const STORE_KEY   = 'shadow_templates';
   const MAX_DEPTH   = 2;   // Parent > Subtask only
   const MAX_SUB     = 20;  // max subtasks per template
@@ -15,7 +15,7 @@
   const MAX_NAME    = 100; // template name char limit
   const TMPL_VER    = 1;
 
-  // âââ STATE ââââââââââââââââââââââââââââââââââââââââââââ
+  // Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ STATE Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
   const TM = {
     templates   : [],   // all templates for current user
     activeFilter: 'all', // all | personal | shared | group
@@ -29,7 +29,7 @@
     init        : false
   };
 
-  // âââ UTILS ââââââââââââââââââââââââââââââââââââââââââââ
+  // Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ UTILS Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
   function uid() { return 'tm_' + Date.now() + '_' + Math.random().toString(36).slice(2,7); }
   function now() { return new Date().toISOString(); }
   function esc(s) { return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -38,7 +38,7 @@
   function getGroups()       { return window.state?.groups || []; }
   function getMembers()      { return window.state?.members || []; }
 
-  // âââ PERSISTENCE ââââââââââââââââââââââââââââââââââââââ
+  // Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ PERSISTENCE Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
   function loadTemplates() {
     try {
       const raw = localStorage.getItem(STORE_KEY);
@@ -51,7 +51,7 @@
   function findTmpl(id) { return TM.templates.find(t => t.id === id); }
   function isOwner(tmpl) { return tmpl && tmpl.createdBy === currentUserId(); }
 
-  // âââ FILTERED + SORTED LIST âââââââââââââââââââââââââââ
+  // Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ FILTERED + SORTED LIST Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
   function getFilteredTemplates() {
     let list = TM.templates.slice();
     const uid = currentUserId();
@@ -91,7 +91,7 @@
     return list;
   }
 
-  // âââ FLOW 1: CREATE TEMPLATE âââââââââââââââââââââââââââ
+  // Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ FLOW 1: CREATE TEMPLATE Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
   // Extract template data from a task object (strips assignees/dueDates)
   function extractFromTask(task) {
     const subtasks = (task.subtasks || []).slice(0, MAX_SUB).map(st => ({
@@ -171,7 +171,7 @@
     if (tmpl) { tmpl.isFavourite = !tmpl.isFavourite; tmpl.updatedAt = now(); saveTemplates(); }
   }
 
-  // âââ FLOW 3: APPLY TEMPLATE ââââââââââââââââââââââââââââââ
+  // Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ FLOW 3: APPLY TEMPLATE Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
   // Build apply-preview config from template + optional user overrides
   function buildApplyConfig(tmpl, overrides) {
     overrides = overrides || {};
@@ -229,13 +229,13 @@
       saveTemplates();
       // Push bell notification
       if (window.pushBellNotification) {
-        window.pushBellNotification(currentUserName() + ' applied template â' + tmpl.name + 'â â ' + cfg.subtasks.length + ' subtask(s) created');
+        window.pushBellNotification(currentUserName() + ' applied template Ã¢ÂÂ' + tmpl.name + 'Ã¢ÂÂ Ã¢ÂÂ ' + cfg.subtasks.length + ' subtask(s) created');
       }
     }
     return task;
   }
 
-  // âââ FLOW 4: SHARE TEMPLATE âââââââââââââââââââââââââââââââ
+  // Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ FLOW 4: SHARE TEMPLATE Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
   // AC5: max 50 users per share action, recipients are read-only
   function shareTemplate(tmplId, targets) {
     // targets = [{type:'user'|'group', id, name}, ...]
@@ -267,12 +267,12 @@
     saveTemplates();
   }
 
-  // âââ UI HELPERS âââââââââââââââââââââââââââââââââââââââââ
+  // Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ UI HELPERS Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
   function priColor(p) {
     return {High:'#ea4335',Medium:'#f59f00',Low:'#1a73e8',None:'#9ca3af'}[p] || '#9ca3af';
   }
   function priLabel(p) {
-    return {High:'â High',Medium:'â Medium',Low:'â Low',None:'â None'}[p] || p;
+    return {High:'Ã¢ÂÂ High',Medium:'Ã¢ÂÂ Medium',Low:'Ã¢ÂÂ Low',None:'Ã¢ÂÂ None'}[p] || p;
   }
   function taskCountLabel(tmpl) {
     const sub = tmpl.subtasks.length;
@@ -284,7 +284,7 @@
   }
   function isMine(tmpl) { return tmpl.createdBy === currentUserId(); }
 
-  // âââ SIDEBAR ENTRY âââââââââââââââââââââââââââââââââââââ
+  // Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ SIDEBAR ENTRY Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
   function injectSidebarEntry() {
     if (document.getElementById('tm-sidebar-item')) return;
     const sidebar = document.querySelector('.sidebar');
@@ -862,7 +862,7 @@
       '<div class="tm-shared-current">' +
       tmpl.sharedWith.map(function(s){
         return '<span class="tm-shared-chip">' + esc(s.name) + ' ('+s.type+')' +
-          '<button class="tm-chip-remove" data-type="'+s.type+'" data-id="'+esc(s.id)+'">Ã</button></span>';
+          '<button class="tm-chip-remove" data-type="'+s.type+'" data-id="'+esc(s.id)+'">ÃÂ</button></span>';
       }).join('') + '</div>' : '') +
       '</div>' +
       '<div class="tm-modal-footer">' +
@@ -901,9 +901,9 @@
   // --- CONTEXT MENU: "Save as Template" on task card right-click (AC1)
   function hookTaskContextMenu() {
     document.addEventListener('contextmenu', function(e) {
-      var card = e.target.closest('.svk-card, .list-row, [data-task-id]');
+      var card = e.target.closest('.svk-card, .list-row, [data-task-id], [data-taskid]');
       if (!card) return;
-      var taskId = card.dataset.taskId || card.dataset.id;
+      var taskId = card.dataset.taskid || card.dataset.taskId || card.dataset.id;
       if (!taskId) return;
       e.preventDefault();
       var existing = document.getElementById('tm-ctx-menu');
