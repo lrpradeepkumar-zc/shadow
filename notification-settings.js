@@ -95,7 +95,7 @@
     return opts.map(function(o){ return '<option value="'+o+'" '+(cur===o?'selected':'')+'>'+o+'</option>'; }).join('');
   }
 
-  // ── Desktop ──────────────────────────────────────────────────────────────
+  // ââ Desktop ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
   function renderDesktopSection(prefs, c) {
     var d = prefs.desktop;
     c.innerHTML =
@@ -117,14 +117,14 @@
       '</div>'+
       '<div class="ns-block"><h3 class="ns-sub-heading">Notify me in mobile</h3>'+
         '<label class="ns-checkbox-row"><input type="checkbox" id="ns-mobile-fallback" '+(d.mobileFallbackEnabled?'checked':'')+'>'+
-        '<span>When I'm inactive for</span>'+
+        '<span>When I\'m inactive for</span>'+
         '<select id="ns-mobile-delay" class="ns-select ns-select-sm">'+
           '<option value="5" '+(d.mobileFallbackDelay==='5'?'selected':'')+'>5 Minutes</option>'+
           '<option value="10" '+(d.mobileFallbackDelay==='10'?'selected':'')+'>10 Minutes</option>'+
           '<option value="15" '+(d.mobileFallbackDelay==='15'?'selected':'')+'>15 Minutes</option>'+
           '<option value="30" '+(d.mobileFallbackDelay==='30'?'selected':'')+'>30 Minutes</option></select></label>'+
         '<label class="ns-checkbox-row"><input type="checkbox" id="ns-disable-mobile-active" '+(d.disableMobileWhenActive?'checked':'')+'>'+
-        '<span>Disable mobile notifications when I'm actively using my desktop</span></label>'+
+        '<span>Disable mobile notifications when I\'m actively using my desktop</span></label>'+
       '</div>'+
       '<div class="ns-block"><h3 class="ns-sub-heading">Do Not Disturb (DND)</h3>'+
         '<label class="ns-toggle-row"><input type="checkbox" class="ns-toggle-input" id="ns-dnd-enabled" '+(prefs.dnd.enabled?'checked':'')+'>'+
@@ -147,7 +147,7 @@
     c.querySelector('#ns-dnd-priority').onchange = function(){ prefs.dnd.allowPriorityUsers=this.checked; };
   }
 
-  // ── Reminder ─────────────────────────────────────────────────────────────
+  // ââ Reminder âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
   function renderReminderSection(prefs, c) {
     var r = prefs.reminder;
     c.innerHTML =
@@ -172,7 +172,7 @@
     c.querySelector('#ns-reminder-event').onchange = function(){ prefs.reminder.showEventDetails=this.checked; };
   }
 
-  // ── Email ─────────────────────────────────────────────────────────────────
+  // ââ Email âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
   function renderEmailSection(prefs, c) {
     var e = prefs.email;
     c.innerHTML =
@@ -215,7 +215,7 @@
     });
   }
 
-  // ── Priority Users ────────────────────────────────────────────────────────
+  // ââ Priority Users ââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
   function renderPriorityUsersSection(prefs, c) {
     var members=(window.state&&window.state.members)||[];
     var priorityIds=prefs.priorityUsers||[];
@@ -245,7 +245,7 @@
     });
   }
 
-  // ── Notification Preference ───────────────────────────────────────────────
+  // ââ Notification Preference âââââââââââââââââââââââââââââââââââââââââââââââ
   function renderNotifPreferenceSection(prefs, c) {
     var s=window.state;
     var groups=(s&&s.groups)?s.groups.filter(function(g){return g.type!=='personal';}):[]; 
@@ -306,7 +306,7 @@
     };
   }
 
-  // ── Main Render ───────────────────────────────────────────────────────────
+  // ââ Main Render âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
   function renderNotificationSettings(prefs) {
     var overlay=document.getElementById('ns-overlay'); if(!overlay) return;
     var panels=[
@@ -371,7 +371,7 @@
     t.textContent=msg; document.body.appendChild(t); setTimeout(function(){t.remove();},2500);
   }
 
-  // ── Integration ───────────────────────────────────────────────────────────
+  // ââ Integration âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
   function boot() {
     var section=document.getElementById('section-notification'); if(!section) return;
     var overlay=document.getElementById('ns-overlay');
