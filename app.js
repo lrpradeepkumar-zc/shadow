@@ -1,5 +1,5 @@
 // ============================================================
-// Shadow ToDo ÃÂ¢ÃÂÃÂ app.js  (Zoho-spec + UI/UX polish)
+// Shadow ToDo ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ app.js  (Zoho-spec + UI/UX polish)
 // ============================================================
 (function () {
   'use strict';
@@ -611,7 +611,7 @@ function renderListView() {
     if (lh) lh.style.display = 'none';
     return;
   }
-  // Hide the legacy column strip ÃÂ¢ÃÂÃÂ ShadowViewKit renders its own columnar table.
+  // Hide the legacy column strip ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ ShadowViewKit renders its own columnar table.
   if (lh) { lh.innerHTML = ''; lh.classList.add('compact-header'); }
   var tasks = getFilteredTasks();
   var kit = window.ShadowAgenda || window.ShadowViewKit || window.ShadowCreatedByMe;
@@ -830,7 +830,7 @@ function renderListView() {
         const color = tag ? tag.color : '#888';
         const name  = tag ? tag.name  : tid;
         return '<span class="task-tag" style="background:'+color+'">'+name+
-          '<span class="tag-remove" data-tag="'+tid+'" data-taskid="'+taskId+'">ÃÂÃÂ</span></span>';
+          '<span class="tag-remove" data-tag="'+tid+'" data-taskid="'+taskId+'">ÃÂÃÂÃÂÃÂ</span></span>';
       }).join('');
       tagsContainer.querySelectorAll('.tag-remove').forEach(function(btn){
         btn.addEventListener('click', function(){
@@ -1356,7 +1356,7 @@ function renderListView() {
       return '<div class="subtask-item" data-idx="'+i+'">' +
         '<input type="checkbox" class="subtask-check"'+(st.completed?' checked':'')+' data-idx="'+i+'">' +
         '<span class="subtask-title'+(st.completed?' completed-text':'')+'">'+st.title+'</span>' +
-        '<button class="subtask-del" data-idx="'+i+'" style="background:none;border:none;cursor:pointer;color:var(--text-muted);padding:0 4px;font-size:12px">ÃÂÃÂ</button>' +
+        '<button class="subtask-del" data-idx="'+i+'" style="background:none;border:none;cursor:pointer;color:var(--text-muted);padding:0 4px;font-size:12px">ÃÂÃÂÃÂÃÂ</button>' +
         '</div>';
     }).join('');
 
@@ -1482,7 +1482,7 @@ function renderListView() {
   }
 
   // ============================================================
-  // NEW TASK MODAL — ntm-* wiring  (replaces old modal event block)
+  // NEW TASK MODAL â ntm-* wiring  (replaces old modal event block)
   // ============================================================
   (function initNTM() {
     'use strict';
@@ -1526,7 +1526,7 @@ function renderListView() {
       });
     }
 
-    // ── state ──
+    // ââ state ââ
     var selGroupId  = '';
     var selStatus   = 'Open';
     var selPriority = 'Medium';
@@ -1536,7 +1536,7 @@ function renderListView() {
     var mtSubtasks  = [];
     var grpCats     = [{ name:'General' }];
 
-    // ── status ──
+    // ââ status ââ
     function getStatusColor(name) {
       var s = grpStatuses.find(function(x){ return x.name===name; });
       return s ? s.color : '#718096';
@@ -1584,7 +1584,7 @@ function renderListView() {
     }
     if (sSrch) sSrch.addEventListener('input', function(){ buildStatusList(sSrch.value); });
 
-    // ── group ──
+    // ââ group ââ
     function buildGroupList(filter) {
       var list = $el('ntmGroupList'); if (!list) return;
       var q = (filter||'').toLowerCase();
@@ -1621,7 +1621,7 @@ function renderListView() {
     }
     if (gSrch) gSrch.addEventListener('input', function(){ buildGroupList(gSrch.value); });
 
-    // ── category ──
+    // ââ category ââ
     function loadCategoriesForGroup(groupId) {
       ShadowDB.Categories.getAll().then(function(cats) {
         if (!groupId) {
@@ -1670,7 +1670,7 @@ function renderListView() {
     }
     if (cSrch) cSrch.addEventListener('input', function(){ buildCatList(cSrch.value); });
 
-    // ── priority ──
+    // ââ priority ââ
     function updatePriorityBtn() {
       var icon = $el('ntmPriorityIcon'), lbl = $el('ntmPriorityLabel');
       if (icon) {
@@ -1698,7 +1698,7 @@ function renderListView() {
       });
     }
 
-    // ── tags ──
+    // ââ tags ââ
     function buildTagsList(filter) {
       var list = $el('ntmTagsList'); if (!list) return;
       var tags = (window.state && window.state.tags) ? window.state.tags : [];
@@ -1739,7 +1739,7 @@ function renderListView() {
     }
     if (tSrch) tSrch.addEventListener('input', function(){ buildTagsList(tSrch.value); });
 
-    // ── assignee ──
+    // ââ assignee ââ
     function buildAssigneeList(filter) {
       var list = $el('ntmAssigneeList'); if (!list) return;
       var members = (window.state && window.state.members) ? window.state.members : [];
@@ -1784,7 +1784,7 @@ function renderListView() {
     }
     if (aSrch) aSrch.addEventListener('input', function(){ buildAssigneeList(aSrch.value); });
 
-    // ── custom date picker ──
+    // ââ custom date picker ââ
   var selStartDate = null; // stores 'YYYY-MM-DD' string
   var selDueDate = null;
 
@@ -1828,10 +1828,10 @@ function renderListView() {
       var html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">';
       html += '<span style="font-weight:600;font-size:14px;color:var(--text-primary,#1a202c)">'+MONTHS[viewMonth]+' '+viewYear+'</span>';
       html += '<div style="display:flex;gap:3px;">';
-      html += '<button class="ntm-dp-nav" data-a="py" style="'+btnBase+'10px;">«</button>';
-      html += '<button class="ntm-dp-nav" data-a="pm" style="'+btnBase+'15px;">‹</button>';
-      html += '<button class="ntm-dp-nav" data-a="nm" style="'+btnBase+'15px;">›</button>';
-      html += '<button class="ntm-dp-nav" data-a="ny" style="'+btnBase+'10px;">»</button>';
+      html += '<button class="ntm-dp-nav" data-a="py" style="'+btnBase+'10px;">Â«</button>';
+      html += '<button class="ntm-dp-nav" data-a="pm" style="'+btnBase+'15px;">â¹</button>';
+      html += '<button class="ntm-dp-nav" data-a="nm" style="'+btnBase+'15px;">âº</button>';
+      html += '<button class="ntm-dp-nav" data-a="ny" style="'+btnBase+'10px;">Â»</button>';
       html += '</div></div>';
 
       html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;margin-bottom:3px;">';
@@ -1977,7 +1977,7 @@ function renderListView() {
       });
     }
 
-    // ── attachment ──
+    // ââ attachment ââ
     var attachBtn = $el('modalAttachBtn');
     if (attachBtn) {
       attachBtn.addEventListener('click', function() {
@@ -1987,7 +1987,7 @@ function renderListView() {
       });
     }
 
-    // ── reminder ──
+    // ââ reminder ââ
     var remBtn = $el('modalReminderBtn');
     if (remBtn) {
       remBtn.addEventListener('click', function(e) {
@@ -1999,7 +1999,7 @@ function renderListView() {
       });
     }
 
-    // ── subtasks ──
+    // ââ subtasks ââ
     function renderSubtasksList() {
       var list = $el('ntmSubtasksList'); if (!list) return;
       list.innerHTML = mtSubtasks.map(function(st,i) {
@@ -2032,7 +2032,7 @@ function renderListView() {
     var stAddBtn = $el('ntmSubtaskAddBtn');
     if (stAddBtn) stAddBtn.addEventListener('click', addSubtask);
 
-    // ── save ──
+    // ââ save ââ
     var saveBtn = $el('modalSaveBtn');
     if (saveBtn) {
       saveBtn.addEventListener('click', async function() {
@@ -2077,7 +2077,7 @@ function renderListView() {
       });
     }
 
-    // ── cancel / close ──
+    // ââ cancel / close ââ
     function closeModal() {
       var m=$el('taskModal'); if(m) m.style.display='none';
       closeAllDropdowns(); var am=$el('ntmAssigneeModal'); if(am) am.classList.remove('open');
@@ -2085,7 +2085,7 @@ function renderListView() {
     var cancelBtn=$el('modalCancelBtn'); if(cancelBtn) cancelBtn.addEventListener('click',closeModal);
     var closeBtn=$el('closeModalBtn');   if(closeBtn)  closeBtn.addEventListener('click',closeModal);
 
-    // ── click-outside ──
+    // ââ click-outside ââ
     document.addEventListener('click', function(e) {
       if (!e.target.closest('#ntmStatusWrap'))    { var el=$el('ntmStatusWrap');    if(el) el.classList.remove('open'); }
       if (!e.target.closest('#ntmGroupBtn') && !e.target.closest('#ntmGroupDropdown'))       { var el=$el('ntmGroupDropdown');   if(el) el.classList.remove('open'); }
@@ -2095,8 +2095,8 @@ function renderListView() {
       if (!e.target.closest('#ntmAssigneeChip') && !e.target.closest('#ntmAssigneeModal'))   { var el=$el('ntmAssigneeModal');   if(el) el.classList.remove('open'); }
     });
 
-    // ── reset & open ──
-    function resetAndOpen() {
+    // ââ reset & open ââ
+    function resetAndOpen(opts) {
       selGroupId=''; selStatus='Open'; selPriority='Medium'; selTags=[]; mtSubtasks=[]; selAssignee='';
       if (window.state && window.state.members && window.state.members.length) {
         var owner = window.state.members.find(function(m){ return m.role==='Owner'||m.role==='admin'||m.role==='owner'; });
@@ -2112,14 +2112,37 @@ function renderListView() {
       if($el('ntmStartVal')) $el('ntmStartVal').textContent='Yet to set';
       if($el('ntmDueVal')) $el('ntmDueVal').textContent='Yet to set';
       var rl=$el('ntmReminderLabel'); if(rl) rl.textContent='Set reminder';
-      var gl=$el('ntmGroupLabel');    if(gl) gl.textContent='Personal tasks';
+      // Apply group from opts if provided
+      var targetGroupId = (opts && opts.groupId != null) ? opts.groupId : '';
+      selGroupId = targetGroupId;
+      var gl=$el('ntmGroupLabel');
       var hg=$el('modalGroup');
       if(hg && window.state) {
         hg.innerHTML='<option value="">Personal tasks</option>'
           +(window.state.groups||[]).map(function(g){ return '<option value="'+g.id+'">'+g.name+'</option>'; }).join('');
-        hg.value='';
+        hg.value = targetGroupId;
       }
-      loadCategoriesForGroup(''); loadStatusesForGroup('');
+      if (gl) {
+        if (!targetGroupId) {
+          gl.textContent = 'Personal tasks';
+        } else {
+          var grps = (window.state && window.state.groups) || [];
+          var grp = grps.find(function(g){ return g.id===targetGroupId; });
+          gl.textContent = grp ? grp.name : 'Personal tasks';
+        }
+      }
+      loadCategoriesForGroup(targetGroupId);
+      loadStatusesForGroup(targetGroupId);
+      // Apply category from opts if provided (after loadCategoriesForGroup)
+      if (opts && opts.category) {
+        var lbl = $el('ntmCatLabel'); if (lbl) lbl.textContent = opts.category;
+        var hc = $el('modalCategory'); if (hc) hc.value = opts.category;
+      }
+      // Apply status from opts if provided
+      if (opts && opts.status) {
+        selStatus = opts.status;
+        updateStatusBtn();
+      }
       updateAssigneeChip(); updatePriorityBtn(); renderSubtasksList(); renderTagsBar();
       var m=$el('taskModal'); if(m) m.style.display='flex';
       if($el('modalTaskTitle')) $el('modalTaskTitle').focus();
@@ -2134,6 +2157,7 @@ function renderListView() {
     }
 
     window.ntmResetAndOpen = resetAndOpen;
+    window.ntmResetAndOpenWith = function(opts) { resetAndOpen(opts); };
 
     // Init
     updateStatusBtn(); updatePriorityBtn(); loadCategoriesForGroup('');
@@ -2367,7 +2391,7 @@ function renderListView() {
     state.members  = (typeof ShadowAuth !== 'undefined' && ShadowAuth.getOrgMembers) ? ShadowAuth.getOrgMembers() : [];
     state.categories = await ShadowDB.Categories.getAll();
 
-    // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Auto-dedup: remove duplicate tasks (same title + group name + dueDate) ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
+    // ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Auto-dedup: remove duplicate tasks (same title + group name + dueDate) ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ
     const seenTaskKeys = new Set();
     for (const t of state.tasks.slice()) {
       const g = state.groups.find(function(gr){return gr.id===(t.group||t.groupId);});
@@ -2375,7 +2399,7 @@ function renderListView() {
       if (seenTaskKeys.has(key)) { await ShadowDB.Tasks.delete(t.id); }
       else seenTaskKeys.add(key);
     }
-    // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Auto-dedup: remove duplicate groups, tags, members by name ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
+    // ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Auto-dedup: remove duplicate groups, tags, members by name ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ
     const seenGroupNames = new Set();
     for (const g of state.groups.slice()) {
       if (seenGroupNames.has(g.name)) { await ShadowDB.Groups.delete(g.id); }
@@ -2587,14 +2611,14 @@ function renderListView() {
 
 
 /* =========================================================================
- * feature/shared-with-me  ÃÂ¢ÃÂÃÂ  Invitee module
+ * feature/shared-with-me  ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ  Invitee module
  *   - Invite User modal (search + select mock users)
  *   - "Enable invitee access" toggle is a setting only (does NOT touch sharedWith)
  *   - Emits per-invitee notifications + task timeline entries
  * ========================================================================= */
 (function InviteeModule() {
 
-  // MOCK directory ÃÂ¢ÃÂÃÂ swap for ShadowDB.Members.list() when available.
+  // MOCK directory ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ swap for ShadowDB.Members.list() when available.
   var MOCK_USERS = [
     { id: 'u1', name: 'Raghavan P',         email: 'raghavan.pk@zohocorp.com' },
     { id: 'u2', name: 'Raghavan Anandan',   email: 'raghavan.av@zohocorp.com' },
@@ -2757,7 +2781,7 @@ function renderListView() {
 
 
 /* =========================================================================
- * feature/shared-with-me  ÃÂ¢ÃÂÃÂ  Notifications dropdown module
+ * feature/shared-with-me  ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ  Notifications dropdown module
  *   Header bell bound to state.notifications; listens for
  *   'notifications:updated' events from invitee flow (and future emitters).
  * ========================================================================= */
