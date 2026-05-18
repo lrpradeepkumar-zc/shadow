@@ -10,7 +10,7 @@
 window.SVK = window.SVK || {};
 var SVK = window.SVK;
 
-// ── Escape helper ────────────────────────────────────────────
+// ââ Escape helper ââââââââââââââââââââââââââââââââââââââââââââ
 SVK.esc = function (s) {
   if (s == null) return '';
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
@@ -37,7 +37,7 @@ SVK.isDone = function (t) {
   return s === 'completed' || s === 'done' || s === 'closed' || s === 'fixed';
 };
 
-// ── State persistence (per userId) ───────────────────────────
+// ââ State persistence (per userId) âââââââââââââââââââââââââââ
 SVK.STATE_KEY_PREFIX = 'svk_state_';
 SVK._collapsedGroups = {};
 SVK.getPersistedState = function (userId) {
@@ -76,7 +76,7 @@ SVK.initFromPersistedState = function (userId) {
   if (ps.collapsedGroups) Object.assign(SVK._collapsedGroups, ps.collapsedGroups);
 };
 
-// ── Colors & Grouping Helpers ────────────────────────────────
+// ââ Colors & Grouping Helpers ââââââââââââââââââââââââââââââââ
 SVK.DEFAULT_STATUSES = [
   {name:'Open',color:'#e53e3e'},{name:'In Progress',color:'#d69e2e'},
   {name:'Fixed',color:'#3182ce'},{name:'Completed',color:'#38a169'},
@@ -141,7 +141,7 @@ SVK.getGroupColorByKey = function (key, gb) {
   return '#4285f4';
 };
 
-// ── Manage Fields ─────────────────────────────────────────────
+// ââ Manage Fields âââââââââââââââââââââââââââââââââââââââââââââ
 SVK.FIELD_DEFS_BOARD = [
   {key:'assignee',label:'Assignee',icon:'fa-user'},{key:'status',label:'Status',icon:'fa-circle-half-stroke'},
   {key:'dueDate',label:'Due Date',icon:'fa-calendar'},{key:'priority',label:'Priority',icon:'fa-circle-exclamation'},
@@ -183,7 +183,7 @@ SVK.saveFields = function (viewType, fields) {
   }
 };
 
-// ── CSS Injection ─────────────────────────────────────────────
+// ââ CSS Injection âââââââââââââââââââââââââââââââââââââââââââââ
 if (!document.getElementById('svk-styles')) {
   var svkStyle = document.createElement('style');
   svkStyle.id = 'svk-styles';
@@ -193,6 +193,10 @@ if (!document.getElementById('svk-styles')) {
     +'.svk-col__header-top{display:flex;align-items:center;justify-content:space-between}'
     +'.svk-col__title{font-size:13px;font-weight:600;color:var(--text-primary,#e0e0e0)}'
     +'.svk-col__count{font-size:12px;color:var(--text-muted,#6c6c7c);background:var(--bg-tertiary,#0f3460);padding:2px 7px;border-radius:10px}'
+    +'.svk-add-task-btn{background:none;border:none;cursor:pointer;color:var(--text-muted,#6c6c7c);padding:2px 5px;border-radius:4px;font-size:13px;display:inline-flex;align-items:center;justify-content:center;line-height:1;transition:color .15s,background .15s}'
+    +'.svk-add-task-btn:hover{color:var(--accent-blue,#1a73e8);background:rgba(26,115,232,.12)}'
+    +'.svk-list-add-task-btn{background:none;border:none;cursor:pointer;color:var(--text-muted,#6c6c7c);padding:2px 8px;border-radius:4px;font-size:12px;display:inline-flex;align-items:center;gap:4px;line-height:1;transition:color .15s,background .15s;margin-left:4px}'
+    +'.svk-list-add-task-btn:hover{color:var(--accent-blue,#1a73e8);background:rgba(26,115,232,.12)}'
     +'.svk-col__body{padding:10px;display:flex;flex-direction:column;gap:8px;min-height:60px;flex:1}'
     +'.svk-col__empty{text-align:center;padding:20px 10px;color:var(--text-muted,#6c6c7c);font-size:13px;font-style:italic}'
     +'.svk-card{background:var(--bg-primary,#1a1a2e);border:1px solid var(--border-color,#2d3748);border-radius:8px;padding:12px;cursor:pointer;transition:box-shadow .15s,border-color .15s;position:relative}'
@@ -254,7 +258,7 @@ if (!document.getElementById('svk-styles')) {
   document.head.appendChild(svkStyle);
 }
 
-// ── TaskCard (Board) Renderer ─────────────────────────────────
+// ââ TaskCard (Board) Renderer âââââââââââââââââââââââââââââââââ
 SVK.renderTaskCard = function (task, ctx) {
   var fields = SVK.getFields('board');
   var s = window.state;
@@ -325,7 +329,7 @@ SVK.renderTaskCard = function (task, ctx) {
   +'</div>';
 };
 
-// ── TaskRow (List) Renderer ───────────────────────────────────
+// ââ TaskRow (List) Renderer âââââââââââââââââââââââââââââââââââ
 SVK.renderTaskRow = function (task, ctx, totalCols) {
   var fields = SVK.getFields('list');
   var s = window.state;
@@ -373,7 +377,7 @@ SVK.renderTaskRow = function (task, ctx, totalCols) {
   return '<tr class="svk-list-row'+(isSelected?' active-row':'')+'" data-taskid="'+esc(task.id)+'" data-group="'+esc(gid)+'" draggable="true">'+cells+'</tr>';
 };
 
-// ── Board View Renderer ───────────────────────────────────────
+// ââ Board View Renderer âââââââââââââââââââââââââââââââââââââââ
 SVK.renderBoard = function (container, tasks, ctx) {
   if (!container) return;
   var s = window.state;
@@ -411,7 +415,12 @@ SVK.renderBoard = function (container, tasks, ctx) {
       +'<div class="svk-col__header" style="border-top:4px solid '+color+'">'
         +'<div class="svk-col__header-top">'
           +'<span class="svk-col__title">'+SVK.esc(key)+'</span>'
-          +'<span class="svk-col__count">'+colTasks.length+'</span>'
+          +'<span style="display:flex;align-items:center;gap:6px">'
+            +'<span class="svk-col__count">'+colTasks.length+'</span>'
+            +'<button class="svk-add-task-btn" title="Add task" data-group-key="'+SVK.esc(key)+'">'
+              +'<i class="fa-solid fa-plus"></i>'
+            +'</button>'
+          +'</span>'
         +'</div>'
       +'</div>'
       +'<div class="svk-col__body" data-group-key="'+SVK.esc(key)+'">'+cards
@@ -425,7 +434,7 @@ SVK.renderBoard = function (container, tasks, ctx) {
   SVK.bindBoardDragDrop(container, ctx);
 };
 
-// ── List View Renderer ────────────────────────────────────────
+// ââ List View Renderer ââââââââââââââââââââââââââââââââââââââââ
 SVK.renderList = function (container, tasks, ctx) {
   if (!container) return;
   var s = window.state;
@@ -479,6 +488,9 @@ SVK.renderList = function (container, tasks, ctx) {
           +'<span class="svk-group-color-dot" style="background:'+color+'"></span>'
           +'<span>'+SVK.esc(key)+'</span>'
           +'<span class="svk-group-count">'+grpTasks.length+'</span>'
+          +'<button class="svk-list-add-task-btn" title="Add task" data-group-key="'+SVK.esc(key)+'">'
+            +'<i class="fa-solid fa-plus"></i> New task'
+          +'</button>'
         +'</div>'
       +'</td>'
     +'</tr>';
@@ -494,9 +506,16 @@ SVK.renderList = function (container, tasks, ctx) {
   SVK.bindListDragDrop(container, ctx);
 };
 
-// ── Board Interactions & Drag-Drop ────────────────────────────
+// ââ Board Interactions & Drag-Drop ââââââââââââââââââââââââââââ
 SVK.bindBoardInteractions = function (container, ctx) {
   var s = window.state;
+  container.querySelectorAll('.svk-add-task-btn').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (typeof window.ntmResetAndOpen === 'function') window.ntmResetAndOpen();
+      else if (document.getElementById('newTaskBtn')) document.getElementById('newTaskBtn').click();
+    });
+  });
   container.querySelectorAll('.svk-card').forEach(function(card) {
     card.addEventListener('click', function(e) {
       if (e.target.closest('.svk-check') || e.target.closest('.svk-drag-handle')) return;
@@ -566,7 +585,7 @@ SVK.bindBoardDragDrop = function (container, ctx) {
   });
 };
 
-// ── List Interactions & Drag-Drop ─────────────────────────────
+// ââ List Interactions & Drag-Drop âââââââââââââââââââââââââââââ
 SVK.bindListInteractions = function (container, ctx) {
   var s = window.state;
   var userId = s ? s.currentUserId : null;
@@ -589,6 +608,13 @@ SVK.bindListInteractions = function (container, ctx) {
       await window.ShadowDB.Tasks.update(task);
       var activeTab = document.querySelector('.view-tab.active');
       if (activeTab) activeTab.click();
+    });
+  });
+  container.querySelectorAll('.svk-list-add-task-btn').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (typeof window.ntmResetAndOpen === 'function') window.ntmResetAndOpen();
+      else if (document.getElementById('newTaskBtn')) document.getElementById('newTaskBtn').click();
     });
   });
   container.querySelectorAll('.svk-group-toggle-btn').forEach(function(btn) {
@@ -671,7 +697,7 @@ SVK._applyGroupChange = async function (task, targetGroupKey, gb) {
   }
 };
 
-// ── Enhanced Manage Fields Dropdown ──────────────────────────
+// ââ Enhanced Manage Fields Dropdown ââââââââââââââââââââââââââ
 window.showManageFieldsDropdown = function () {
   document.querySelectorAll('.dropdown-menu').forEach(function(m){m.remove();});
   var btn = document.getElementById('manageFieldsBtn');
@@ -735,7 +761,7 @@ window.showManageFieldsDropdown = function () {
   }, 10);
 };
 
-// ── Wire into existing app ────────────────────────────────────
+// ââ Wire into existing app ââââââââââââââââââââââââââââââââââââ
 // Patch ShadowAgenda to delegate group/unified/personal views to SVK
 var SVK_VIEWS = ['group','unified','createdbyme','assignedtome','sharedwithme','personal','agenda'];
 
@@ -793,7 +819,7 @@ window.ShadowViewKit = {
   renderList: function(c,t,x){ SVK.renderList(c,t,x); }
 };
 
-// ── Settings Merge: Group Settings → Master Settings ─────────
+// ââ Settings Merge: Group Settings â Master Settings âââââââââ
 // Merges the small group settings modal into the master settings page.
 // Clicking the gear icon on a group now opens master settings,
 // navigates to the group, and lands on Task Settings.
