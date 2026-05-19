@@ -204,7 +204,7 @@
       STORES, _sb: sb, on, emit,
       init: async () => {
         const { data: { session } } = await sb.auth.getSession();
-        if (!session) { try { await sb.auth.signInAnonymously(); } catch (e) { console.warn('Anon sign-in failed:', e); } }
+        // auth.js handles authentication
         return true;
       },
       openDB: async () => true,
@@ -236,9 +236,7 @@
 
     // Make sure a session always exists so RLS works
     if (typeof window.__shadowdbFlush === 'function') window.__shadowdbFlush();
-    sb.auth.getSession().then(({ data }) => {
-      if (!data.session) sb.auth.signInAnonymously().catch(err => console.warn('Anon sign-in error:', err));
-    });
+    // session managed by auth.js
 
     document.dispatchEvent(new CustomEvent('shadowdb:ready'));
   }
