@@ -216,12 +216,41 @@ var STORE_KEY_LOCAL = 'shadow_templates';
 window.TM = {
   templates: [], searchQuery: '', activeFilter: 'all', activeSort: 'recent', previewId: null,
   MAX_SUB: MAX_SUB, MAX_SHARE: MAX_SHARE, MAX_NAME: MAX_NAME,
-  load: function() { try { this.templates = JSON.parse(localStorage.getItem(STORE_KEY_LOCAL) || '[]'); } catch(e) { this.templates = []; } },
-  save: function() { localStorage.setItem(STORE_KEY_LOCAL, JSON.stringify(this.templates)); tmUpdateSidebarCount(); },
+  load: function() {
+    var self = this;
+    if (window.ShadowDB && ShadowDB._sb) {
+      ShadowDB._sb.from('templates').select('*').then(function(res) {
+        if (res.data) {
+          self.templates = res.data.map(function(t) {
+            return { id: t.id, name: t.name, emoji: t.emoji || '', description: t.description || '', priority: t.priority || 'medium', tags: t.tags || [], subtasks: t.subtasks || [], isFavourite: t.is_favourite || false, source: t.source || 'custom', ownerId: t.owner_id, createdBy: t.created_by, createdByName: t.created_by_name || '' };
+          });
+        } else {
+          self.templates = JSON.parse(localStorage.getItem(STORE_KEY_LOCAL) || '[]');
+        }
+        if (typeof tmRender === 'function') tmRender();
+        tmUpdateSidebarCount();
+      });
+    } else {
+      self.templates = JSON.parse(localStorage.getItem(STORE_KEY_LOCAL) || '[]');
+      tmUpdateSidebarCount();
+    }
+  },
+  save: function() {
+    var self = this;
+    localStorage.setItem(STORE_KEY_LOCAL, JSON.stringify(this.templates));
+    tmUpdateSidebarCount();
+    if (window.ShadowDB && ShadowDB._sb) {
+      var userId = (window.__shadowSession && __shadowSession.uid) || null;
+      var upsertData = this.templates.map(function(t) {
+        return { id: t.id, owner_id: t.ownerId || userId, name: t.name, emoji: t.emoji || '', description: t.description || '', priority: t.priority || 'medium', tags: t.tags || [], subtasks: t.subtasks || [], is_favourite: t.isFavourite || false, source: t.source || 'custom', created_by: t.createdBy || userId, created_by_name: t.createdByName || '' };
+      });
+      ShadowDB._sb.from('templates').upsert(upsertData, { onConflict: 'id' }).then(function(res) { if (res.error) console.warn('[TM] save error:', res.error.message); });
+    }
+  },
   find: function(id) { return this.templates.find(function(t) { return t.id === id; }); },
   create: function(data) {
     var subs = (data.subtasks || []).filter(function(s) { return s.title && s.title.trim(); }).slice(0, MAX_SUB);
-    var tpl = { id: tmUid(), name: data.name, emoji: data.emoji || '📋', description: data.description || '',
+    var tpl = { id: tmUid(), name: data.name, emoji: data.emoji || 'ð', description: data.description || '',
       priority: data.priority || 'none', tags: data.tags || [], subtasks: subs,
       createdBy: tmGetUserId(), createdByName: tmGetUserName(),
       createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
@@ -258,25 +287,25 @@ window.TM = {
 
 /* ---------- PRESET TEMPLATES ---------- */
 window.PRESET_TEMPLATES = [
-  {id:'pre_weekly',name:'Weekly Review',emoji:'🗓️',description:'A GTD-friendly checklist to review your week.',priority:'medium',tags:['Review','Weekly'],createdByName:'Built-in',createdBy:'__preset',subtasks:[{id:'pw1',order:0,title:'Review completed tasks from last week',priority:'medium',tags:[],description:''},{id:'pw2',order:1,title:'Clear and process inbox',priority:'medium',tags:[],description:''},{id:'pw3',order:2,title:'Update project statuses',priority:'high',tags:[],description:''},{id:'pw4',order:3,title:'Set top 3 priorities for next week',priority:'high',tags:[],description:''},{id:'pw5',order:4,title:'Schedule key meetings and deadlines',priority:'medium',tags:[],description:''}]},
-  {id:'pre_launch',name:'Product Launch',emoji:'🚀',description:'Everything to ship a feature successfully.',priority:'high',tags:['Product','Launch'],createdByName:'Built-in',createdBy:'__preset',subtasks:[{id:'pl1',order:0,title:'Define launch goals and metrics',priority:'high',tags:[],description:''},{id:'pl2',order:1,title:'Finalize scope and release notes',priority:'high',tags:[],description:''},{id:'pl3',order:2,title:'QA testing and sign-off',priority:'high',tags:[],description:''},{id:'pl4',order:3,title:'Prepare marketing assets',priority:'medium',tags:[],description:''},{id:'pl5',order:4,title:'Deploy to production',priority:'high',tags:[],description:''},{id:'pl6',order:5,title:'Monitor post-launch metrics',priority:'medium',tags:[],description:''}]},
-  {id:'pre_sprint',name:'Sprint Planning',emoji:'⚡',description:'Plan and kick off a productive sprint.',priority:'high',tags:['Sprint','Agile'],createdByName:'Built-in',createdBy:'__preset',subtasks:[{id:'sp1',order:0,title:'Review and prioritize backlog',priority:'high',tags:[],description:''},{id:'sp2',order:1,title:'Define sprint goal',priority:'high',tags:[],description:''},{id:'sp3',order:2,title:'Assign tasks to team members',priority:'medium',tags:[],description:''},{id:'sp4',order:3,title:'Estimate story points',priority:'medium',tags:[],description:''},{id:'sp5',order:4,title:'Set up sprint board',priority:'low',tags:[],description:''}]},
-  {id:'pre_meeting',name:'Meeting Prep',emoji:'💬',description:'Prepare for any important meeting.',priority:'medium',tags:['Meeting'],createdByName:'Built-in',createdBy:'__preset',subtasks:[{id:'mp1',order:0,title:'Define meeting agenda and goals',priority:'high',tags:[],description:''},{id:'mp2',order:1,title:'Send calendar invites to attendees',priority:'medium',tags:[],description:''},{id:'mp3',order:2,title:'Prepare materials and slides',priority:'medium',tags:[],description:''},{id:'mp4',order:3,title:'Review action items from previous meeting',priority:'low',tags:[],description:''}]},
-  {id:'pre_onboard',name:'Employee Onboarding',emoji:'🧑‍💼',description:'Onboard a new team member efficiently.',priority:'high',tags:['HR','Onboarding'],createdByName:'Built-in',createdBy:'__preset',subtasks:[{id:'ob1',order:0,title:'Set up accounts and credentials',priority:'high',tags:[],description:''},{id:'ob2',order:1,title:'Workspace setup',priority:'high',tags:[],description:''},{id:'ob3',order:2,title:'Intro meetings with team',priority:'medium',tags:[],description:''},{id:'ob4',order:3,title:'Share documentation and processes',priority:'medium',tags:[],description:''},{id:'ob5',order:4,title:'30-day check-in scheduled',priority:'low',tags:[],description:''}]},
-  {id:'pre_bugfix',name:'Bug Fix Workflow',emoji:'🐛',description:'Structured workflow for fixing bugs.',priority:'high',tags:['Bug','Dev'],createdByName:'Built-in',createdBy:'__preset',subtasks:[{id:'bf1',order:0,title:'Reproduce the bug consistently',priority:'high',tags:[],description:''},{id:'bf2',order:1,title:'Identify root cause',priority:'high',tags:[],description:''},{id:'bf3',order:2,title:'Write failing test case',priority:'medium',tags:[],description:''},{id:'bf4',order:3,title:'Implement fix',priority:'high',tags:[],description:''},{id:'bf5',order:4,title:'Verify and run test suite',priority:'high',tags:[],description:''}]},
-  {id:'pre_design',name:'Design Sprint',emoji:'✏️',description:'5-day design sprint process.',priority:'high',tags:['Design','Sprint'],createdByName:'Built-in',createdBy:'__preset',subtasks:[{id:'ds1',order:0,title:'Map problem and user journey',priority:'high',tags:[],description:''},{id:'ds2',order:1,title:'Sketch competing solutions',priority:'medium',tags:[],description:''},{id:'ds3',order:2,title:'Choose best solution',priority:'high',tags:[],description:''},{id:'ds4',order:3,title:'Build realistic prototype',priority:'high',tags:[],description:''},{id:'ds5',order:4,title:'Test with real users',priority:'high',tags:[],description:''}]},
-  {id:'pre_qr',name:'Quarterly Review',emoji:'📊',description:'Thorough quarterly business review.',priority:'medium',tags:['Review','Management'],createdByName:'Built-in',createdBy:'__preset',subtasks:[{id:'qr1',order:0,title:'Gather team feedback and metrics',priority:'medium',tags:[],description:''},{id:'qr2',order:1,title:'Identify improvements and opportunities',priority:'high',tags:[],description:''},{id:'qr3',order:2,title:'Create action items for next quarter',priority:'high',tags:[],description:''},{id:'qr4',order:3,title:'Update goals and OKRs',priority:'medium',tags:[],description:''}]}
+  {id:'pre_weekly',name:'Weekly Review',emoji:'ðï¸',description:'A GTD-friendly checklist to review your week.',priority:'medium',tags:['Review','Weekly'],createdByName:'Built-in',createdBy:'__preset',subtasks:[{id:'pw1',order:0,title:'Review completed tasks from last week',priority:'medium',tags:[],description:''},{id:'pw2',order:1,title:'Clear and process inbox',priority:'medium',tags:[],description:''},{id:'pw3',order:2,title:'Update project statuses',priority:'high',tags:[],description:''},{id:'pw4',order:3,title:'Set top 3 priorities for next week',priority:'high',tags:[],description:''},{id:'pw5',order:4,title:'Schedule key meetings and deadlines',priority:'medium',tags:[],description:''}]},
+  {id:'pre_launch',name:'Product Launch',emoji:'ð',description:'Everything to ship a feature successfully.',priority:'high',tags:['Product','Launch'],createdByName:'Built-in',createdBy:'__preset',subtasks:[{id:'pl1',order:0,title:'Define launch goals and metrics',priority:'high',tags:[],description:''},{id:'pl2',order:1,title:'Finalize scope and release notes',priority:'high',tags:[],description:''},{id:'pl3',order:2,title:'QA testing and sign-off',priority:'high',tags:[],description:''},{id:'pl4',order:3,title:'Prepare marketing assets',priority:'medium',tags:[],description:''},{id:'pl5',order:4,title:'Deploy to production',priority:'high',tags:[],description:''},{id:'pl6',order:5,title:'Monitor post-launch metrics',priority:'medium',tags:[],description:''}]},
+  {id:'pre_sprint',name:'Sprint Planning',emoji:'â¡',description:'Plan and kick off a productive sprint.',priority:'high',tags:['Sprint','Agile'],createdByName:'Built-in',createdBy:'__preset',subtasks:[{id:'sp1',order:0,title:'Review and prioritize backlog',priority:'high',tags:[],description:''},{id:'sp2',order:1,title:'Define sprint goal',priority:'high',tags:[],description:''},{id:'sp3',order:2,title:'Assign tasks to team members',priority:'medium',tags:[],description:''},{id:'sp4',order:3,title:'Estimate story points',priority:'medium',tags:[],description:''},{id:'sp5',order:4,title:'Set up sprint board',priority:'low',tags:[],description:''}]},
+  {id:'pre_meeting',name:'Meeting Prep',emoji:'ð¬',description:'Prepare for any important meeting.',priority:'medium',tags:['Meeting'],createdByName:'Built-in',createdBy:'__preset',subtasks:[{id:'mp1',order:0,title:'Define meeting agenda and goals',priority:'high',tags:[],description:''},{id:'mp2',order:1,title:'Send calendar invites to attendees',priority:'medium',tags:[],description:''},{id:'mp3',order:2,title:'Prepare materials and slides',priority:'medium',tags:[],description:''},{id:'mp4',order:3,title:'Review action items from previous meeting',priority:'low',tags:[],description:''}]},
+  {id:'pre_onboard',name:'Employee Onboarding',emoji:'ð§âð¼',description:'Onboard a new team member efficiently.',priority:'high',tags:['HR','Onboarding'],createdByName:'Built-in',createdBy:'__preset',subtasks:[{id:'ob1',order:0,title:'Set up accounts and credentials',priority:'high',tags:[],description:''},{id:'ob2',order:1,title:'Workspace setup',priority:'high',tags:[],description:''},{id:'ob3',order:2,title:'Intro meetings with team',priority:'medium',tags:[],description:''},{id:'ob4',order:3,title:'Share documentation and processes',priority:'medium',tags:[],description:''},{id:'ob5',order:4,title:'30-day check-in scheduled',priority:'low',tags:[],description:''}]},
+  {id:'pre_bugfix',name:'Bug Fix Workflow',emoji:'ð',description:'Structured workflow for fixing bugs.',priority:'high',tags:['Bug','Dev'],createdByName:'Built-in',createdBy:'__preset',subtasks:[{id:'bf1',order:0,title:'Reproduce the bug consistently',priority:'high',tags:[],description:''},{id:'bf2',order:1,title:'Identify root cause',priority:'high',tags:[],description:''},{id:'bf3',order:2,title:'Write failing test case',priority:'medium',tags:[],description:''},{id:'bf4',order:3,title:'Implement fix',priority:'high',tags:[],description:''},{id:'bf5',order:4,title:'Verify and run test suite',priority:'high',tags:[],description:''}]},
+  {id:'pre_design',name:'Design Sprint',emoji:'âï¸',description:'5-day design sprint process.',priority:'high',tags:['Design','Sprint'],createdByName:'Built-in',createdBy:'__preset',subtasks:[{id:'ds1',order:0,title:'Map problem and user journey',priority:'high',tags:[],description:''},{id:'ds2',order:1,title:'Sketch competing solutions',priority:'medium',tags:[],description:''},{id:'ds3',order:2,title:'Choose best solution',priority:'high',tags:[],description:''},{id:'ds4',order:3,title:'Build realistic prototype',priority:'high',tags:[],description:''},{id:'ds5',order:4,title:'Test with real users',priority:'high',tags:[],description:''}]},
+  {id:'pre_qr',name:'Quarterly Review',emoji:'ð',description:'Thorough quarterly business review.',priority:'medium',tags:['Review','Management'],createdByName:'Built-in',createdBy:'__preset',subtasks:[{id:'qr1',order:0,title:'Gather team feedback and metrics',priority:'medium',tags:[],description:''},{id:'qr2',order:1,title:'Identify improvements and opportunities',priority:'high',tags:[],description:''},{id:'qr3',order:2,title:'Create action items for next quarter',priority:'high',tags:[],description:''},{id:'qr4',order:3,title:'Update goals and OKRs',priority:'medium',tags:[],description:''}]}
 ];
 
 /* ---------- AI PROMPTS ---------- */
 var AI_PROMPTS = {
-  'product launch': {name:'Product Launch Plan',emoji:'🚀',priority:'high',tags:['Product','Launch'],description:'A comprehensive plan for launching a product.',subtasks:[{title:'Define launch goals',priority:'high'},{title:'Finalize scope and changelog',priority:'high'},{title:'QA testing and sign-off',priority:'high'},{title:'Prepare marketing assets',priority:'medium'},{title:'Brief sales and support teams',priority:'medium'},{title:'Deploy to production',priority:'high'},{title:'Send launch announcement',priority:'medium'},{title:'Monitor post-launch metrics',priority:'medium'}]},
-  'sprint': {name:'Sprint Planning',emoji:'⚡',priority:'high',tags:['Sprint','Agile'],description:'Plan and kick off a productive sprint.',subtasks:[{title:'Review and prioritize backlog',priority:'high'},{title:'Define sprint goal',priority:'high'},{title:'Assign tasks to team',priority:'medium'},{title:'Estimate story points',priority:'medium'},{title:'Set up sprint board',priority:'low'}]},
-  'marketing': {name:'Marketing Campaign',emoji:'📢',priority:'high',tags:['Marketing'],description:'End-to-end campaign planning.',subtasks:[{title:'Define campaign KPIs',priority:'high'},{title:'Research target audience',priority:'high'},{title:'Create content calendar',priority:'medium'},{title:'Design creative assets',priority:'medium'},{title:'Launch campaign',priority:'high'},{title:'Monitor and optimize',priority:'medium'}]},
-  'onboard': {name:'Employee Onboarding',emoji:'🧑‍💼',priority:'high',tags:['HR'],description:'Onboard new team member efficiently.',subtasks:[{title:'Set up accounts and credentials',priority:'high'},{title:'Workspace setup',priority:'high'},{title:'Intro meetings with team',priority:'medium'},{title:'Share processes and documentation',priority:'medium'},{title:'Assign first tasks',priority:'medium'}]},
-  'review': {name:'Quarterly Review',emoji:'📊',priority:'medium',tags:['Review'],description:'Thorough quarterly review.',subtasks:[{title:'Gather metrics and feedback',priority:'medium'},{title:'Identify improvements',priority:'high'},{title:'Create action items',priority:'high'},{title:'Update goals and OKRs',priority:'medium'}]},
-  'bug': {name:'Bug Fix Workflow',emoji:'🐛',priority:'high',tags:['Bug','Dev'],description:'Structured bug fix workflow.',subtasks:[{title:'Reproduce bug consistently',priority:'high'},{title:'Identify root cause',priority:'high'},{title:'Write failing test',priority:'medium'},{title:'Implement fix',priority:'high'},{title:'Verify and run test suite',priority:'high'}]},
-  'design': {name:'Design Sprint',emoji:'✏️',priority:'high',tags:['Design'],description:'5-day design sprint.',subtasks:[{title:'Map problem and user journey',priority:'high'},{title:'Sketch solutions',priority:'medium'},{title:'Choose best solution',priority:'high'},{title:'Build prototype',priority:'high'},{title:'Test with users',priority:'high'}]}
+  'product launch': {name:'Product Launch Plan',emoji:'ð',priority:'high',tags:['Product','Launch'],description:'A comprehensive plan for launching a product.',subtasks:[{title:'Define launch goals',priority:'high'},{title:'Finalize scope and changelog',priority:'high'},{title:'QA testing and sign-off',priority:'high'},{title:'Prepare marketing assets',priority:'medium'},{title:'Brief sales and support teams',priority:'medium'},{title:'Deploy to production',priority:'high'},{title:'Send launch announcement',priority:'medium'},{title:'Monitor post-launch metrics',priority:'medium'}]},
+  'sprint': {name:'Sprint Planning',emoji:'â¡',priority:'high',tags:['Sprint','Agile'],description:'Plan and kick off a productive sprint.',subtasks:[{title:'Review and prioritize backlog',priority:'high'},{title:'Define sprint goal',priority:'high'},{title:'Assign tasks to team',priority:'medium'},{title:'Estimate story points',priority:'medium'},{title:'Set up sprint board',priority:'low'}]},
+  'marketing': {name:'Marketing Campaign',emoji:'ð¢',priority:'high',tags:['Marketing'],description:'End-to-end campaign planning.',subtasks:[{title:'Define campaign KPIs',priority:'high'},{title:'Research target audience',priority:'high'},{title:'Create content calendar',priority:'medium'},{title:'Design creative assets',priority:'medium'},{title:'Launch campaign',priority:'high'},{title:'Monitor and optimize',priority:'medium'}]},
+  'onboard': {name:'Employee Onboarding',emoji:'ð§âð¼',priority:'high',tags:['HR'],description:'Onboard new team member efficiently.',subtasks:[{title:'Set up accounts and credentials',priority:'high'},{title:'Workspace setup',priority:'high'},{title:'Intro meetings with team',priority:'medium'},{title:'Share processes and documentation',priority:'medium'},{title:'Assign first tasks',priority:'medium'}]},
+  'review': {name:'Quarterly Review',emoji:'ð',priority:'medium',tags:['Review'],description:'Thorough quarterly review.',subtasks:[{title:'Gather metrics and feedback',priority:'medium'},{title:'Identify improvements',priority:'high'},{title:'Create action items',priority:'high'},{title:'Update goals and OKRs',priority:'medium'}]},
+  'bug': {name:'Bug Fix Workflow',emoji:'ð',priority:'high',tags:['Bug','Dev'],description:'Structured bug fix workflow.',subtasks:[{title:'Reproduce bug consistently',priority:'high'},{title:'Identify root cause',priority:'high'},{title:'Write failing test',priority:'medium'},{title:'Implement fix',priority:'high'},{title:'Verify and run test suite',priority:'high'}]},
+  'design': {name:'Design Sprint',emoji:'âï¸',priority:'high',tags:['Design'],description:'5-day design sprint.',subtasks:[{title:'Map problem and user journey',priority:'high'},{title:'Sketch solutions',priority:'medium'},{title:'Choose best solution',priority:'high'},{title:'Build prototype',priority:'high'},{title:'Test with users',priority:'high'}]}
 };
 
 function tmAiGenerate(prompt) {
@@ -285,7 +314,7 @@ function tmAiGenerate(prompt) {
   var words = prompt.replace(/[^a-z0-9\s]/gi, '').split(/\s+/).filter(function(w) { return w.length > 3; }).slice(0, 5);
   return {
     name: words.length > 0 ? words.map(function(w) { return w.charAt(0).toUpperCase() + w.slice(1); }).join(' ') + ' Workflow' : 'Custom Workflow',
-    emoji: '📋', priority: 'medium', tags: [], description: 'Auto-generated for: ' + prompt,
+    emoji: 'ð', priority: 'medium', tags: [], description: 'Auto-generated for: ' + prompt,
     subtasks: [{title:'Plan and define scope',priority:'high'},{title:'Identify stakeholders',priority:'medium'},{title:'Break down into tasks',priority:'high'},{title:'Assign responsibilities',priority:'medium'},{title:'Set milestones',priority:'medium'},{title:'Execute and track',priority:'high'},{title:'Review and adjust',priority:'medium'},{title:'Final sign-off',priority:'high'}]
   };
 }
@@ -300,7 +329,7 @@ function tmUpdateSidebarCount() {
 function tmRenderEmptyState() {
   var isEmpty = TM.templates.length === 0;
   return '<div class="tm-empty-state">' +
-    '<div class="tm-empty-icon">' + (isEmpty ? '📋' : '🔍') + '</div>' +
+    '<div class="tm-empty-icon">' + (isEmpty ? 'ð' : 'ð') + '</div>' +
     '<div class="tm-empty-title">' + (isEmpty ? 'No templates yet' : 'No matching templates') + '</div>' +
     '<div class="tm-empty-sub">' + (isEmpty ? 'Save a task as a template, or start from scratch.' : 'Try adjusting your search or filters.') + '</div>' +
     (isEmpty ? '<button class="tm-new-btn" id="tm-empty-create" style="margin-left:0;"><i class="fa-solid fa-plus"></i> Create Template</button>' : '') +
@@ -309,18 +338,18 @@ function tmRenderEmptyState() {
 
 function tmRenderCard(t) {
   var subCount = (t.subtasks || []).length;
-  var favIcon = t.isFavourite ? '⭐' : '☆';
+  var favIcon = t.isFavourite ? 'â­' : 'â';
   var tags = (t.tags || []).map(function(tag) { return '<span class="tm-tag">' + tmEsc(tag) + '</span>'; }).join('');
   var isOwner = t.createdBy === tmGetUserId();
   var sharedBadge = !isOwner ? '<span style="font-size:10px;background:rgba(26,115,232,0.1);color:var(--accent-blue,#1a73e8);padding:1px 6px;border-radius:8px;margin-left:4px;">Shared</span>' : '';
   return '<div class="tm-card' + (TM.previewId === t.id ? ' selected' : '') + '" data-tpl-id="' + t.id + '" data-action="preview">' +
     '<button class="tm-card-fav' + (t.isFavourite ? ' active' : '') + '" data-tpl-id="' + t.id + '" data-action="fav" title="Favourite">' + favIcon + '</button>' +
-    '<div class="tm-card-header"><div class="tm-card-emoji">' + (t.emoji || '📋') + '</div>' +
+    '<div class="tm-card-header"><div class="tm-card-emoji">' + (t.emoji || 'ð') + '</div>' +
     '<div class="tm-card-info"><div class="tm-card-name">' + tmEsc(t.name) + sharedBadge + '</div>' +
     '<div class="tm-card-desc">' + tmEsc(t.description || 'No description') + '</div></div></div>' +
     '<div class="tm-card-meta"><span><i class="fa-solid fa-list-check"></i> ' + subCount + ' task' + (subCount !== 1 ? 's' : '') + '</span>' +
-    '<span>•</span><span style="color:' + tmPriColor(t.priority) + ';font-weight:500;">' + tmPriLabel(t.priority) + '</span>' +
-    (t.sharedWith && t.sharedWith.length ? '<span>• <i class="fa-solid fa-share-nodes"></i> Shared</span>' : '') + '</div>' +
+    '<span>â¢</span><span style="color:' + tmPriColor(t.priority) + ';font-weight:500;">' + tmPriLabel(t.priority) + '</span>' +
+    (t.sharedWith && t.sharedWith.length ? '<span>â¢ <i class="fa-solid fa-share-nodes"></i> Shared</span>' : '') + '</div>' +
     (tags ? '<div class="tm-card-tags">' + tags + '</div>' : '') +
     '<div class="tm-card-actions">' +
     '<button class="tm-btn-secondary" data-tpl-id="' + t.id + '" data-action="preview">Preview</button>' +
@@ -339,10 +368,10 @@ function tmRenderPreviewContent(tpl, isPreset) {
       '<span>' + tmEsc(s.title) + '</span><span style="font-size:10px;color:var(--text-muted);margin-left:auto;">' + tmPriLabel(s.priority) + '</span></div>';
   }).join('');
   var ownerLine = isPreset ? '<span>Built-in</span>' : '<span>by ' + tmEsc(tpl.createdByName || 'You') + '</span>';
-  return '<div class="tm-preview-name">' + (tpl.emoji || '📋') + ' ' + tmEsc(tpl.name) + '</div>' +
+  return '<div class="tm-preview-name">' + (tpl.emoji || 'ð') + ' ' + tmEsc(tpl.name) + '</div>' +
     '<div class="tm-preview-meta">' + ownerLine +
-    '<span>•</span><span style="color:' + tmPriColor(tpl.priority) + ';font-weight:500;">' + tmPriLabel(tpl.priority) + '</span>' +
-    '<span>•</span><span>' + (tpl.subtasks || []).length + ' subtasks</span></div>' +
+    '<span>â¢</span><span style="color:' + tmPriColor(tpl.priority) + ';font-weight:500;">' + tmPriLabel(tpl.priority) + '</span>' +
+    '<span>â¢</span><span>' + (tpl.subtasks || []).length + ' subtasks</span></div>' +
     (tpl.description ? '<div class="tm-preview-desc">' + tmEsc(tpl.description) + '</div>' : '') +
     ((tpl.tags || []).length ? '<div class="tm-card-tags" style="margin-bottom:12px;">' + (tpl.tags || []).map(function(t) { return '<span class="tm-tag">' + tmEsc(t) + '</span>'; }).join('') + '</div>' : '') +
     '<div class="tm-preview-tasks-label"><i class="fa-solid fa-list-check"></i> TASK STRUCTURE</div>' +
@@ -351,7 +380,7 @@ function tmRenderPreviewContent(tpl, isPreset) {
     '<span>' + tmEsc(tpl.name) + '</span>' +
     '<span style="margin-left:auto;width:8px;height:8px;border-radius:50%;background:' + tmPriColor(tpl.priority) + ';display:inline-block;"></span></div>' +
     subRows + '</div>' +
-    (!isPreset && !tmCanEdit(tpl) ? '<div style="margin-top:12px;padding:10px;background:rgba(245,158,11,0.08);border-radius:6px;font-size:12px;color:#92400e;display:flex;align-items:center;gap:6px;"><i class="fa-solid fa-lock"></i> Read-only — apply only</div>' : '') +
+    (!isPreset && !tmCanEdit(tpl) ? '<div style="margin-top:12px;padding:10px;background:rgba(245,158,11,0.08);border-radius:6px;font-size:12px;color:#92400e;display:flex;align-items:center;gap:6px;"><i class="fa-solid fa-lock"></i> Read-only â apply only</div>' : '') +
     '<div class="tm-alert-info" style="margin-top:12px;"><i class="fa-solid fa-circle-info"></i> Assignees and Due Dates are not saved.</div>';
 }
 
@@ -492,7 +521,7 @@ function tmBindGridEvents(lib) {
         case 'fav':
           TM.toggleFav(id);
           var fb = lib.querySelector('.tm-card-fav[data-tpl-id="' + id + '"]');
-          if (fb) { var t2 = TM.find(id); if (t2) { fb.textContent = t2.isFavourite ? '⭐' : '☆'; fb.classList.toggle('active', t2.isFavourite); } }
+          if (fb) { var t2 = TM.find(id); if (t2) { fb.textContent = t2.isFavourite ? 'â­' : 'â'; fb.classList.toggle('active', t2.isFavourite); } }
           break;
         case 'apply':
           var t3 = TM.find(id); if (t3) { tmCloseLibrary(); setTimeout(function() { tmOpenApplyModal(t3); }, 150); }
@@ -542,7 +571,7 @@ function tmBuildSubRow(s, i) {
 }
 
 function tmOpenCreateModal(prefill) {
-  var data = prefill ? Object.assign({}, prefill) : {name: '', priority: 'none', tags: [], description: '', subtasks: [], emoji: '📋'};
+  var data = prefill ? Object.assign({}, prefill) : {name: '', priority: 'none', tags: [], description: '', subtasks: [], emoji: 'ð'};
   var isFromTask = !!(prefill && !prefill._isBlank);
   var currentSubs = (data.subtasks || []).slice(0, MAX_SUB).map(function(s, i) { return Object.assign({}, s, {order: i, id: s.id || tmUid()}); });
   var activeTab = 'manual', dragSrcIdx = null;
@@ -558,7 +587,7 @@ function tmOpenCreateModal(prefill) {
       '<input class="tm-input" id="tm-create-name" type="text" placeholder="e.g. Bug Fix Workflow" maxlength="100" value="' + tmEsc(data.name || '') + '"></div>' +
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
       '<div class="tm-field-row"><label>Priority</label><select class="tm-select" id="tm-create-priority">' + priOpts + '</select></div>' +
-      '<div class="tm-field-row"><label>Emoji</label><input class="tm-input" id="tm-create-emoji" type="text" placeholder="📋" maxlength="4" value="' + tmEsc(data.emoji || '📋') + '"></div></div>' +
+      '<div class="tm-field-row"><label>Emoji</label><input class="tm-input" id="tm-create-emoji" type="text" placeholder="ð" maxlength="4" value="' + tmEsc(data.emoji || 'ð') + '"></div></div>' +
       '<div class="tm-field-row"><label>Tags <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--text-muted)">(comma-separated)</span></label>' +
       '<input class="tm-input" id="tm-create-tags" type="text" placeholder="Bug, Backend, Frontend" value="' + tmEsc((data.tags || []).join(', ')) + '"></div>' +
       '<div class="tm-field-row"><label>Description</label><textarea class="tm-textarea" id="tm-create-desc" rows="2" placeholder="Optional description...">' + tmEsc(data.description || '') + '</textarea></div>' +
@@ -626,22 +655,22 @@ function tmOpenCreateModal(prefill) {
         var ra = overlay.querySelector('#tm-ai-result-area');
         if (ra) {
           var sp = aiResult.subtasks.map(function(s) { return '<div class="tm-ai-result-sub"><i class="fa-solid fa-circle-dot" style="color:' + tmPriColor(s.priority) + ';font-size:8px;"></i> ' + tmEsc(s.title) + '</div>'; }).join('');
-          ra.innerHTML = '<div class="tm-ai-result"><div class="tm-ai-result-title">' + (aiResult.emoji || '📋') + ' ' + tmEsc(aiResult.name) + '</div>' +
+          ra.innerHTML = '<div class="tm-ai-result"><div class="tm-ai-result-title">' + (aiResult.emoji || 'ð') + ' ' + tmEsc(aiResult.name) + '</div>' +
             '<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">' + tmEsc(aiResult.description || '') + ' &bull; ' + aiResult.subtasks.length + ' subtasks &bull; ' + tmPriLabel(aiResult.priority) + '</div>' +
             '<div class="tm-ai-result-tasks"><div class="tm-ai-result-parent"><i class="fa-regular fa-square-check" style="font-size:11px;color:var(--accent-blue,#1a73e8);"></i> ' + tmEsc(aiResult.name) + '</div>' + sp + '</div>' +
             (aiResult.subtasks.length >= MAX_SUB ? '<div class="tm-alert-warn" style="margin-top:8px;"><i class="fa-solid fa-triangle-exclamation"></i> Capped at 20 subtasks (limit enforced)</div>' : '') +
             '<div style="margin-top:12px;display:flex;gap:8px;"><button class="tm-btn-secondary" style="flex:1;" id="tm-ai-edit">Edit in Manual Mode</button><button class="tm-btn-primary" style="flex:1;" id="tm-ai-save">Save to Library</button></div></div>';
           overlay.querySelector('#tm-ai-edit').addEventListener('click', function() {
             currentSubs = aiResult.subtasks.map(function(s, i) { return {id: tmUid(), title: s.title, priority: s.priority || 'none', tags: [], description: '', order: i}; });
-            data.name = aiResult.name; data.priority = aiResult.priority; data.tags = aiResult.tags || []; data.description = aiResult.description || ''; data.emoji = aiResult.emoji || '📋';
+            data.name = aiResult.name; data.priority = aiResult.priority; data.tags = aiResult.tags || []; data.description = aiResult.description || ''; data.emoji = aiResult.emoji || 'ð';
             activeTab = 'manual'; render();
             setTimeout(function() {
               var n = overlay.querySelector('#tm-create-name'), p = overlay.querySelector('#tm-create-priority'), t = overlay.querySelector('#tm-create-tags'), d = overlay.querySelector('#tm-create-desc'), em = overlay.querySelector('#tm-create-emoji');
-              if (n) n.value = aiResult.name || ''; if (p) p.value = aiResult.priority || 'none'; if (t) t.value = (aiResult.tags || []).join(', '); if (d) d.value = aiResult.description || ''; if (em) em.value = aiResult.emoji || '📋';
+              if (n) n.value = aiResult.name || ''; if (p) p.value = aiResult.priority || 'none'; if (t) t.value = (aiResult.tags || []).join(', '); if (d) d.value = aiResult.description || ''; if (em) em.value = aiResult.emoji || 'ð';
             }, 50);
           });
           overlay.querySelector('#tm-ai-save').addEventListener('click', function() {
-            var saved = TM.create({name: aiResult.name, emoji: aiResult.emoji || '📋', priority: aiResult.priority || 'none', tags: aiResult.tags || [], description: aiResult.description || '',
+            var saved = TM.create({name: aiResult.name, emoji: aiResult.emoji || 'ð', priority: aiResult.priority || 'none', tags: aiResult.tags || [], description: aiResult.description || '',
               subtasks: aiResult.subtasks.slice(0, MAX_SUB).map(function(s, i) { return {id: tmUid(), title: s.title, priority: s.priority || 'none', tags: [], description: '', order: i}; }), source: 'ai'});
             overlay.remove(); tmShowToast('\u2728 AI template "' + saved.name + '" saved!', 'success'); tmUpdateSidebarCount();
           });
@@ -658,7 +687,7 @@ function tmOpenCreateModal(prefill) {
       var priority = overlay.querySelector('#tm-create-priority') && overlay.querySelector('#tm-create-priority').value || 'none';
       var tags = (overlay.querySelector('#tm-create-tags') && overlay.querySelector('#tm-create-tags').value || '').split(',').map(function(t) { return t.trim(); }).filter(Boolean);
       var desc = overlay.querySelector('#tm-create-desc') && overlay.querySelector('#tm-create-desc').value || '';
-      var emoji = overlay.querySelector('#tm-create-emoji') && overlay.querySelector('#tm-create-emoji').value || '📋';
+      var emoji = overlay.querySelector('#tm-create-emoji') && overlay.querySelector('#tm-create-emoji').value || 'ð';
       if (prefill && prefill.id) {
         TM.update(prefill.id, {name: name, priority: priority, tags: tags, description: desc, emoji: emoji, subtasks: validSubs.map(function(s, i) { return Object.assign({}, s, {order: i}); })});
         tmShowToast('Template updated', 'success');
@@ -737,8 +766,8 @@ function tmOpenShareModal(tpl) {
   var members = tmGetMembers().filter(function(m) { return m.id !== tmGetUserId(); });
   var selectedRecipients = (tpl.sharedWith || []).slice();
   var overlay = document.createElement('div'); overlay.className = 'tm-overlay'; overlay.id = 'tm-share-overlay'; document.body.appendChild(overlay);
-  var groupOpts = groups.map(function(g) { return '<option value="g:' + g.id + ':' + g.name + '">' + tmEsc('🏢 Group: ' + g.name) + '</option>'; }).join('');
-  var memberOpts = members.map(function(m) { return '<option value="u:' + m.id + ':' + m.name + '">' + tmEsc('👤 ' + m.name) + '</option>'; }).join('');
+  var groupOpts = groups.map(function(g) { return '<option value="g:' + g.id + ':' + g.name + '">' + tmEsc('ð¢ Group: ' + g.name) + '</option>'; }).join('');
+  var memberOpts = members.map(function(m) { return '<option value="u:' + m.id + ':' + m.name + '">' + tmEsc('ð¤ ' + m.name) + '</option>'; }).join('');
   overlay.innerHTML = '<div class="tm-modal" style="width:520px;max-width:95vw;">' +
     '<div class="tm-modal-header"><i class="fa-solid fa-share-nodes" style="color:var(--accent-blue,#1a73e8);font-size:15px;"></i>' +
     '<span class="tm-modal-title">Share Template: ' + tmEsc(tpl.name) + '</span>' +
@@ -753,14 +782,14 @@ function tmOpenShareModal(tpl) {
     '<div class="tm-field-row"><label>Recipients <span id="tm-share-count" style="font-weight:400;text-transform:none;color:var(--text-muted);font-size:11px;"></span></label>' +
     '<div id="tm-share-chips" class="tm-share-recipient-list"></div></div>' +
     '<div class="tm-share-readonly-note"><i class="fa-solid fa-lock" style="color:#92400e;"></i>' +
-    '<div>Recipients will have <strong>read-only</strong> access — they can apply but not edit the template structure.</div></div>' +
+    '<div>Recipients will have <strong>read-only</strong> access â they can apply but not edit the template structure.</div></div>' +
     '</div><div class="tm-modal-footer"><button class="tm-btn-secondary" style="padding:9px 20px;" id="tm-share-cancel">Cancel</button>' +
     '<button class="tm-btn-primary" style="padding:9px 24px;" id="tm-share-confirm"><i class="fa-solid fa-share-nodes"></i> Share Template</button></div></div>';
   function renderChips() {
     var chips = overlay.querySelector('#tm-share-chips');
     if (!chips) return;
     chips.innerHTML = selectedRecipients.length === 0 ? '<span style="color:var(--text-muted);font-size:12px;">No recipients selected</span>' :
-      selectedRecipients.map(function(r) { return '<div class="tm-share-chip" data-id="' + r.id + '">' + (r.type === 'group' ? '🏢' : '👤') + ' ' + tmEsc(r.name) + '<button class="tm-share-chip-remove" data-id="' + r.id + '" title="Remove">\u00D7</button></div>'; }).join('');
+      selectedRecipients.map(function(r) { return '<div class="tm-share-chip" data-id="' + r.id + '">' + (r.type === 'group' ? 'ð¢' : 'ð¤') + ' ' + tmEsc(r.name) + '<button class="tm-share-chip-remove" data-id="' + r.id + '" title="Remove">\u00D7</button></div>'; }).join('');
     chips.querySelectorAll('.tm-share-chip-remove').forEach(function(btn) { btn.addEventListener('click', function(e) { selectedRecipients = selectedRecipients.filter(function(r) { return r.id !== e.currentTarget.dataset.id; }); renderChips(); updateCount(); }); });
     updateCount();
   }
@@ -821,7 +850,7 @@ function tmOpenEditModal(tpl) {
       '<input class="tm-input" id="tm-edit-name" type="text" maxlength="100" value="' + tmEsc(tpl.name || '') + '"></div>' +
       '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">' +
       '<div class="tm-field-row"><label>Priority</label><select class="tm-select" id="tm-edit-priority">' + ePriOpts + '</select></div>' +
-      '<div class="tm-field-row"><label>Emoji</label><input class="tm-input" id="tm-edit-emoji" type="text" maxlength="4" value="' + tmEsc(tpl.emoji || '📋') + '"></div>' +
+      '<div class="tm-field-row"><label>Emoji</label><input class="tm-input" id="tm-edit-emoji" type="text" maxlength="4" value="' + tmEsc(tpl.emoji || 'ð') + '"></div>' +
       '<div class="tm-field-row"><label>Tags</label><input class="tm-input" id="tm-edit-tags" type="text" value="' + tmEsc((tpl.tags || []).join(', ')) + '"></div></div>' +
       '<div class="tm-field-row"><label>Description</label><textarea class="tm-textarea" id="tm-edit-desc" rows="2">' + tmEsc(tpl.description || '') + '</textarea></div>' +
       '<div class="tm-field-row"><div class="tm-subtask-section-header"><span class="tm-subtask-section-label">Subtasks <span id="tm-edit-sub-count">(' + sc + '/20)</span></span>' +
@@ -867,7 +896,7 @@ function tmOpenEditModal(tpl) {
       var priority = overlay.querySelector('#tm-edit-priority') && overlay.querySelector('#tm-edit-priority').value || 'none';
       var tags = (overlay.querySelector('#tm-edit-tags') && overlay.querySelector('#tm-edit-tags').value || '').split(',').map(function(t) { return t.trim(); }).filter(Boolean);
       var desc = overlay.querySelector('#tm-edit-desc') && overlay.querySelector('#tm-edit-desc').value || '';
-      var emoji = overlay.querySelector('#tm-edit-emoji') && overlay.querySelector('#tm-edit-emoji').value || '📋';
+      var emoji = overlay.querySelector('#tm-edit-emoji') && overlay.querySelector('#tm-edit-emoji').value || 'ð';
       TM.update(tpl.id, {name: name, priority: priority, tags: tags, description: desc, emoji: emoji, subtasks: validSubs.map(function(s, i) { return Object.assign({}, s, {order: i}); })});
       overlay.remove(); tmShowToast('Template updated \u2014 future uses only', 'success'); tmRefreshLibrary();
     });
@@ -886,7 +915,7 @@ function tmExtractFromTask(taskId) {
   }).filter(function(s) { return s.title; });
   if (subtasks.length > MAX_SUB) tmShowToast('Task has ' + subtasks.length + ' subtasks \u2014 only first 20 will be saved (limit enforced)', 'info');
   /* NOTE: assignee, dueDate, startDate are intentionally NOT extracted */
-  return {name: task.title || task.name || '', priority: task.priority || 'none', tags: (task.tags || []).slice(), description: task.description || '', emoji: '📋', subtasks: subtasks.slice(0, MAX_SUB)};
+  return {name: task.title || task.name || '', priority: task.priority || 'none', tags: (task.tags || []).slice(), description: task.description || '', emoji: 'ð', subtasks: subtasks.slice(0, MAX_SUB)};
 }
 
 /* ---------- CONTEXT MENU INJECTION ---------- */
