@@ -808,16 +808,62 @@ function setupRefreshListener() {
 }
 
 /* ═══════════════════════════════════════════════
-   PART 8 — Notification Bell init (C2)
-   ═══════════════════════════════════════════════ */
-function initNotificationBell() {
-  if (document.querySelector('.notif-bell')) return; // already there
-  var bell = ApprovalUI.renderNotificationBell();
-  // Find the header right area (top-right icons)
-  var headerRight = document.querySelector('.header-right');
-  if (headerRight) {
-    headerRight.insertBefore(bell, headerRight.firstChild);
+   PART 8 — Bridge Approval Notifications → Unified Bell
+   Removes duplicate left bell; routes ApprovalWorkflow events to notification-bell.js
+═══════════════════════════════════════════════ */
+function bridgeApprovalNotifications() {
+  if (window._approvalBellBridged) return;
+  window._approvalBellBridged = true;
+
+  // Remove any stray .approval-notifications bells already in DOM
+  function removeOldBell() {
+    document.querySelectorAll('.approval-notifications').forEach(function(el) { el.remove(); });
   }
+  removeOldBell();
+
+  // Wait for ApprovalWorkflow and pushBellNotification to be ready
+  var tries = 0;
+  var iv = setInterval(function() {
+    if (typeof ApprovalWorkflow !== 'undefined' && typeof window.pushBellNotification === 'function') {
+      clearInterval(iv);
+
+      // Remove any bell that may have been injected before bridge ran
+      removeOldBell();
+
+      // Bridge: ApprovalWorkflow approval:notification -> pushBellNotification (unified bell)
+      ApprovalWorkflow.on('approval:notification', function(data) {
+        var currentUser = getCurrentUser();
+        var currentUserId = getCurrentUserId();
+        // Only show to the intended recipient
+        if (data.recipientId &&
+            data.recipientId !== currentUser &&
+            data.recipientId !== currentUserId) return;
+        window.pushBellNotification(
+          data.type || 'approval_requested',
+          data.taskId || '',
+          '',
+          data.message || 'Approval notification'
+        );
+      });
+
+      console.log('[ApprovalPatch] Approval notifications bridged to unified bell');
+    } else if (++tries > 80) {
+      clearInterval(iv);
+      console.warn('[ApprovalPatch] Bridge timed out');
+    }
+  }, 150);
+
+  // Guard: silently remove any future .approval-notifications injections
+  var _bellObs = new MutationObserver(function(mutations) {
+    mutations.forEach(function(m) {
+      m.addedNodes.forEach(function(node) {
+        if (node.nodeType === 1 && node.classList && node.classList.contains('approval-notifications')) {
+          node.remove();
+        }
+      });
+    });
+  });
+  _bellObs.observe(document.body || document.documentElement, { childList: true, subtree: true });
 }
 
 /* ═══════════════════════════════════════════════
@@ -832,7 +878,7 @@ function boot() {
     setupTaskDetailObserver();
     hookStatusChange();
     setupRefreshListener();
-    initNotificationBell();
+    bridgeApprovalNotifications();
     patchSettingsPanel();
     console.log('[ApprovalPatch] All hooks installed');
   } catch(e) {
