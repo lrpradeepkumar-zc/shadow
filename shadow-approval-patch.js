@@ -11,43 +11,82 @@
 (function() {
 'use strict';
 
-/* ═══════════════════════════════════════════════
-   PART 1 — localStorage Storage Engine
+/* âââââââââââââââââââââââââââââââââââââââââââââââ
+   PART 1 â localStorage Storage Engine
    Replaces broken IndexedDB in approval-backend.js
-   ═══════════════════════════════════════════════ */
-var LS = {
-  _key: function(store) { return 'shadow_approval_' + store; },
-  getAll: function(store) {
-    try { return JSON.parse(localStorage.getItem(LS._key(store)) || '[]'); } catch(e) { return []; }
-  },
-  setAll: function(store, arr) {
-    try { localStorage.setItem(LS._key(store), JSON.stringify(arr)); } catch(e) {}
-  },
-  add: function(store, item) {
-    var arr = LS.getAll(store);
-    item.id = store + '_' + Date.now() + '_' + Math.random().toString(36).substr(2,5);
-    arr.push(item);
-    LS.setAll(store, arr);
-    return item;
-  },
-  put: function(store, item) {
-    var arr = LS.getAll(store);
-    var idx = arr.findIndex(function(x){return x.id===item.id;});
-    if (idx === -1) arr.push(item); else arr[idx] = item;
-    LS.setAll(store, arr);
-    return item;
-  },
-  get: function(store, id) {
-    return LS.getAll(store).find(function(x){return x.id===id;}) || null;
-  },
-  getByField: function(store, field, val) {
-    return LS.getAll(store).filter(function(x){return x[field]===val;});
-  }
-};
+   âââââââââââââââââââââââââââââââââââââââââââââââ */
+/* ============================================================
+   Supabase Storage Engine
+   Replaces localStorage-based storage (Issues Fixed: all approval data now persists across sessions/browsers)
+   ============================================================ */
+  var SB = {
+    _cache: { settings: [], requests: [], audit: [] },
+    _sb: function() { return (window.ShadowDB && ShadowDB._sb) ? ShadowDB._sb : null; },
+    _tableMap: { settings: 'approval_settings_tbl', requests: 'approval_requests', audit: 'approval_audit' },
 
-/* ═══════════════════════════════════════════════
-   PART 2 — Patch ApprovalWorkflow backend
-   ═══════════════════════════════════════════════ */
+    /* Load all data for a store from Supabase into cache */
+    preload: function(store, cb) {
+      var sb = this._sb();
+      var self = this;
+      if (!sb) { cb && cb([]); return; }
+      sb.from(self._tableMap[store]).select('*').then(function(res) {
+        self._cache[store] = res.data || [];
+        cb && cb(self._cache[store]);
+      });
+    },
+
+    getAll: function(store) { return this._cache[store] || []; },
+    setAll: function(store, arr) {
+      this._cache[store] = arr;
+      /* Persist is done via put/add/del operations */
+    },
+    get: function(store, id) {
+      return (this._cache[store] || []).find(function(x){ return x.id === id; }) || null;
+    },
+    getByField: function(store, field, val) {
+      return (this._cache[store] || []).filter(function(x){ return x[field] === val; });
+    },
+    add: function(store, obj) {
+      var sb = this._sb();
+      var self = this;
+      this._cache[store] = this._cache[store] || [];
+      this._cache[store].push(obj);
+      if (sb) {
+        sb.from(self._tableMap[store]).insert(obj).then(function(res) {
+          if (res.error) console.warn('[Approval] insert error:', res.error.message);
+        });
+      }
+    },
+    put: function(store, obj) {
+      var sb = this._sb();
+      var self = this;
+      var arr = this._cache[store] || [];
+      var idx = arr.findIndex(function(x){ return x.id === obj.id; });
+      if (idx >= 0) arr[idx] = obj; else arr.push(obj);
+      this._cache[store] = arr;
+      if (sb) {
+        sb.from(self._tableMap[store]).upsert(obj, { onConflict: 'id' }).then(function(res) {
+          if (res.error) console.warn('[Approval] upsert error:', res.error.message);
+        });
+      }
+    },
+    del: function(store, id) {
+      var sb = this._sb();
+      var self = this;
+      this._cache[store] = (this._cache[store] || []).filter(function(x){ return x.id !== id; });
+      if (sb) {
+        sb.from(self._tableMap[store]).delete().eq('id', id).then(function(res) {
+          if (res.error) console.warn('[Approval] delete error:', res.error.message);
+        });
+      }
+    }
+  };
+  /* Alias LS to SB for backward compatibility */
+  var LS = SB;;
+
+/* âââââââââââââââââââââââââââââââââââââââââââââââ
+   PART 2 â Patch ApprovalWorkflow backend
+   âââââââââââââââââââââââââââââââââââââââââââââââ */
 function getCurrentUser() {
   var s = window.state;
   if (!s) return 'Unknown';
@@ -303,9 +342,9 @@ if (typeof ApprovalWorkflow !== 'undefined') {
   console.log('[ApprovalPatch] Backend patched to use localStorage');
 }
 
-/* ═══════════════════════════════════════════════
-   PART 3 — Patch ApprovalUI
-   ═══════════════════════════════════════════════ */
+/* âââââââââââââââââââââââââââââââââââââââââââââââ
+   PART 3 â Patch ApprovalUI
+   âââââââââââââââââââââââââââââââââââââââââââââââ */
 if (typeof ApprovalUI !== 'undefined') {
 
   // C11: CURRENT_USER from window.state (override the hardcoded 'Pradeep')
@@ -337,7 +376,7 @@ if (typeof ApprovalUI !== 'undefined') {
         var isApprover = activeRequest.approverId === currentUser || activeRequest.approverId === currentUserId;
         container.innerHTML =
           '<div class="approval-status-strip pending">' +
-          '<span class="approval-status-strip-text"><i class="fa-solid fa-clock"></i> Approval Pending — waiting for <strong>' + (function(id){var ms=window.state&&window.state.members;var m=ms&&ms.find(function(x){return x.id===id||x.name===id;});return m?m.name:id;})(activeRequest.approverId) + '</strong></span>' +
+          '<span class="approval-status-strip-text"><i class="fa-solid fa-clock"></i> Approval Pending â waiting for <strong>' + (function(id){var ms=window.state&&window.state.members;var m=ms&&ms.find(function(x){return x.id===id||x.name===id;});return m?m.name:id;})(activeRequest.approverId) + '</strong></span>' +
           '</div>';
         injectBadge('pending');
         if (isApprover) container.appendChild(ApprovalUI.renderDecisionInterface(activeRequest));
@@ -357,7 +396,7 @@ if (typeof ApprovalUI !== 'undefined') {
       } else if (latestRequest && latestRequest.status === 'rejected') {
         container.innerHTML =
           '<div class="approval-status-strip rejected" style="background:#fff5f5;border-left:4px solid #e53e3e">' +
-          '<span class="approval-status-strip-text" style="color:#e53e3e"><i class="fa-solid fa-xmark-circle"></i> Rejected — ' + (latestRequest.rejectionCategory||'') + '</span>' +
+          '<span class="approval-status-strip-text" style="color:#e53e3e"><i class="fa-solid fa-xmark-circle"></i> Rejected â ' + (latestRequest.rejectionCategory||'') + '</span>' +
           '</div>';
         injectBadge('rejected');
         if (canRequest) {
@@ -607,10 +646,10 @@ if (typeof ApprovalUI !== 'undefined') {
   console.log('[ApprovalPatch] ApprovalUI patched');
 }
 
-/* ═══════════════════════════════════════════════
-   PART 4 — Poll-based task detail approval injector (C2+C3)
+/* âââââââââââââââââââââââââââââââââââââââââââââââ
+   PART 4 â Poll-based task detail approval injector (C2+C3)
    Uses setInterval to reliably detect task panel open state
-   ═══════════════════════════════════════════════ */
+   âââââââââââââââââââââââââââââââââââââââââââââââ */
 function setupTaskDetailObserver() {
   if (window._approvalObserverPatched) return;
   window._approvalObserverPatched = true;
@@ -654,9 +693,9 @@ function setupTaskDetailObserver() {
   console.log('[ApprovalPatch] Task detail approval poller installed (600ms)');
 }
 
-/* ═══════════════════════════════════════════════
-   PART 5 — Hook into status change (C5: Mandate)
-   ═══════════════════════════════════════════════ */
+/* âââââââââââââââââââââââââââââââââââââââââââââââ
+   PART 5 â Hook into status change (C5: Mandate)
+   âââââââââââââââââââââââââââââââââââââââââââââââ */
 function hookStatusChange() {
   var detailStatus = document.getElementById('detailStatus');
   if (!detailStatus || detailStatus._approvalPatched) return;
@@ -695,9 +734,9 @@ function hookStatusChange() {
   console.log('[ApprovalPatch] status change hooked');
 }
 
-/* ═══════════════════════════════════════════════
-   PART 6 — Fix settings panel auto-render (C7+C8)
-   ═══════════════════════════════════════════════ */
+/* âââââââââââââââââââââââââââââââââââââââââââââââ
+   PART 6 â Fix settings panel auto-render (C7+C8)
+   âââââââââââââââââââââââââââââââââââââââââââââââ */
 function patchSettingsPanel() {
   document.querySelectorAll('.task-settings-nav-item').forEach(function(item) {
     if (item.dataset.tsection !== 'approvals' || item._approvalPatched) return;
@@ -760,9 +799,9 @@ function patchSettingsToggle(mount, groupId) {
   }
 }
 
-/* ═══════════════════════════════════════════════
-   PART 7 — approval:ui:refresh event handler (C2)
-   ═══════════════════════════════════════════════ */
+/* âââââââââââââââââââââââââââââââââââââââââââââââ
+   PART 7 â approval:ui:refresh event handler (C2)
+   âââââââââââââââââââââââââââââââââââââââââââââââ */
 function setupRefreshListener() {
   if (window._approvalRefreshPatched) return;
   window._approvalRefreshPatched = true;
@@ -807,10 +846,10 @@ function setupRefreshListener() {
   });
 }
 
-/* ═══════════════════════════════════════════════
-   PART 8 — Bridge Approval Notifications → Unified Bell
+/* âââââââââââââââââââââââââââââââââââââââââââââââ
+   PART 8 â Bridge Approval Notifications â Unified Bell
    Removes duplicate left bell; routes ApprovalWorkflow events to notification-bell.js
-═══════════════════════════════════════════════ */
+âââââââââââââââââââââââââââââââââââââââââââââââ */
 function bridgeApprovalNotifications() {
   if (window._approvalBellBridged) return;
   window._approvalBellBridged = true;
@@ -866,10 +905,14 @@ function bridgeApprovalNotifications() {
   _bellObs.observe(document.body || document.documentElement, { childList: true, subtree: true });
 }
 
-/* ═══════════════════════════════════════════════
+/* âââââââââââââââââââââââââââââââââââââââââââââââ
    MAIN BOOT
-   ═══════════════════════════════════════════════ */
+   âââââââââââââââââââââââââââââââââââââââââââââââ */
 function boot() {
+    /* === Preload Supabase data into SB cache === */
+    SB.preload('settings', function() {});
+    SB.preload('requests', function() {});
+    SB.preload('audit', function() {});
   if (typeof ApprovalWorkflow === 'undefined' || typeof ApprovalUI === 'undefined') {
     setTimeout(boot, 300);
     return;
