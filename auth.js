@@ -50,7 +50,8 @@ const ShadowAuth = (() => {
   async function _submitRegister(e){if(e)e.preventDefault();var name=(document.getElementById('sa-reg-name')||{}).value||'',email=(document.getElementById('sa-reg-email')||{}).value||'',pass=(document.getElementById('sa-reg-pass')||{}).value||'',errEl=document.getElementById('sa-reg-error'),btn=e&&e.target;if(btn){btn.textContent='Creating...';btn.disabled=true;}var res=await register(name.trim(),email.trim(),pass);if(!res.ok){if(errEl)errEl.textContent=res.error;if(btn){btn.textContent='Create Account';btn.disabled=false;}return;}var ol=document.getElementById('shadow-auth-overlay');if(ol)ol.remove();location.reload();}
   async function checkAuth(){
     var tries=0;while(!getSB()&&tries++<40){await new Promise(function(r){setTimeout(r,150);});}
-    var sb=getSB();if(!sb){renderLoginScreen();return false;}
+  // Login handled by shadow-auth-gate.js
+  return false;
     var r=await sb.auth.getSession(),session=r.data&&r.data.session;
     if(session){
       _cu=await buildCU(session);
