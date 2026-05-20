@@ -1,5 +1,5 @@
 // shadow-auth-gate.js
-// Authentication wall — uses ONLY Supabase Auth (no localStorage users)
+// Authentication wall â uses ONLY Supabase Auth (no localStorage users)
 // Loaded FIRST before all other scripts
 (function () {
   'use strict';
@@ -7,7 +7,7 @@
   var SESSION_KEY    = 'shadow_session';
   var APP_READY_EVENT = 'shadow_app_ready';
 
-  // Session helpers — stored as simple metadata only (no passwords ever)
+  // Session helpers â stored as simple metadata only (no passwords ever)
   function getSession() { try { return JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); } catch(e) { return null; } }
   function setSession(u) { localStorage.setItem(SESSION_KEY, JSON.stringify(u)); }
   function clearSession() { localStorage.removeItem(SESSION_KEY); }
@@ -26,7 +26,7 @@
   }
   function showApp() { var s=document.getElementById('sag-hide'); if(s) s.remove(); }
 
-  // ── UI helpers ───────────────────────────────────────────────────────────────────────────
+  // ââ UI helpers âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
   function addFocusStyles(inp, focusColor, blurColor) {
     inp.addEventListener('focus', function() { inp.style.borderColor = focusColor; inp.style.boxShadow = '0 0 0 3px '+focusColor+'33'; });
     inp.addEventListener('blur',  function() { inp.style.borderColor = blurColor;  inp.style.boxShadow = 'none'; });
@@ -74,7 +74,7 @@
     return e;
   }
 
-  // ── Login wall ───────────────────────────────────────────────────────────────────────────
+  // ââ Login wall âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
   var _emailInp, _passInp, _errLogin;
 
   function buildWall() {
@@ -126,7 +126,7 @@
   function showErr(el, msg) { el.textContent = msg; el.style.display = 'block'; }
   function hideErr(el) { el.style.display = 'none'; }
 
-  // ── Supabase-only login ─────────────────────────────────────────────────────────────────────
+  // ââ Supabase-only login âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
   function doLogin() {
     var email = (_emailInp.value||'').trim().toLowerCase();
     var pass  = (_passInp.value||'');
@@ -136,12 +136,12 @@
 
     var sbClient = window.ShadowDB && window.ShadowDB._sb;
     if (!sbClient) {
-      showErr(_errLogin, 'Auth service not ready — please wait and try again.');
+      showErr(_errLogin, 'Auth service not ready â please wait and try again.');
       return;
     }
 
     var loginBtn = document.querySelector('#sag-wall button');
-    if (loginBtn) { loginBtn.textContent = 'Signing in…'; loginBtn.disabled = true; }
+    if (loginBtn) { loginBtn.textContent = 'Signing inâ¦'; loginBtn.disabled = true; }
 
     sbClient.auth.signInWithPassword({ email: email, password: pass })
       .then(function(result) {
@@ -164,7 +164,7 @@
               user.color  = pr.data.color  || user.color;
             }
             setSession(user);
-            onAuthSuccess(user);
+            location.reload();
           })
           .catch(function() { setSession(user); onAuthSuccess(user); });
       })
@@ -174,7 +174,7 @@
       });
   }
 
-  // ── Post-login ───────────────────────────────────────────────────────────────────────────
+  // ââ Post-login âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
   function onAuthSuccess(user) {
     var wall = document.getElementById('sag-wall');
     if (wall) wall.remove();
@@ -211,7 +211,7 @@
     else { showLoginWall(); }
   }
 
-  // ── Global logout ───────────────────────────────────────────────────────────────────────────
+  // ââ Global logout âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
   window.sagLogout = function() {
     clearSession();
     var sb = window.ShadowDB && window.ShadowDB._sb;
@@ -219,7 +219,7 @@
     doSignOut.finally(function() { location.reload(); });
   };
 
-  // ── Boot ─────────────────────────────────────────────────────────────────────────────────────────
+  // ââ Boot âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
   document.addEventListener('DOMContentLoaded', function() {
     hideApp(); gate();
     setTimeout(function() {
