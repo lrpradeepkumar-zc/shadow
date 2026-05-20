@@ -1,46 +1,31 @@
 // auth-supabase.js — Supabase auth helpers for Shadow ToDo.
-// Exposed as window.ShadowCloudAuth (does NOT touch your existing ShadowAuth).
+// Exposed as window.ShadowCloudAuth. No anonymous auth (prevents session deadlocks).
 
 (function () {
   function whenReady(cb) {
     if (window.ShadowDB && window.ShadowDB._sb) return cb(window.ShadowDB._sb);
-    document.addEventListener('shadowdb:ready', () => cb(window.ShadowDB._sb), { once: true });
+    document.addEventListener('shadow_app_ready', function() {
+      if (window.ShadowDB && window.ShadowDB._sb) cb(window.ShadowDB._sb);
+    });
   }
 
-  whenReady(async (sb) => {
-    const { data: { session } } = await sb.auth.getSession();
-    if (!session) {
-      try { await sb.auth.signInAnonymously(); }
-      catch (e) { console.warn('Anonymous sign-in failed — enable it in Supabase → Auth → Providers.', e); }
-    }
-
+  whenReady(function(sb) {
     window.ShadowCloudAuth = {
       current: async () => (await sb.auth.getUser()).data.user,
-      isAnonymous: async () => {
-        const u = (await sb.auth.getUser()).data.user;
-        return !!u && (u.is_anonymous === true || !u.email);
-      },
-      signUpWithEmail: async (email, password) => {
-        const { data, error } = await sb.auth.updateUser({ email, password });
+      signUpWithEmail: async (email, password, name) => {
+        var { data, error } = await sb.auth.signUp({ email, password, options: { data: { name: name || email.split('@')[0] } } });
         if (error) throw error; return data.user;
       },
       signInWithEmail: async (email, password) => {
-        const { data, error } = await sb.auth.signInWithPassword({ email, password });
+        var { data, error } = await sb.auth.signInWithPassword({ email, password });
         if (error) throw error; return data.user;
       },
-      signInWithMagicLink: async (email) => {
-        const { error } = await sb.auth.signInWithOtp({ email });
-        if (error) throw error; return true;
-      },
-      signOut: async () => {
-        await sb.auth.signOut();
-        try { await sb.auth.signInAnonymously(); } catch(_){}
-      },
-      onChange: (fn) => sb.auth.onAuthStateChange((_evt, sess) => fn(sess?.user || null))
+      signOut: async () => { await sb.auth.signOut(); },
+      onChange: (fn) => sb.auth.onAuthStateChange((_evt, sess) => fn(sess ? sess.user : null))
     };
 
-    sb.auth.onAuthStateChange((_evt, sess) => {
-      document.dispatchEvent(new CustomEvent('shadowauth:changed', { detail: sess?.user || null }));
+    sb.auth.onAuthStateChange(function(_evt, sess) {
+      document.dispatchEvent(new CustomEvent('shadowauth:changed', { detail: sess ? sess.user : null }));
     });
   });
 })();
