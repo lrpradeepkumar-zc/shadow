@@ -63,7 +63,8 @@ const ShadowAuth = (() => {
         return true;
       }
     }
-    renderLoginScreen();return false;
+    // Login handled by shadow-auth-gate.js
+  return false;
   }
   function getUsers(){return[];}function saveUsers(){}function getPerms(){return DEFAULT_PERMS;}function savePerms(){}
   function getSession(){return _cu;}function setSession(){}function clearSession(){}
