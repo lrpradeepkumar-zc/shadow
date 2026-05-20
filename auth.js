@@ -1,4 +1,4 @@
-// auth.js v2 - Supabase Auth. Zero localStorage for users/sessions.
+// auth.js v3 - Supabase Auth only. No localStorage for users/passwords/sessions.
 const ShadowAuth = (() => {
   'use strict';
   const SUPABASE_URL  = 'https://ycysvoolkezntbxcfrnq.supabase.co';
@@ -56,7 +56,7 @@ const ShadowAuth = (() => {
       _cu=await buildCU(session);
       if(_cu){
         if(window.state){state.currentUserName=_cu.name;state.currentUserId=_cu.id;state.currentUserRole=_cu.role;}
-        localStorage.setItem('shadow_session',JSON.stringify({id:_cu.id,name:_cu.name,email:_cu.email,role:_cu.role,avatar:_cu.avatar,color:_cu.color}));
+
         updateUI();
         sb.auth.onAuthStateChange(async function(event,sess){if(event==='SIGNED_OUT'){_cu=null;location.reload();}else if(sess){_cu=await buildCU(sess);updateUI();}});
         return true;
