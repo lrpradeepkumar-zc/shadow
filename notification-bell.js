@@ -111,6 +111,9 @@
       var panel = document.getElementById('notifPanel');
       if (!btn || !panel) { if (++tries > 80) clearInterval(iv); return; }
       clearInterval(iv);
+      /* remove existing click listeners (e.g. from app.js) to prevent conflicts */
+      var freshBtn = btn.cloneNode(true);
+      if (btn.parentNode) { btn.parentNode.replaceChild(freshBtn, btn); btn = freshBtn; }
 
       /* ensure panel starts hidden */
       panel.hidden = true;
