@@ -1,29 +1,21 @@
 // shadow-auth-gate.js
-// Full authentication wall - blocks ALL app content until authenticated
+// Authentication wall — uses ONLY Supabase Auth (no localStorage users)
 // Loaded FIRST before all other scripts
 (function () {
   'use strict';
-  var SESSION_KEY = 'shadow_session';
-  var USERS_KEY   = 'shadow_users';
+
+  var SESSION_KEY    = 'shadow_session';
   var APP_READY_EVENT = 'shadow_app_ready';
 
+  // Session helpers — stored as simple metadata only (no passwords ever)
   function getSession() { try { return JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); } catch(e) { return null; } }
   function setSession(u) { localStorage.setItem(SESSION_KEY, JSON.stringify(u)); }
   function clearSession() { localStorage.removeItem(SESSION_KEY); }
-  function getUsers() { try { return JSON.parse(localStorage.getItem(USERS_KEY) || '[]'); } catch(e) { return []; } }
-  function saveUsers(u) { localStorage.setItem(USERS_KEY, JSON.stringify(u)); }
-  function hashPass(p) { var h=0; for(var i=0;i<p.length;i++){h=(Math.imul(31,h)+p.charCodeAt(i))|0;} return 'h_'+(h>>>0).toString(16); }
-  function genId() { return 'u_'+Date.now()+'_'+Math.random().toString(36).slice(2,7); }
-  function getInitials(n) { return (n||'').trim().split(/\s+/).map(function(w){return w[0];}).join('').toUpperCase().slice(0,2)||'?'; }
-  function seedAdmin() {
-    var users = getUsers();
-    if (!users.length) {
-      users.push({ id:'u_admin', name:'Admin', email:'admin@todo.app', password:hashPass('admin123'), role:'admin', avatar:'A', color:'#667eea' });
-      saveUsers(users);
-    }
-  }
 
-  // App shell hide/show
+  // Helpers
+  function getInitials(n) { return (n||'').trim().split(/\s+/).map(function(w){return w[0];}).join('').toUpperCase().slice(0,2)||'?'; }
+
+  // App shell show / hide
   function hideApp() {
     if (!document.getElementById('sag-hide')) {
       var s = document.createElement('style');
@@ -34,25 +26,24 @@
   }
   function showApp() { var s=document.getElementById('sag-hide'); if(s) s.remove(); }
 
-  // Field focus helper (no inline events needed)
+  // ── UI helpers ───────────────────────────────────────────────────────────────────────────
   function addFocusStyles(inp, focusColor, blurColor) {
-    inp.addEventListener('focus', function(){ inp.style.borderColor = focusColor; });
-    inp.addEventListener('blur',  function(){ inp.style.borderColor = blurColor;  });
+    inp.addEventListener('focus', function() { inp.style.borderColor = focusColor; inp.style.boxShadow = '0 0 0 3px '+focusColor+'33'; });
+    inp.addEventListener('blur',  function() { inp.style.borderColor = blurColor;  inp.style.boxShadow = 'none'; });
   }
-
-  // Create a styled input
   function mkInput(id, type, placeholder, autocomplete) {
-    var inp = document.createElement('input');
-    inp.id = id; inp.type = type; inp.placeholder = placeholder;
-    if (autocomplete) inp.autocomplete = autocomplete;
-    inp.style.cssText = 'width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;box-sizing:border-box;outline:none;transition:.2s;';
-    addFocusStyles(inp, '#667eea', '#e2e8f0');
-    return inp;
+    var i = document.createElement('input');
+    i.id = id; i.type = type; i.placeholder = placeholder;
+    i.autocomplete = autocomplete || 'off';
+    Object.assign(i.style, {width:'100%',padding:'12px 16px',border:'2px solid #e2e8f0',borderRadius:'10px',
+      fontSize:'14px',outline:'none',boxSizing:'border-box',transition:'border-color .2s,box-shadow .2s',background:'#fff',color:'#2d3748'});
+    addFocusStyles(i, '#667eea', '#e2e8f0');
+    return i;
   }
   function mkLabel(text) {
     var l = document.createElement('label');
     l.textContent = text;
-    l.style.cssText = 'display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px;';
+    Object.assign(l.style, {fontSize:'13px',fontWeight:'600',color:'#4a5568',marginBottom:'6px',display:'block'});
     return l;
   }
   function mkField(labelText, input) {
@@ -64,268 +55,145 @@
   }
   function mkBtn(text, primary) {
     var b = document.createElement('button');
-    b.type = 'button'; b.textContent = text;
-    b.style.cssText = 'width:100%;padding:12px;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;transition:.2s;';
+    b.textContent = text; b.type = 'button';
+    Object.assign(b.style, {width:'100%',padding:'13px',border:'none',borderRadius:'10px',fontSize:'14px',
+      fontWeight:'600',cursor:'pointer',transition:'all .2s',marginBottom:'8px',
+      background: primary ? 'linear-gradient(135deg,#667eea,#764ba2)' : '#f7fafc',
+      color: primary ? '#fff' : '#4a5568'});
     if (primary) {
-      b.style.background = 'linear-gradient(135deg,#667eea,#764ba2)';
-      b.style.color = '#fff';
-    } else {
-      b.style.background = 'none';
-      b.style.border = '1.5px solid #e2e8f0';
-      b.style.color = '#64748b';
+      b.addEventListener('mouseenter', function(){ b.style.transform='translateY(-1px)'; b.style.boxShadow='0 4px 15px rgba(102,126,234,.4)'; });
+      b.addEventListener('mouseleave', function(){ b.style.transform=''; b.style.boxShadow=''; });
     }
     return b;
   }
   function mkErr(id) {
-    var p = document.createElement('p');
-    p.id = id; p.style.cssText = 'color:#ef4444;font-size:13px;margin:0 0 12px;display:none;';
-    return p;
+    var e = document.createElement('div');
+    e.id = id;
+    Object.assign(e.style, {color:'#e53e3e',fontSize:'13px',padding:'10px 14px',background:'#fff5f5',
+      border:'1px solid #fed7d7',borderRadius:'8px',marginBottom:'12px',display:'none'});
+    return e;
   }
-  function showErr(errEl, msg) { errEl.textContent = msg; errEl.style.display = 'block'; }
-  function hideErr(errEl) { errEl.style.display = 'none'; }
 
-  var _wall, _formLogin, _formReg, _forgotDiv, _subEl;
-  var _emailInp, _passInp, _errLogin, _loginBtn;
-  var _regName, _regEmail, _regPass, _errReg;
-  var _forgotEmail, _forgotMsg;
-  var _tabLogin, _tabReg, _tabsDiv;
+  // ── Login wall ───────────────────────────────────────────────────────────────────────────
+  var _emailInp, _passInp, _errLogin;
 
   function buildWall() {
-    var old = document.getElementById('sag-wall');
-    if (old) old.remove();
-    var old2 = document.getElementById('shadow-auth-overlay');
-    if (old2) old2.remove();
+    var existing = document.getElementById('sag-wall');
+    if (existing) return;
 
-    _wall = document.createElement('div');
-    _wall.id = 'sag-wall';
-    _wall.style.cssText = 'position:fixed;inset:0;z-index:999999;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;';
+    var overlay = document.createElement('div');
+    overlay.id = 'sag-wall';
+    Object.assign(overlay.style, {position:'fixed',inset:'0',display:'flex',alignItems:'center',
+      justifyContent:'center',background:'linear-gradient(135deg,#667eea 0%,#764ba2 100%)',zIndex:'99999',
+      fontFamily:'-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif'});
 
-    // Card
     var card = document.createElement('div');
-    card.style.cssText = 'background:#fff;border-radius:16px;padding:40px 36px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.4);margin:16px;';
+    Object.assign(card.style, {background:'#fff',borderRadius:'20px',padding:'40px',width:'100%',
+      maxWidth:'420px',boxShadow:'0 25px 50px rgba(0,0,0,.25)',boxSizing:'border-box'});
 
-    // Logo area
-    var logoDiv = document.createElement('div');
-    logoDiv.style.cssText = 'text-align:center;margin-bottom:24px;';
-    var logoIcon = document.createElement('div');
-    logoIcon.style.cssText = 'width:52px;height:52px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:14px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:12px;';
-    logoIcon.innerHTML = '<i class="fa-solid fa-check-double" style="color:#fff;font-size:22px;"></i>';
-    var h1 = document.createElement('h1');
-    h1.textContent = 'ToDo'; h1.style.cssText = 'margin:0;font-size:26px;font-weight:700;color:#1a1a2e;';
-    _subEl = document.createElement('p');
-    _subEl.textContent = 'Sign in to your workspace';
-    _subEl.style.cssText = 'margin:4px 0 0;color:#64748b;font-size:14px;';
-    logoDiv.appendChild(logoIcon); logoDiv.appendChild(h1); logoDiv.appendChild(_subEl);
+    var title = document.createElement('h1');
+    title.textContent = '\u2713 ToDo';
+    Object.assign(title.style, {margin:'0 0 6px',fontSize:'28px',fontWeight:'700',
+      background:'linear-gradient(135deg,#667eea,#764ba2)',WebkitBackgroundClip:'text',
+      WebkitTextFillColor:'transparent',backgroundClip:'text'});
+    var sub = document.createElement('p');
+    sub.textContent = 'Sign in to your account';
+    Object.assign(sub.style, {margin:'0 0 28px',fontSize:'14px',color:'#718096'});
 
-    // Tabs
-    _tabsDiv = document.createElement('div');
-    _tabsDiv.style.cssText = 'display:flex;border-bottom:2px solid #f1f5f9;margin-bottom:24px;';
-    var activeTabStyle = 'flex:1;padding:10px;border:none;background:none;font-size:14px;font-weight:600;cursor:pointer;color:#667eea;border-bottom:2px solid #667eea;margin-bottom:-2px;';
-    var inactiveTabStyle = 'flex:1;padding:10px;border:none;background:none;font-size:14px;font-weight:500;cursor:pointer;color:#94a3b8;';
-    _tabLogin = document.createElement('button'); _tabLogin.type='button'; _tabLogin.textContent='Sign In'; _tabLogin.style.cssText = activeTabStyle;
-    _tabReg = document.createElement('button'); _tabReg.type='button'; _tabReg.textContent='Register'; _tabReg.style.cssText = inactiveTabStyle;
-    _tabLogin.addEventListener('click', function(){ switchTab('login', activeTabStyle, inactiveTabStyle); });
-    _tabReg.addEventListener('click', function(){ switchTab('register', activeTabStyle, inactiveTabStyle); });
-    _tabsDiv.appendChild(_tabLogin); _tabsDiv.appendChild(_tabReg);
-
-    // LOGIN FORM
-    _formLogin = document.createElement('form');
-    _emailInp = mkInput('sag-email','email','you@company.com','email');
+    _emailInp = mkInput('sag-email','email','Email address','email');
     _passInp  = mkInput('sag-pass','password','Password','current-password');
-    var forgotLink = document.createElement('a'); forgotLink.href='#'; forgotLink.textContent='Forgot password?';
-    forgotLink.style.cssText='font-size:12px;color:#667eea;text-decoration:none;display:block;text-align:right;margin-bottom:20px;';
-    forgotLink.addEventListener('click', function(e){ e.preventDefault(); showForgotPanel(activeTabStyle, inactiveTabStyle); });
     _errLogin = mkErr('sag-err-login');
-    _loginBtn = mkBtn('Sign In', true);
-    _formLogin.appendChild(mkField('Email', _emailInp));
-    _formLogin.appendChild(mkField('Password', _passInp));
-    _formLogin.appendChild(forgotLink);
-    _formLogin.appendChild(_errLogin);
-    _formLogin.appendChild(_loginBtn);
-    _formLogin.addEventListener('submit', function(e){ e.preventDefault(); doLogin(); });
-    _loginBtn.addEventListener('click', function(){ doLogin(); });
 
-    // REGISTER FORM
-    _formReg = document.createElement('form');
-    _formReg.style.display = 'none';
-    _regName  = mkInput('sag-reg-name','text','Your full name','name');
-    _regEmail = mkInput('sag-reg-email','email','you@company.com','email');
-    _regPass  = mkInput('sag-reg-pass','password','Min 6 characters','new-password');
-    _errReg = mkErr('sag-err-reg');
-    var regBtn = mkBtn('Create Account', true);
-    _formReg.appendChild(mkField('Full Name', _regName));
-    _formReg.appendChild(mkField('Email', _regEmail));
-    var passField = mkField('Password', _regPass);
-    passField.style.marginBottom = '20px';
-    _formReg.appendChild(passField);
-    _formReg.appendChild(_errReg);
-    _formReg.appendChild(regBtn);
-    _formReg.addEventListener('submit', function(e){ e.preventDefault(); doRegister(); });
-    regBtn.addEventListener('click', function(){ doRegister(); });
+    var loginBtn = mkBtn('Sign In', true);
+    loginBtn.addEventListener('click', doLogin);
 
-    // FORGOT PASSWORD
-    _forgotDiv = document.createElement('div');
-    _forgotDiv.style.display = 'none';
-    var fp = document.createElement('p');
-    fp.textContent = 'Enter your email to get a temporary password.';
-    fp.style.cssText = 'font-size:14px;color:#374151;margin-bottom:16px;';
-    _forgotEmail = mkInput('sag-forgot-email','email','you@company.com','email');
-    _forgotMsg = document.createElement('p');
-    _forgotMsg.style.cssText = 'font-size:13px;margin:0 0 12px;display:none;';
-    var resetBtn = mkBtn('Reset Password', true); resetBtn.style.marginBottom='8px';
-    var backBtn  = mkBtn('Back to Sign In', false);
-    resetBtn.addEventListener('click', function(){ doForgot(); });
-    backBtn.addEventListener('click', function(){ switchTab('login', activeTabStyle, inactiveTabStyle); });
-    _forgotDiv.appendChild(fp);
-    _forgotDiv.appendChild(mkField('Email', _forgotEmail));
-    _forgotDiv.appendChild(_forgotMsg);
-    _forgotDiv.appendChild(resetBtn);
-    _forgotDiv.appendChild(backBtn);
+    function onEnter(e) { if (e.key === 'Enter') doLogin(); }
+    _emailInp.addEventListener('keydown', onEnter);
+    _passInp.addEventListener('keydown', onEnter);
 
-    // Footer
-    var footer = document.createElement('p');
-    footer.textContent = 'Your account is managed by your workspace admin.';
-    footer.style.cssText = 'text-align:center;margin:20px 0 0;font-size:12px;color:#94a3b8;';
+    card.appendChild(title);
+    card.appendChild(sub);
+    card.appendChild(_errLogin);
+    card.appendChild(mkField('Email', _emailInp));
+    card.appendChild(mkField('Password', _passInp));
+    card.appendChild(loginBtn);
 
-    card.appendChild(logoDiv); card.appendChild(_tabsDiv);
-    card.appendChild(_formLogin); card.appendChild(_formReg); card.appendChild(_forgotDiv);
-    card.appendChild(footer);
-    _wall.appendChild(card);
-    document.body.appendChild(_wall);
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+    setTimeout(function(){ _emailInp.focus(); }, 100);
   }
 
-  function switchTab(tab, activeStyle, inactiveStyle) {
-    _formLogin.style.display  = tab==='login' ? 'block' : 'none';
-    _formReg.style.display    = tab==='register' ? 'block' : 'none';
-    _forgotDiv.style.display  = 'none';
-    _tabsDiv.style.display    = 'flex';
-    _tabLogin.style.cssText   = tab==='login' ? activeStyle : inactiveStyle;
-    _tabReg.style.cssText     = tab==='register' ? activeStyle : inactiveStyle;
-    _subEl.textContent        = tab==='login' ? 'Sign in to your workspace' : 'Create your account';
-  }
+  function showErr(el, msg) { el.textContent = msg; el.style.display = 'block'; }
+  function hideErr(el) { el.style.display = 'none'; }
 
-  function showForgotPanel(activeStyle, inactiveStyle) {
-    _formLogin.style.display = 'none';
-    _formReg.style.display   = 'none';
-    _tabsDiv.style.display   = 'none';
-    _forgotDiv.style.display = 'block';
-    _subEl.textContent       = 'Reset your password';
-  }
-
+  // ── Supabase-only login ─────────────────────────────────────────────────────────────────────
   function doLogin() {
     var email = (_emailInp.value||'').trim().toLowerCase();
-    var pass  = _passInp.value || '';
+    var pass  = (_passInp.value||'');
     hideErr(_errLogin);
-    _loginBtn.textContent = 'Signing in...'; _loginBtn.disabled = true;
-    var users = getUsers();
-    var user  = users.find(function(u){ return u.email.toLowerCase()===email && u.password===hashPass(pass); });
-    setTimeout(function(){
-      _loginBtn.textContent = 'Sign In'; _loginBtn.disabled = false;
-      if (!user) {
-      // Fallback: try Supabase authentication
-      var sbClient = window.ShadowDB && window.ShadowDB._sb;
-      if (sbClient) {
-        sbClient.auth.signInWithPassword({ email: email, password: pass })
-          .then(function(sbResult) {
-            if (sbResult.error || !sbResult.data.user) {
-              showErr(_errLogin, 'Invalid email or password.');
-              return;
+    if (!email) { showErr(_errLogin, 'Email is required.'); return; }
+    if (!pass)  { showErr(_errLogin, 'Password is required.'); return; }
+
+    var sbClient = window.ShadowDB && window.ShadowDB._sb;
+    if (!sbClient) {
+      showErr(_errLogin, 'Auth service not ready — please wait and try again.');
+      return;
+    }
+
+    var loginBtn = document.querySelector('#sag-wall button');
+    if (loginBtn) { loginBtn.textContent = 'Signing in…'; loginBtn.disabled = true; }
+
+    sbClient.auth.signInWithPassword({ email: email, password: pass })
+      .then(function(result) {
+        if (loginBtn) { loginBtn.textContent = 'Sign In'; loginBtn.disabled = false; }
+        if (result.error || !result.data.user) {
+          showErr(_errLogin, result.error ? result.error.message : 'Invalid email or password.');
+          return;
+        }
+        var sbUser = result.data.user;
+        var meta   = sbUser.user_metadata || {};
+        var name   = meta.name || sbUser.email.split('@')[0];
+        var user   = { id: sbUser.id, name: name, email: sbUser.email, role: meta.role || 'member',
+                       avatar: getInitials(name), color: meta.color || '#667eea' };
+        sbClient.from('users').select('name,role,avatar,color').eq('id', sbUser.id).maybeSingle()
+          .then(function(pr) {
+            if (pr.data) {
+              user.name   = pr.data.name   || user.name;
+              user.role   = pr.data.role   || user.role;
+              user.avatar = pr.data.avatar || user.avatar;
+              user.color  = pr.data.color  || user.color;
             }
-            var sbUser = sbResult.data.user;
-            var name = (sbUser.user_metadata && sbUser.user_metadata.name) || sbUser.email.split('@')[0];
-            var newUser = { id: sbUser.id, name: name, email: sbUser.email,
-              password: hashPass(pass), role: 'member',
-              avatar: getInitials(name), color: '#667eea' };
-            var allUsers = getUsers();
-            if (!allUsers.find(function(u) { return u.email === sbUser.email; })) {
-              allUsers.push(newUser); saveUsers(allUsers);
-            } else {
-              newUser = allUsers.find(function(u) { return u.email === sbUser.email; });
-            }
-            setSession(newUser); onAuthSuccess(newUser);
+            setSession(user);
+            onAuthSuccess(user);
           })
-          .catch(function() { showErr(_errLogin, 'Invalid email or password.'); });
-        return;
-      }
-      showErr(_errLogin, 'Invalid email or password.'); return;
-    }
-      setSession(user); onAuthSuccess(user);
-    }, 300);
+          .catch(function() { setSession(user); onAuthSuccess(user); });
+      })
+      .catch(function(err) {
+        if (loginBtn) { loginBtn.textContent = 'Sign In'; loginBtn.disabled = false; }
+        showErr(_errLogin, err.message || 'Sign-in failed. Please try again.');
+      });
   }
 
-  function doRegister() {
-    var name  = (_regName.value||'').trim();
-    var email = (_regEmail.value||'').trim().toLowerCase();
-    var pass  = _regPass.value || '';
-    hideErr(_errReg);
-    if (!name)              { showErr(_errReg, 'Name is required.');         return; }
-    if (!email.includes('@')){ showErr(_errReg, 'Valid email required.');    return; }
-    if (pass.length < 6)    { showErr(_errReg, 'Password: min 6 chars.');   return; }
-    var users = getUsers();
-    if (users.find(function(u){ return u.email.toLowerCase()===email; })) {
-      showErr(_errReg, 'Email already registered.'); return;
-    }
-    var COLORS = ['#667eea','#764ba2','#f093fb','#4facfe','#43e97b','#fa709a','#fee140','#30cfd0'];
-    var newUser = { id:genId(), name:name, email:email, password:hashPass(pass),
-      role: users.length===0 ? 'admin' : 'member',
-      avatar: getInitials(name), color: COLORS[users.length % COLORS.length] };
-    users.push(newUser); saveUsers(users);
-    setSession(newUser); onAuthSuccess(newUser);
-  }
-
-  function doForgot() {
-    var email = (_forgotEmail.value||'').trim().toLowerCase();
-    var users = getUsers();
-    var user  = users.find(function(u){ return u.email.toLowerCase()===email; });
-    _forgotMsg.style.display = 'block';
-    if (!user) {
-      _forgotMsg.style.color = '#ef4444';
-      _forgotMsg.textContent = 'No account found with that email.';
-    } else {
-      var tmp = 'tmp' + Math.random().toString(36).slice(2,8);
-      user.password = hashPass(tmp); saveUsers(users);
-      _forgotMsg.style.color = '#22c55e';
-      _forgotMsg.textContent = 'Temp password: ' + tmp + ' (sign in, then update in profile)';
-    }
-  }
-
-  window.sagLogout = function() {
-    clearSession();
-    if (window.state) { window.state.tasks=[]; window.state.groups=[]; window.state.currentUserId=null; }
-    showLoginWall();
-  };
-
+  // ── Post-login ───────────────────────────────────────────────────────────────────────────
   function onAuthSuccess(user) {
     var wall = document.getElementById('sag-wall');
     if (wall) wall.remove();
     showApp();
-    function applyUser() {
-      if (window.state) { window.state.currentUserId=user.id; window.state.currentUserName=user.name; window.state.currentUserRole=user.role; }
-      if (typeof window.ShadowAuth !== 'undefined' && typeof window.ShadowAuth.updateUserUI === 'function') window.ShadowAuth.updateUserUI();
-      updateHeaderUser(user);
-    }
     if (!window._sagAppStarted) {
       window._sagAppStarted = true;
       window.dispatchEvent(new CustomEvent(APP_READY_EVENT, { detail: { user: user } }));
-      setTimeout(function(){ applyUser(); if (typeof window._appInit==='function') window._appInit(); }, 100);
-    } else {
-      applyUser();
-      if (typeof window.renderView==='function') window.renderView();
-      if (typeof window.renderSidebar==='function') window.renderSidebar();
     }
+    updateHeaderUser(user);
   }
 
   function updateHeaderUser(user) {
-    var avatarEl = document.querySelector('.top-header .avatar');
-    if (avatarEl) { avatarEl.textContent=getInitials(user.name); avatarEl.title=user.name+' ('+user.email+')'; avatarEl.style.background=user.color||'#667eea'; }
-    var hdr = document.querySelector('.header-right');
+    var hdr = document.querySelector('.top-header');
     if (hdr && !document.getElementById('sag-logout-btn')) {
       var btn = document.createElement('button');
-      btn.id = 'sag-logout-btn'; btn.title = 'Sign out ('+user.name+')';
-      btn.style.cssText = 'background:none;border:none;cursor:pointer;padding:6px 10px;border-radius:8px;font-size:12px;font-weight:600;color:#64748b;display:flex;align-items:center;gap:4px;transition:.2s;';
-      btn.innerHTML = '<i class="fa-solid fa-right-from-bracket" style="font-size:14px;"></i>';
-      btn.addEventListener('mouseenter', function(){ this.style.background='#f1f5f9'; this.style.color='#ef4444'; });
-      btn.addEventListener('mouseleave', function(){ this.style.background='none'; this.style.color='#64748b'; });
+      btn.id = 'sag-logout-btn';
+      btn.textContent = '\u2190 Sign Out';
+      Object.assign(btn.style, {marginRight:'8px',padding:'6px 14px',borderRadius:'8px',border:'1px solid #e2e8f0',
+        background:'#fff',cursor:'pointer',fontSize:'12px',color:'#4a5568',fontWeight:'500'});
       btn.addEventListener('click', function(){ if(confirm('Sign out of ToDo?')) window.sagLogout(); });
       hdr.insertBefore(btn, hdr.firstChild);
     }
@@ -333,7 +201,6 @@
 
   function showLoginWall() {
     hideApp();
-    setInterval(function(){ var o=document.getElementById('shadow-auth-overlay'); if(o) o.style.display='none'; }, 200);
     if (document.body) { buildWall(); }
     else { document.addEventListener('DOMContentLoaded', function(){ buildWall(); }); }
   }
@@ -344,18 +211,36 @@
     else { showLoginWall(); }
   }
 
-  window._sagAppStarted = false;
-  window._sagGateReady  = false;
+  // ── Global logout ───────────────────────────────────────────────────────────────────────────
+  window.sagLogout = function() {
+    clearSession();
+    var sb = window.ShadowDB && window.ShadowDB._sb;
+    var doSignOut = sb ? sb.auth.signOut() : Promise.resolve();
+    doSignOut.finally(function() { location.reload(); });
+  };
 
+  // ── Boot ─────────────────────────────────────────────────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', function() {
-    hideApp(); seedAdmin(); gate();
-    window._sagGateReady = true;
-    // Patch ShadowAuth.logout
-    if (typeof window.ShadowAuth !== 'undefined' && typeof window.ShadowAuth.logout === 'function') {
-      var origLogout = window.ShadowAuth.logout;
-      window.ShadowAuth.logout = function(){ origLogout(); showLoginWall(); };
-    }
+    hideApp(); gate();
+    setTimeout(function() {
+      if (window.ShadowAuth && window.ShadowAuth.logout) {
+        var orig = window.ShadowAuth.logout;
+        window.ShadowAuth.logout = function() { clearSession(); return orig.apply(this, arguments); };
+      }
+    }, 500);
   }, true);
 
-  console.log('[AuthGate] Installed');
+  // Handle Supabase token expiry
+  document.addEventListener('DOMContentLoaded', function() {
+    var waitForSB = setInterval(function() {
+      var sb = window.ShadowDB && window.ShadowDB._sb;
+      if (!sb) return;
+      clearInterval(waitForSB);
+      sb.auth.onAuthStateChange(function(event, session) {
+        if (event === 'SIGNED_OUT') { clearSession(); showLoginWall(); }
+      });
+    }, 500);
+  });
+
+  console.log('[AuthGate] Supabase-only auth installed');
 })();
