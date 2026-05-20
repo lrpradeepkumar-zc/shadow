@@ -738,23 +738,29 @@ function tmOpenApplyModal(tpl, isPreset) {
   overlay.querySelector('#tm-apply-confirm').addEventListener('click', function() {
     var group = overlay.querySelector('#tm-apply-group') && overlay.querySelector('#tm-apply-group').value || '';
     var priorityOverride = overlay.querySelector('#tm-apply-priority') && overlay.querySelector('#tm-apply-priority').value || '';
-    var startDate = overlay.querySelector('#tm-apply-start') && overlay.querySelector('#tm-apply-start').value || '';
-    var appliedPriority = priorityOverride || tpl.priority || 'none';
-    var parentTask = {
-      id: 'task_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
-      title: tpl.name, priority: appliedPriority, tags: (tpl.tags || []).slice(),
-      description: tpl.description || '', group: group, status: 'Open',
-      assignee: '', assignees: [], dueDate: null, startDate: startDate || null,
-      createdBy: tmGetUserId(), createdAt: new Date().toISOString(), modifiedDate: new Date().toISOString(),
-      subtasks: subs.map(function(s, i) { return {id: 'sub_' + Date.now() + '_' + i, title: s.title, priority: priorityOverride || s.priority || 'none', done: false, tags: (s.tags || []).slice()}; }),
-      sharedWith: [], fromTemplate: tpl.id || tpl.name
-    };
-    if (window.state && window.state.tasks) window.state.tasks.unshift(parentTask);
-    try { if (typeof window.__shadowdbFlush === 'function') window.__shadowdbFlush(); } catch(e) {}
-    try { var nav = document.querySelector('.nav-item.active'); if (nav) nav.click(); } catch(e) {}
+    var appliedPriority = priorityOverride || tpl.priority || 'Medium';
     overlay.remove();
-    tmShowToast('\u2705 Created "' + tpl.name + '" with ' + subs.length + ' subtask' + (subs.length !== 1 ? 's' : '') + ' \u2014 Assignees & dates are blank.', 'success');
     tmCloseLibrary();
+    setTimeout(function() {
+      if (typeof window.ntmResetAndOpenWith === 'function') {
+        window.ntmResetAndOpenWith({ groupId: group });
+      } else {
+        var m = document.getElementById('taskModal'); if (m) m.style.display = 'flex';
+      }
+      setTimeout(function() {
+        var titleEl = document.getElementById('modalTaskTitle');
+        if (titleEl) { titleEl.value = tpl.name || ''; }
+        var descEl = document.getElementById('modalDesc');
+        if (descEl) { descEl.value = tpl.description || ''; }
+        var priorityDrop = document.getElementById('ntmPriorityDropdown');
+        if (priorityDrop) {
+          var pItem = priorityDrop.querySelector('[data-val="' + appliedPriority + '"]');
+          if (!pItem) pItem = priorityDrop.querySelector('[data-val="Medium"]');
+          if (pItem) pItem.click();
+        }
+        if (titleEl) titleEl.focus();
+      }, 100);
+    }, 150);
   });
   document.addEventListener('keydown', function esc(e) { if (e.key === 'Escape') { overlay.remove(); document.removeEventListener('keydown', esc); } });
 }
