@@ -221,7 +221,34 @@
     var user  = users.find(function(u){ return u.email.toLowerCase()===email && u.password===hashPass(pass); });
     setTimeout(function(){
       _loginBtn.textContent = 'Sign In'; _loginBtn.disabled = false;
-      if (!user) { showErr(_errLogin, 'Invalid email or password.'); return; }
+      if (!user) {
+      // Fallback: try Supabase authentication
+      var sbClient = window.ShadowDB && window.ShadowDB._sb;
+      if (sbClient) {
+        sbClient.auth.signInWithPassword({ email: email, password: pass })
+          .then(function(sbResult) {
+            if (sbResult.error || !sbResult.data.user) {
+              showErr(_errLogin, 'Invalid email or password.');
+              return;
+            }
+            var sbUser = sbResult.data.user;
+            var name = (sbUser.user_metadata && sbUser.user_metadata.name) || sbUser.email.split('@')[0];
+            var newUser = { id: sbUser.id, name: name, email: sbUser.email,
+              password: hashPass(pass), role: 'member',
+              avatar: getInitials(name), color: '#667eea' };
+            var allUsers = getUsers();
+            if (!allUsers.find(function(u) { return u.email === sbUser.email; })) {
+              allUsers.push(newUser); saveUsers(allUsers);
+            } else {
+              newUser = allUsers.find(function(u) { return u.email === sbUser.email; });
+            }
+            setSession(newUser); onAuthSuccess(newUser);
+          })
+          .catch(function() { showErr(_errLogin, 'Invalid email or password.'); });
+        return;
+      }
+      showErr(_errLogin, 'Invalid email or password.'); return;
+    }
       setSession(user); onAuthSuccess(user);
     }, 300);
   }
