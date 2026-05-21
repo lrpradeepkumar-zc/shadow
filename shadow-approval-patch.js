@@ -317,12 +317,14 @@ if (typeof ApprovalWorkflow !== 'undefined') {
   // Patch AuditLog to use localStorage
   ApprovalWorkflow.AuditLog.log = function(opts) {
     var entry = {taskId:opts.taskId,requestId:opts.requestId,actorId:opts.actorId,actionType:opts.actionType,notes:opts.notes||'',timestamp:new Date().toISOString(),metadata:opts.metadata||{}};
-    // Also capture actor role
-    var s = window.state;
-    if (s && s.members) {
-      var m = s.members.find(function(x){return x.id===opts.actorId||x.name===opts.actorId;});
-      entry.actorRole = m ? m.role : 'unknown';
-    }
+    // Also capture actor role (defensive: members may be array/object/missing)
+    try {
+      var _all = _allMembersSync();
+      if (_all && _all.length) {
+        var m = _all.find(function(x){return x && (x.id===opts.actorId||x.name===opts.actorId||x.uid===opts.actorId||x.userId===opts.actorId);});
+        entry.actorRole = m ? m.role : 'unknown';
+      }
+    } catch(_e) { /* never block audit logging */ }
     LS.add('audit', entry);
     ApprovalWorkflow.emit('approval:audit:logged', entry);
     return Promise.resolve(entry);
@@ -422,7 +424,7 @@ if (typeof ApprovalUI !== 'undefined') {
         var isApprover = activeRequest.approverId === currentUser || activeRequest.approverId === currentUserId;
         container.innerHTML =
           '<div class="approval-status-strip pending">' +
-          '<span class="approval-status-strip-text"><i class="fa-solid fa-clock"></i> Approval Pending â waiting for <strong>' + (function(id){var ms=window.state&&window.state.members;var m=ms&&ms.find(function(x){return x.id===id||x.name===id;});return m?m.name:id;})(activeRequest.approverId) + '</strong></span>' +
+          '<span class="approval-status-strip-text"><i class="fa-solid fa-clock"></i> Approval Pending â waiting for <strong>' + (function(id){try{var ms=_allMembersSync();var m=ms&&ms.find(function(x){return x && (x.id===id||x.name===id||x.uid===id||x.userId===id);});return (m && (m.name||m.id))||id;}catch(_){return id;}})(activeRequest.approverId) + '</strong></span>' +
           '</div>';
         injectBadge('pending');
         if (isApprover) container.appendChild(ApprovalUI.renderDecisionInterface(activeRequest));
