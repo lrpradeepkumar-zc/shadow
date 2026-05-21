@@ -96,26 +96,64 @@ function getCurrentUserId() {
   var s = window.state;
   return s ? (s.currentUserId || s.currentUserName || 'Unknown') : 'Unknown';
 }
-function getGroupMembers(groupId) {
+// Normalize members source: state.members can be array, plain object, or empty.
+// Falls back to ShadowDB.Members cache to avoid crashes in approval flow.
+function _normalizeMembers(raw) {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw;
+  if (typeof raw === 'object') {
+    try { return Object.values(raw); } catch (e) { return []; }
+  }
+  return [];
+}
+function _allMembersSync() {
   var s = window.state;
-  if (!s || !s.members) return [];
-  var grp = s.groups && s.groups.find(function(g){return g.id===groupId;});
-  var adminIds = grp ? (grp.adminIds||[]) : [];
-  var memberIds = grp ? (grp.memberIds||[]) : [];
+  var arr = _normalizeMembers(s && s.members);
+  if (arr.length > 0) return arr;
+  // Fallback: ShadowDB cached list (already loaded at boot)
+  try {
+    if (typeof ShadowDB !== 'undefined' && ShadowDB.Members && ShadowDB.Members._cache) {
+      var c = ShadowDB.Members._cache;
+      if (Array.isArray(c)) return c;
+    }
+  } catch(e) {}
+  return [];
+}
+function getGroupMembers(groupId) {
+  var all = _allMembersSync();
+  if (!all.length) return [];
+  var s = window.state;
+  var grp = s && s.groups && s.groups.find(function(g){return g.id===groupId;});
+  var adminIds = (grp && grp.adminIds) || [];
+  var memberIds = (grp && grp.memberIds) || [];
   var allIds = adminIds.concat(memberIds);
-  // Return all members if no group or return group members
-  return s.members.filter(function(m){
-    return allIds.length === 0 || allIds.indexOf(m.id) !== -1 || adminIds.indexOf(m.id) !== -1;
+  // If group has no membership metadata, surface all known members
+  if (!allIds.length) return all;
+  return all.filter(function(m){
+    var mid = m && (m.id || m.uid || m.userId);
+    return allIds.indexOf(mid) !== -1;
   });
 }
 function isGroupAdmin(groupId, userId) {
   var s = window.state;
   if (!s) return false;
   var grp = s.groups && s.groups.find(function(g){return g.id===groupId;});
-  if (!grp) return false;
-  var user = s.members && s.members.find(function(m){return m.id===userId||m.name===userId;});
-  if (!user) return false;
-  return (grp.adminIds||[]).indexOf(user.id) !== -1 || user.role === 'admin' || user.role === 'Owner';
+  // Normalize members source and tolerate missing user record
+  var all = _allMembersSync();
+  var user = all.find(function(m){
+    return m && (m.id===userId || m.uid===userId || m.userId===userId || m.name===userId);
+  });
+  if (user) {
+    var r = user.role;
+    if (r === 'admin' || r === 'Admin' || r === 'Owner' || r === 'group_admin' || r === 'Moderator') return true;
+    if (grp && (grp.adminIds||[]).indexOf(user.id) !== -1) return true;
+  }
+  // Fallback to state.currentUserRole for the active user
+  if ((userId === (s.currentUserId) || userId === (s.currentUserName)) && s.currentUserRole) {
+    var cr = String(s.currentUserRole).toLowerCase();
+    if (cr === 'admin' || cr === 'owner' || cr === 'group_admin' || cr === 'moderator') return true;
+  }
+  return false;
 }
 
 // Patch ApprovalWorkflow if it exists
@@ -316,10 +354,18 @@ if (typeof ApprovalWorkflow !== 'undefined') {
   ApprovalWorkflow.getAvailableApprovers = function(groupId) {
     var members = getGroupMembers(groupId);
     if (!members || members.length === 0) {
-      var s = window.state;
-      members = (s && s.members) || [];
+      // Last-resort: try ShadowDB (async) so settings UI always populates.
+      try {
+        if (typeof ShadowDB !== 'undefined' && ShadowDB.Members && ShadowDB.Members.getAll) {
+          return Promise.resolve(ShadowDB.Members.getAll()).then(function(arr){
+            var out = _normalizeMembers(arr);
+            return out.filter(function(m){ return m && m.name !== 'System'; });
+          }).catch(function(){ return []; });
+        }
+      } catch(e) {}
+      members = _allMembersSync();
     }
-    return Promise.resolve(members.filter(function(m){return m.name!=='System';}));
+    return Promise.resolve(members.filter(function(m){ return m && m.name !== 'System'; }));
   };
 
   // Patch isGroupAdmin
