@@ -12,7 +12,7 @@
 'use strict';
 
 /* âââââââââââââââââââââââââââââââââââââââââââââââ
-   PART 1 â localStorage Storage Engine
+   PART 1 \u2014 localStorage Storage Engine
    Replaces broken IndexedDB in approval-backend.js
    âââââââââââââââââââââââââââââââââââââââââââââââ */
 /* ============================================================
@@ -24,13 +24,51 @@
     _sb: function() { return (window.ShadowDB && ShadowDB._sb) ? ShadowDB._sb : null; },
     _tableMap: { settings: 'approval_settings_tbl', requests: 'approval_requests', audit: 'approval_audit' },
 
+    /* Map app object (camelCase) -> DB row (snake_case) per store. Non-mapped stores pass through. */
+    _toDb: function(store, obj) {
+      if (store === 'settings') {
+        var row = {
+          group_id: obj.groupId,
+          enabled: !!obj.enabled,
+          mandate_approval: !!obj.mandateApproval,
+          default_approver: obj.defaultApprover || null
+        };
+        return row;
+      }
+      return obj;
+    },
+    /* Map DB row -> app object */
+    _fromDb: function(store, row) {
+      if (!row) return row;
+      if (store === 'settings') {
+        return {
+          groupId: row.group_id,
+          enabled: !!row.enabled,
+          mandateApproval: !!row.mandate_approval,
+          defaultApprover: row.default_approver || null,
+          defaultApproverType: 'member'
+        };
+      }
+      return row;
+    },
+    /* Conflict column for upsert per store */
+    _conflictKey: function(store) {
+      return store === 'settings' ? 'group_id' : 'id';
+    },
+    /* Field used to locate a row when deleting (settings has no id) */
+    _matchField: function(store, obj) {
+      if (store === 'settings') return { col: 'group_id', val: obj && (obj.groupId || obj.group_id) };
+      return { col: 'id', val: obj && obj.id };
+    },
+
     /* Load all data for a store from Supabase into cache */
     preload: function(store, cb) {
       var sb = this._sb();
       var self = this;
       if (!sb) { cb && cb([]); return; }
       sb.from(self._tableMap[store]).select('*').then(function(res) {
-        self._cache[store] = res.data || [];
+        var rows = res.data || [];
+        self._cache[store] = rows.map(function(r){ return self._fromDb(store, r); });
         cb && cb(self._cache[store]);
       });
     },
@@ -57,7 +95,7 @@
       this._cache[store] = this._cache[store] || [];
       this._cache[store].push(obj);
       if (sb) {
-        sb.from(self._tableMap[store]).insert(obj).then(function(res) {
+        sb.from(self._tableMap[store]).insert(self._toDb(store, obj)).then(function(res) {
           if (res.error) console.warn('[Approval] insert error:', res.error.message);
         });
       }
@@ -71,7 +109,7 @@
       if (idx >= 0) arr[idx] = obj; else arr.push(obj);
       this._cache[store] = arr;
       if (sb) {
-        sb.from(self._tableMap[store]).upsert(obj, { onConflict: 'id' }).then(function(res) {
+        sb.from(self._tableMap[store]).upsert(self._toDb(store, obj), { onConflict: self._conflictKey(store) }).then(function(res) {
           if (res.error) console.warn('[Approval] upsert error:', res.error.message);
         });
       }
@@ -91,7 +129,7 @@
   var LS = SB;;
 
 /* âââââââââââââââââââââââââââââââââââââââââââââââ
-   PART 2 â Patch ApprovalWorkflow backend
+   PART 2 \u2014 Patch ApprovalWorkflow backend
    âââââââââââââââââââââââââââââââââââââââââââââââ */
 function getCurrentUser() {
   var s = window.state;
@@ -397,7 +435,7 @@ if (typeof ApprovalWorkflow !== 'undefined') {
 }
 
 /* âââââââââââââââââââââââââââââââââââââââââââââââ
-   PART 3 â Patch ApprovalUI
+   PART 3 \u2014 Patch ApprovalUI
    âââââââââââââââââââââââââââââââââââââââââââââââ */
 if (typeof ApprovalUI !== 'undefined') {
 
@@ -432,7 +470,7 @@ if (typeof ApprovalUI !== 'undefined') {
         var isApprover = activeRequest.approverId === currentUser || activeRequest.approverId === currentUserId;
         container.innerHTML =
           '<div class="approval-status-strip pending">' +
-          '<span class="approval-status-strip-text"><i class="fa-solid fa-clock"></i> Approval Pending â waiting for <strong>' + (function(id){try{var ms=_allMembersSync();var m=ms&&ms.find(function(x){return x && (x.id===id||x.name===id||x.uid===id||x.userId===id);});return (m && (m.name||m.id))||id;}catch(_){return id;}})(activeRequest.approverId) + '</strong></span>' +
+          '<span class="approval-status-strip-text"><i class="fa-solid fa-clock"></i> Approval Pending \u2014 waiting for <strong>' + (function(id){try{var ms=_allMembersSync();var m=ms&&ms.find(function(x){return x && (x.id===id||x.name===id||x.uid===id||x.userId===id);});return (m && (m.name||m.id))||id;}catch(_){return id;}})(activeRequest.approverId) + '</strong></span>' +
           '</div>';
         injectBadge('pending');
         if (isApprover) container.appendChild(ApprovalUI.renderDecisionInterface(activeRequest));
@@ -452,7 +490,7 @@ if (typeof ApprovalUI !== 'undefined') {
       } else if (latestRequest && latestRequest.status === 'rejected') {
         container.innerHTML =
           '<div class="approval-status-strip rejected" style="background:#fff5f5;border-left:4px solid #e53e3e">' +
-          '<span class="approval-status-strip-text" style="color:#e53e3e"><i class="fa-solid fa-xmark-circle"></i> Rejected â ' + (latestRequest.rejectionCategory||'') + '</span>' +
+          '<span class="approval-status-strip-text" style="color:#e53e3e"><i class="fa-solid fa-xmark-circle"></i> Rejected \u2014 ' + (latestRequest.rejectionCategory||'') + '</span>' +
           '</div>';
         injectBadge('rejected');
         if (canRequest) {
@@ -703,7 +741,7 @@ if (typeof ApprovalUI !== 'undefined') {
 }
 
 /* âââââââââââââââââââââââââââââââââââââââââââââââ
-   PART 4 â Poll-based task detail approval injector (C2+C3)
+   PART 4 \u2014 Poll-based task detail approval injector (C2+C3)
    Uses setInterval to reliably detect task panel open state
    âââââââââââââââââââââââââââââââââââââââââââââââ */
 function setupTaskDetailObserver() {
@@ -750,7 +788,7 @@ function setupTaskDetailObserver() {
 }
 
 /* âââââââââââââââââââââââââââââââââââââââââââââââ
-   PART 5 â Hook into status change (C5: Mandate)
+   PART 5 \u2014 Hook into status change (C5: Mandate)
    âââââââââââââââââââââââââââââââââââââââââââââââ */
 function hookStatusChange() {
   var detailStatus = document.getElementById('detailStatus');
@@ -791,7 +829,7 @@ function hookStatusChange() {
 }
 
 /* âââââââââââââââââââââââââââââââââââââââââââââââ
-   PART 6 â Fix settings panel auto-render (C7+C8)
+   PART 6 \u2014 Fix settings panel auto-render (C7+C8)
    âââââââââââââââââââââââââââââââââââââââââââââââ */
 function patchSettingsPanel() {
   document.querySelectorAll('.task-settings-nav-item').forEach(function(item) {
@@ -870,7 +908,7 @@ function patchSettingsToggle(mount, groupId) {
 }
 
 /* âââââââââââââââââââââââââââââââââââââââââââââââ
-   PART 7 â approval:ui:refresh event handler (C2)
+   PART 7 \u2014 approval:ui:refresh event handler (C2)
    âââââââââââââââââââââââââââââââââââââââââââââââ */
 function setupRefreshListener() {
   if (window._approvalRefreshPatched) return;
@@ -917,7 +955,7 @@ function setupRefreshListener() {
 }
 
 /* âââââââââââââââââââââââââââââââââââââââââââââââ
-   PART 8 â Bridge Approval Notifications â Unified Bell
+   PART 8 \u2014 Bridge Approval Notifications â Unified Bell
    Removes duplicate left bell; routes ApprovalWorkflow events to notification-bell.js
 âââââââââââââââââââââââââââââââââââââââââââââââ */
 function bridgeApprovalNotifications() {
