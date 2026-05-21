@@ -11,7 +11,7 @@
     sortBy: 'dueDate',
     sortDir: 'desc',
     groupBy: 'dueDate',
-    filterGroup: null,h
+    filterGroup: null,
     filterTag: null,
     filterAssignee: null,
     filterCreatedBy: null,
