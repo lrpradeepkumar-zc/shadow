@@ -182,14 +182,26 @@ const ApprovalUI = (function() {
 
         injectHeaderBadge('approved');
       } else if (latestRequest && latestRequest.status === 'changes_requested') {
-        container.innerHTML =
-          '<div class="approval-status-strip changes-requested">' +
-            '<span class="approval-status-strip-text">' +
-              '<i class="fa-solid fa-rotate-left"></i> Changes Requested' +
-            '</span>' +
-          '</div>';
-
-        injectHeaderBadge('changes');
+        // Distinguish "Declined" (has rejectionCategory) from "Changes Requested" (feedback only)
+        const wasDeclined = !!latestRequest.rejectionCategory;
+        if (wasDeclined) {
+          container.innerHTML =
+            '<div class="approval-status-strip declined">' +
+              '<span class="approval-status-strip-text">' +
+                '<i class="fa-solid fa-circle-xmark"></i> Declined' +
+                (latestRequest.rejectionCategory ? ' \u2014 ' + latestRequest.rejectionCategory : '') +
+              '</span>' +
+            '</div>';
+          injectHeaderBadge('declined');
+        } else {
+          container.innerHTML =
+            '<div class="approval-status-strip changes-requested">' +
+              '<span class="approval-status-strip-text">' +
+                '<i class="fa-solid fa-rotate-left"></i> Changes Requested' +
+              '</span>' +
+            '</div>';
+          injectHeaderBadge('changes');
+        }
 
         if (canRequest) {
           const resubmitBtn = document.createElement('button');
@@ -240,11 +252,13 @@ const ApprovalUI = (function() {
     badge.className = 'approval-header-badge ' + type;
 
     if (type === 'pending') {
-      badge.innerHTML = 'Approval  Requested';
+      badge.innerHTML = 'Approval Requested';
     } else if (type === 'approved') {
-      badge.innerHTML = 'Approval  Requested';
+      badge.innerHTML = 'Approved';
+    } else if (type === 'declined') {
+      badge.innerHTML = 'Declined';
     } else {
-      badge.innerHTML = 'Changes  Requested';
+      badge.innerHTML = 'Changes Requested';
     }
 
     headerRight.insertBefore(badge, headerRight.firstChild);
