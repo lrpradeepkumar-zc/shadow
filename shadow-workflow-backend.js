@@ -169,6 +169,15 @@
         var all = engine.getAllRules() || [];
         rule = all.find(function(r){ return r && r.trigger && r.trigger.type === 'webhook' && (r.state === 'published' || r.state === 'active'); }) || all[0];
       }
+      // Fallback: read rules directly from DB if engine in-memory cache is empty (e.g., this is a headless/background session)
+      if (!rule) {
+        try{
+          var sres = await sb.from('settings').select('value').eq('owner_id', owner).eq('key', 'workflow_rules').maybeSingle();
+          var rulesArr = sres.data && sres.data.value ? JSON.parse(sres.data.value) : [];
+          if (ruleId) rule = rulesArr.find(function(r){ return r && r.id === ruleId; });
+          if (!rule) rule = rulesArr.find(function(r){ return r && r.trigger && r.trigger.type === 'webhook' && (r.state === 'published' || r.state === 'active'); }) || rulesArr[0];
+        }catch(_){}
+      }
       if (!rule) throw new Error('No matching workflow rule for webhook');
       var inst = await Backend.trigger({ rule: rule, payload: saved.payload, triggerType: 'webhook', source: 'webhook' });
       await sb.from(Backend.TABLES.WEBHOOKS).update({ status: 'processed', instance_id: inst.id, processed_at: nowIso() }).eq('id', saved.id);
@@ -219,8 +228,9 @@
           var row = p.new || p.old;
           if (!row || (row.key !== 'workflow_rules' && row.key !== 'workflow_logs')) return;
           // Re-hydrate engine rules from DB so UI reflects external/other-session changes immediately.
-          if (window.WorkflowEngine && typeof window.WorkflowEngine.init === 'function'){
-            window.WorkflowEngine.init().catch(function(){});
+          if (window.WorkflowEngine){
+            // engine.init() short-circuits if already initialized; use reloadEngineRules to force-resync from DB.
+            Backend.reloadEngineRules().catch(function(){});
           }
           if (window.WorkflowEngine && typeof window.WorkflowEngine.emit === 'function') window.WorkflowEngine.emit('rules:reloaded', p);
         }catch(_){}
@@ -238,6 +248,34 @@
   };
 
   // ---------- Boot ----------
+  // Force-reload engine rules from DB regardless of internal 'initialized' guard.
+  // The core engine.init() short-circuits if already initialized, so realtime cross-session updates need this.
+  Backend.reloadEngineRules = async function(){
+    try{
+      var sb = getSb(); if (!sb) return 0;
+      var owner = getOwnerId() || (await getOwnerIdAsync()); if (!owner) return 0;
+      var sres = await sb.from('settings').select('value').eq('owner_id', owner).eq('key', 'workflow_rules').maybeSingle();
+      var dbRules = sres.data && sres.data.value ? JSON.parse(sres.data.value) : [];
+      var eng = window.WorkflowEngine;
+      if (!eng) return 0;
+      var inMem = (eng.getAllRules && eng.getAllRules()) || [];
+      var inMemIds = new Set(inMem.map(function(r){ return r && r.id; }));
+      var dbIds = new Set(dbRules.map(function(r){ return r && r.id; }));
+      // Add new rules to engine in-memory cache via addRule (which also writes back to settings, idempotent)
+      for (var i=0;i<dbRules.length;i++){
+        var r = dbRules[i];
+        if (!inMemIds.has(r.id) && typeof eng.addRule === 'function'){ try{ await eng.addRule(r); }catch(_){} }
+        else if (typeof eng.updateRule === 'function'){ try{ await eng.updateRule(r.id, r); }catch(_){} }
+      }
+      // Remove rules that no longer exist in DB
+      for (var j=0;j<inMem.length;j++){
+        var rr = inMem[j];
+        if (!dbIds.has(rr.id) && typeof eng.deleteRule === 'function'){ try{ await eng.deleteRule(rr.id); }catch(_){} }
+      }
+      return dbRules.length;
+    }catch(e){ log('reloadEngineRules err', e.message); return -1; }
+  };
+
   async function boot(){
     if (!getSb()) { setTimeout(boot, 250); return; }
     // Ensure owner is resolved before subscribing
