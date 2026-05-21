@@ -480,18 +480,37 @@ function setupApprovalSettings() {
 
         // Mount the approval settings panel
         var mount = document.getElementById('approvalSettingsMount');
-        if (mount && typeof ApprovalUI !== 'undefined' && currentGroup) {
+        // Resolve current group safely (no undefined ReferenceError).
+        // Prefer settings.js' own currentGroupId/groupsData, then window.state.filterGroup, else first available group.
+        var _resolvedGroup = null;
+        try {
+          if (typeof currentGroupId !== 'undefined' && currentGroupId && typeof groupsData !== 'undefined' && Array.isArray(groupsData)) {
+            _resolvedGroup = groupsData.find(function(g){ return g.id === currentGroupId; }) || null;
+          }
+          if (!_resolvedGroup && window.state) {
+            var fg = window.state.filterGroup;
+            if (fg && window.state.groups) {
+              _resolvedGroup = window.state.groups.find(function(g){ return g.id === fg; }) || null;
+            }
+            if (!_resolvedGroup && window.state.groups && window.state.groups[0]) {
+              _resolvedGroup = window.state.groups[0];
+            }
+          }
+        } catch(_e) {}
+        if (mount && typeof ApprovalUI !== 'undefined' && _resolvedGroup) {
           mount.innerHTML = ''; // Clear previous
           try {
             await ShadowDB.init();
             await ApprovalWorkflow.init();
-            var groupId = currentGroup.id;
+            var groupId = _resolvedGroup.id;
             var panel = await ApprovalUI.renderSettingsPanel(groupId);
             mount.appendChild(panel);
           } catch(e) {
             mount.innerHTML = '<p style="color:var(--text-secondary)">Unable to load approval settings. Make sure the database is initialized.</p>';
             console.error('Approval settings error:', e);
           }
+        } else if (mount && typeof ApprovalUI !== 'undefined' && !_resolvedGroup) {
+          mount.innerHTML = '<p style="color:var(--text-secondary)">Select a group to configure approval settings.</p>';
         }
       }
     });
