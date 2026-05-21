@@ -498,16 +498,21 @@ function setupApprovalSettings() {
           }
         } catch(_e) {}
         if (mount && typeof ApprovalUI !== 'undefined' && _resolvedGroup) {
-          mount.innerHTML = ''; // Clear previous
-          try {
-            await ShadowDB.init();
-            await ApprovalWorkflow.init();
-            var groupId = _resolvedGroup.id;
-            var panel = await ApprovalUI.renderSettingsPanel(groupId);
-            mount.appendChild(panel);
-          } catch(e) {
-            mount.innerHTML = '<p style="color:var(--text-secondary)">Unable to load approval settings. Make sure the database is initialized.</p>';
-            console.error('Approval settings error:', e);
+          // If shadow-approval-patch.js already rendered the panel (single source of truth),
+          // do not re-render here to avoid duplicated cards.
+          var _alreadyRendered = mount.querySelector && mount.querySelector('.approval-settings-card');
+          if (!_alreadyRendered) {
+            mount.innerHTML = ''; // Clear previous
+            try {
+              await ShadowDB.init();
+              await ApprovalWorkflow.init();
+              var groupId = _resolvedGroup.id;
+              var panel = await ApprovalUI.renderSettingsPanel(groupId);
+              mount.appendChild(panel);
+            } catch(e) {
+              mount.innerHTML = '<p style="color:var(--text-secondary)">Unable to load approval settings. Make sure the database is initialized.</p>';
+              console.error('Approval settings error:', e);
+            }
           }
         } else if (mount && typeof ApprovalUI !== 'undefined' && !_resolvedGroup) {
           mount.innerHTML = '<p style="color:var(--text-secondary)">Select a group to configure approval settings.</p>';
