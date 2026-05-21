@@ -794,20 +794,29 @@ function patchSettingsPanel() {
       var currentGroupId = s && s.filterGroup;
       if (!currentGroupId && s && s.groups && s.groups[0]) currentGroupId = s.groups[0].id;
       if (!currentGroupId || !mount) return;
-      // Avoid duplicate render: if a card is already mounted, just re-bind toggles and exit.
+      // Avoid duplicate render across concurrent click handlers (settings.js + this patch).
+      // Use a synchronous lock on the mount so the second handler exits before doing async work.
+      if (mount.dataset && mount.dataset.approvalRendering === '1') return;
       if (mount.querySelector && mount.querySelector('.approval-settings-card')) {
         try { patchSettingsToggle(mount, currentGroupId); } catch(_e) {}
         return;
       }
+      if (mount.dataset) mount.dataset.approvalRendering = '1';
       mount.innerHTML = '';
       try {
         await ApprovalWorkflow.init();
         var panel = await ApprovalUI.renderSettingsPanel(currentGroupId);
-        mount.appendChild(panel);
-        // After mounting, patch the toggle to properly show/hide sub-sections
-        patchSettingsToggle(mount, currentGroupId);
+        // Re-check after await in case another handler raced and already rendered
+        if (mount.querySelector('.approval-settings-card')) {
+          try { patchSettingsToggle(mount, currentGroupId); } catch(_e) {}
+        } else {
+          mount.appendChild(panel);
+          patchSettingsToggle(mount, currentGroupId);
+        }
       } catch(e) {
         mount.innerHTML = '<div style="padding:16px;color:red">Error loading approval settings: ' + e.message + '</div>';
+      } finally {
+        if (mount.dataset) delete mount.dataset.approvalRendering;
       }
     });
   });
