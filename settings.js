@@ -498,20 +498,28 @@ function setupApprovalSettings() {
           }
         } catch(_e) {}
         if (mount && typeof ApprovalUI !== 'undefined' && _resolvedGroup) {
-          // If shadow-approval-patch.js already rendered the panel (single source of truth),
-          // do not re-render here to avoid duplicated cards.
-          var _alreadyRendered = mount.querySelector && mount.querySelector('.approval-settings-card');
-          if (!_alreadyRendered) {
+          // Race-safe single-source-of-truth: skip if another handler is rendering or already did.
+          if (mount.dataset && mount.dataset.approvalRendering === '1') {
+            // Another handler in-flight
+          } else if (mount.querySelector && mount.querySelector('.approval-settings-card')) {
+            // Already rendered by patch or previous run
+          } else {
+            if (mount.dataset) mount.dataset.approvalRendering = '1';
             mount.innerHTML = ''; // Clear previous
             try {
               await ShadowDB.init();
               await ApprovalWorkflow.init();
               var groupId = _resolvedGroup.id;
               var panel = await ApprovalUI.renderSettingsPanel(groupId);
-              mount.appendChild(panel);
+              // Re-check after await
+              if (!mount.querySelector('.approval-settings-card')) {
+                mount.appendChild(panel);
+              }
             } catch(e) {
               mount.innerHTML = '<p style="color:var(--text-secondary)">Unable to load approval settings. Make sure the database is initialized.</p>';
               console.error('Approval settings error:', e);
+            } finally {
+              if (mount.dataset) delete mount.dataset.approvalRendering;
             }
           }
         } else if (mount && typeof ApprovalUI !== 'undefined' && !_resolvedGroup) {
