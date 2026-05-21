@@ -15,14 +15,26 @@
   function log(){ try{ console.debug.apply(console, ['[WorkflowBackend]'].concat([].slice.call(arguments))); }catch(_){} }
 
   function getSb(){ return window.ShadowDB && window.ShadowDB._sb; }
+  var _cachedOwnerId = null;
   function getOwnerId(){
     try{
+      if (_cachedOwnerId) return _cachedOwnerId;
       var s = window.state && window.state.currentUser;
-      if (s && s.ownerId) return s.ownerId;
-      if (window.ShadowDB && window.ShadowDB.ownerId) return window.ShadowDB.ownerId;
-      if (window.ShadowDB && typeof window.ShadowDB.getOwnerId === 'function') return window.ShadowDB.getOwnerId();
+      if (s && s.ownerId) return (_cachedOwnerId = s.ownerId);
+      if (window.ShadowDB && window.ShadowDB.ownerId) return (_cachedOwnerId = window.ShadowDB.ownerId);
+      if (window.ShadowDB && typeof window.ShadowDB.getOwnerId === 'function') return (_cachedOwnerId = window.ShadowDB.getOwnerId());
     }catch(_){}
     return null;
+  }
+  async function getOwnerIdAsync(){
+    var sync = getOwnerId(); if (sync) return sync;
+    try{
+      var sb = getSb(); if (!sb || !sb.auth) return null;
+      var sess = await sb.auth.getSession();
+      var uid = sess && sess.data && sess.data.session && sess.data.session.user && sess.data.session.user.id;
+      if (uid) _cachedOwnerId = uid;
+      return uid || null;
+    }catch(_){ return null; }
   }
 
   var Backend = {
@@ -35,7 +47,7 @@
   // ---------- Instance CRUD ----------
   Backend.createInstance = async function(opts){
     var sb = getSb(); if(!sb) throw new Error('Supabase not ready');
-    var owner = opts.ownerId || getOwnerId();
+    var owner = opts.ownerId || getOwnerId() || (await getOwnerIdAsync());
     if (!owner) throw new Error('No owner_id; user must be signed in to persist workflow state');
     var row = {
       id: opts.id || uid('inst'),
@@ -82,7 +94,7 @@
     var sb = getSb(); if(!sb) return [];
     filter = filter || {};
     var q = sb.from(Backend.TABLES.INSTANCES).select('*');
-    var owner = filter.ownerId || getOwnerId();
+    var owner = filter.ownerId || getOwnerId() || (await getOwnerIdAsync());
     if (owner) q = q.eq('owner_id', owner);
     if (filter.ruleId) q = q.eq('rule_id', filter.ruleId);
     if (filter.status) q = q.eq('status', filter.status);
@@ -131,7 +143,7 @@
   // Records the incoming webhook to DB first, then resolves the rule and triggers.
   Backend.webhook = async function(opts){
     var sb = getSb(); if(!sb) throw new Error('Supabase not ready');
-    var owner = opts.ownerId || getOwnerId();
+    var owner = opts.ownerId || getOwnerId() || (await getOwnerIdAsync());
     if (!owner) throw new Error('No owner_id; cannot persist webhook');
     var hook = {
       id: opts.id || uid('hook'),
@@ -173,7 +185,7 @@
   //   (b) re-attempt if rule still exists. Default: only mark stale (>10m running) as failed, leave fresh as-is.
   Backend.resumePending = async function(){
     var sb = getSb(); if(!sb) return { resumed: 0, stale: 0 };
-    var owner = getOwnerId(); if (!owner) return { resumed: 0, stale: 0 };
+    var owner = getOwnerId() || (await getOwnerIdAsync()); if (!owner) return { resumed: 0, stale: 0 };
     var staleCutoff = new Date(Date.now() - 10*60*1000).toISOString();
     var res = await sb.from(Backend.TABLES.INSTANCES).select('id,status,updated_at').eq('owner_id', owner).in('status', [Backend.Status.PENDING, Backend.Status.RUNNING]);
     if (res.error) { log('resumePending err', res.error.message); return { resumed: 0, stale: 0 }; }
@@ -186,10 +198,10 @@
   };
 
   // ---------- Realtime subscriptions ----------
-  Backend.subscribe = function(){
+  Backend.subscribe = async function(){
     var sb = getSb(); if(!sb) return;
     if (Backend._channels.instances) return; // idempotent
-    var owner = getOwnerId();
+    var owner = getOwnerId() || (await getOwnerIdAsync());
     var ch = sb.channel('wf_inst_' + (owner || 'all'))
       .on('postgres_changes', { event: '*', schema: 'public', table: Backend.TABLES.INSTANCES }, function(p){
         try{
@@ -226,9 +238,11 @@
   };
 
   // ---------- Boot ----------
-  function boot(){
+  async function boot(){
     if (!getSb()) { setTimeout(boot, 250); return; }
-    Backend.subscribe();
+    // Ensure owner is resolved before subscribing
+    await getOwnerIdAsync();
+    await Backend.subscribe();
     // Best-effort cleanup of stale instances from prior sessions:
     Backend.resumePending().catch(function(){});
   }
