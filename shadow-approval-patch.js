@@ -425,6 +425,8 @@ if (typeof ApprovalUI !== 'undefined') {
       var latestRequest = allRequests.sort(function(a,b){return new Date(b.createdAt)-new Date(a.createdAt);})[0];
       var adminCheck = await ApprovalWorkflow.isGroupAdmin(groupId, currentUserId);
       var isAdmin = adminCheck || await ApprovalWorkflow.isGroupAdmin(groupId, currentUser);
+      // Group admins can also request approval on behalf of the team
+      canRequest = canRequest || isAdmin;
 
       if (activeRequest) {
         var isApprover = activeRequest.approverId === currentUser || activeRequest.approverId === currentUserId;
