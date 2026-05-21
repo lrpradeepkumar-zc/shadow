@@ -49,6 +49,11 @@
     add: function(store, obj) {
       var sb = this._sb();
       var self = this;
+      // Ensure object always has a unique id so subsequent get/put can locate it.
+      if (!obj.id) {
+        obj.id = (store==='requests' ? 'areq_' : store==='audit' ? 'aud_' : 'as_') +
+                 Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+      }
       this._cache[store] = this._cache[store] || [];
       this._cache[store].push(obj);
       if (sb) {
@@ -56,6 +61,7 @@
           if (res.error) console.warn('[Approval] insert error:', res.error.message);
         });
       }
+      return obj.id;
     },
     put: function(store, obj) {
       var sb = this._sb();
