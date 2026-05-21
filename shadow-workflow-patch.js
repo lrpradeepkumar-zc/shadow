@@ -462,3 +462,23 @@
     (document.head || document.documentElement).appendChild(s);
   })();
 })();
+
+
+// ----- Empty-state button styling fix (Browse Templates) -----
+(function(){
+  try {
+    var s = document.createElement('style');
+    s.id = 'shadow-wf-empty-btn-fix';
+    s.textContent = [
+      '.wf-empty .wf-btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; font-size: 13px; font-weight: 500; border-radius: 6px; border: 1px solid transparent; cursor: pointer; line-height: 1.4; transition: background-color .15s ease, box-shadow .15s ease; }',
+      '.wf-empty .wf-btn.primary { background: #1a73e8; color: #fff; border-color: #1a73e8; }',
+      '.wf-empty .wf-btn.primary:hover { background: #1666c9; border-color: #1666c9; }',
+      '.wf-empty .wf-btn .fa-shapes { display: none; }',
+      '.wf-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 48px 24px; color: #5f6368; text-align: center; }',
+      '.wf-empty > i { font-size: 32px; color: #9aa0a6; margin-bottom: 12px; }',
+      '.wf-empty h3 { margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #202124; }',
+      '.wf-empty p { margin: 0 0 16px 0; font-size: 13px; color: #5f6368; }'
+    ].join('\n');
+    if (!document.getElementById(s.id)) document.head.appendChild(s);
+  } catch (e) { console.warn('[shadow-wf-patch] empty-state CSS inject failed', e); }
+})();
