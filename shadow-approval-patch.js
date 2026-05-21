@@ -794,6 +794,11 @@ function patchSettingsPanel() {
       var currentGroupId = s && s.filterGroup;
       if (!currentGroupId && s && s.groups && s.groups[0]) currentGroupId = s.groups[0].id;
       if (!currentGroupId || !mount) return;
+      // Avoid duplicate render: if a card is already mounted, just re-bind toggles and exit.
+      if (mount.querySelector && mount.querySelector('.approval-settings-card')) {
+        try { patchSettingsToggle(mount, currentGroupId); } catch(_e) {}
+        return;
+      }
       mount.innerHTML = '';
       try {
         await ApprovalWorkflow.init();
