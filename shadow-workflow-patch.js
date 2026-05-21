@@ -178,11 +178,11 @@
 
   function upgradeParamInputs(root){
     if(!root) return;
-    var inputs = root.querySelectorAll('input.action-param[data-param-key]');
+    var inputs = root.querySelectorAll('input.action-param[data-param]');
     if(!inputs || !inputs.length) return;
     var users = (cache.users || []);
     Array.prototype.forEach.call(inputs, function(inp){
-      var key = inp.getAttribute('data-param-key');
+      var key = inp.getAttribute('data-param');
       if(key !== 'assignee' && key !== 'recipients' && key !== 'priority') return;
       // Already upgraded?
       if(inp.getAttribute('data-wf-upgraded') === '1') return;
@@ -203,7 +203,7 @@
         sel.innerHTML = buildUserSelect(currentVal, users);
       }
       inp.parentNode.replaceChild(sel, inp);
-      // The original code listens via event delegation on input.action-param[data-param-key].
+      // The original code listens via event delegation on input.action-param[data-param].
       // Replicate the same dispatch path on change.
       sel.addEventListener('change', function(ev){
         try{
