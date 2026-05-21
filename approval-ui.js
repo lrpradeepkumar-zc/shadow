@@ -181,9 +181,9 @@ const ApprovalUI = (function() {
           '</div>';
 
         injectHeaderBadge('approved');
-      } else if (latestRequest && latestRequest.status === 'changes_requested') {
-        // Distinguish "Declined" (has rejectionCategory) from "Changes Requested" (feedback only)
-        const wasDeclined = !!latestRequest.rejectionCategory;
+      } else if (latestRequest && (latestRequest.status === 'changes_requested' || latestRequest.status === 'rejected')) {
+        // Distinguish "Declined" (status==='rejected' OR has rejectionCategory) from "Changes Requested" (feedback only)
+        const wasDeclined = latestRequest.status === 'rejected' || !!latestRequest.rejectionCategory;
         if (wasDeclined) {
           container.innerHTML =
             '<div class="approval-status-strip declined">' +
