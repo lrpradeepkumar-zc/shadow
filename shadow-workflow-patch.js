@@ -346,4 +346,118 @@
     refresh: function(){ return refreshData(true).then(function(){ repopulateGroupSelect(true); }); },
     _cache: cache
   };
+
+  // ----- canManage fix: original engine.canManage reads window.state.groups which doesn't exist
+  //       on workflow.html, so it always returns false and disables Test/Publish/Save Draft.
+  //       Replace it with a check against ShadowDB-loaded groups (already used by populateGroupSelect above).
+  (function patchCanManage(){
+    function wireCanManage(){
+      var eng = window.WorkflowEngine;
+      if (!eng || eng.__canManagePatched) return;
+      var orig = eng.canManage;
+      eng.canManage = function(groupId, userId){
+        try{
+          if (!groupId) return false;
+          var uid = userId
+            || (window.state && (window.state.currentUserId || (window.state.currentUser && (window.state.currentUser.uid || window.state.currentUser.id))))
+            || (window.ShadowWorkflowPatch && window.ShadowWorkflowPatch._cache && window.ShadowWorkflowPatch._cache.ownerId)
+            || null;
+          // Try cache first
+          var cache = window.ShadowWorkflowPatch && window.ShadowWorkflowPatch._cache;
+          if (cache && Array.isArray(cache.groups)){
+            var g = cache.groups.find(function(x){ return x && x.id === groupId; });
+            if (g){
+              // If we found this group via the user's mapped groups, the user can manage it.
+              // (populateGroupSelect already filters to owned/member groups for the active user.)
+              return true;
+            }
+          }
+          // Fallback to the original engine logic
+          if (typeof orig === 'function') return orig.call(eng, groupId, userId);
+        }catch(_){}
+        return false;
+      };
+      eng.__canManagePatched = true;
+    }
+    if (window.WorkflowEngine) wireCanManage();
+    else { var i = setInterval(function(){ if (window.WorkflowEngine){ wireCanManage(); clearInterval(i); } }, 100); setTimeout(function(){ clearInterval(i); }, 8000); }
+  })();
+
+  // ----- Re-enable the Test/Publish/Save Draft buttons whenever the user changes group selection
+  //       (group-ui's permission check fires on change but uses the same broken canManage).
+  (function rewireGroupChange(){
+    function refreshButtons(){
+      try{
+        var sel = document.getElementById('wfGroupSelect');
+        var gid = sel && sel.value;
+        var can = gid ? window.WorkflowEngine && window.WorkflowEngine.canManage(gid) : false;
+        ['testRuleBtn','publishRuleBtn','saveRuleBtn'].forEach(function(id){
+          var b = document.getElementById(id);
+          if (!b) return;
+          if (gid && can){ b.disabled = false; b.title = ''; }
+          else if (gid && !can){ b.disabled = true; b.title = 'You need Admin or Moderator role on this group to manage rules.'; }
+          else { b.disabled = false; b.title = ''; }
+        });
+      }catch(_){}
+    }
+    function attach(){
+      var sel = document.getElementById('wfGroupSelect');
+      if (!sel || sel.__patchedRefresh) return false;
+      sel.addEventListener('change', function(){ setTimeout(refreshButtons, 50); });
+      sel.__patchedRefresh = true;
+      // Initial state
+      setTimeout(refreshButtons, 100);
+      return true;
+    }
+    if (!attach()){
+      var i = setInterval(function(){ if (attach()){ clearInterval(i); } }, 200);
+      setTimeout(function(){ clearInterval(i); }, 8000);
+    }
+    // Also expose for external triggers
+    window.ShadowWorkflowPatch = window.ShadowWorkflowPatch || {};
+    window.ShadowWorkflowPatch.refreshRuleButtons = refreshButtons;
+    // Re-run after the builder mounts (it may re-render the buttons)
+    document.addEventListener('click', function(e){
+      var t = e.target && (e.target.id || (e.target.closest && e.target.closest('button')?.id));
+      if (t === 'newRuleBtn' || t === 'createWorkflowBtn'){ setTimeout(refreshButtons, 300); }
+    }, true);
+  })();
+
+  // ----- CSS fix: workflow.css scopes the base .wf-btn rule to '.wf-header-right .wf-btn',
+  //       which leaves the canvas-header buttons (Test / Publish / Save Draft / Cancel) with
+  //       browser defaults. Inject equivalent styling, scoped to .wf-canvas-header only.
+  (function injectButtonCss(){
+    if (document.getElementById('shadow-wf-btn-fix')) return;
+    var css = [
+      '.wf-canvas-header .wf-btn {',
+      '  padding: 8px 14px;',
+      '  border-radius: 6px;',
+      '  border: 1px solid var(--border-color, #d0d4dc);',
+      '  background: var(--bg-tertiary, #f4f6fa);',
+      '  color: var(--text-primary, #1f2328);',
+      '  cursor: pointer;',
+      '  font-size: 13px;',
+      '  font-weight: 500;',
+      '  line-height: 1;',
+      '  display: inline-flex;',
+      '  align-items: center;',
+      '  gap: 6px;',
+      '  transition: background .15s, border-color .15s, color .15s, opacity .15s;',
+      '}',
+      '.wf-canvas-header .wf-btn:not(:disabled):hover { background: var(--bg-hover, #e9edf3); border-color: var(--border-color-hover, #b6bcc7); }',
+      '.wf-canvas-header .wf-btn:disabled { opacity: .55; cursor: not-allowed; }',
+      '.wf-canvas-header .wf-btn.primary { background: var(--accent-blue, #1a73e8); border-color: var(--accent-blue, #1a73e8); color: #fff; }',
+      '.wf-canvas-header .wf-btn.primary:not(:disabled):hover { background: #1666c9; border-color: #1666c9; }',
+      '.wf-canvas-header .wf-btn.success { background: var(--accent-green, #34a853); border-color: var(--accent-green, #34a853); color: #fff; }',
+      '.wf-canvas-header .wf-btn.success:not(:disabled):hover { background: #2c8f47; border-color: #2c8f47; }',
+      '.wf-canvas-header .wf-btn.danger  { background: var(--accent-red, #ea4335); border-color: var(--accent-red, #ea4335); color: #fff; }',
+      '.wf-canvas-header .wf-btn.danger:not(:disabled):hover  { background: #cf372c; border-color: #cf372c; }',
+      '.wf-canvas-header { display: flex; gap: 8px; align-items: center; }',
+      ''
+    ].join('\n');
+    var s = document.createElement('style');
+    s.id = 'shadow-wf-btn-fix';
+    s.textContent = css;
+    (document.head || document.documentElement).appendChild(s);
+  })();
 })();
