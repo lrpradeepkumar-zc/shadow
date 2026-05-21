@@ -739,11 +739,12 @@ function tmOpenApplyModal(tpl, isPreset) {
     var group = overlay.querySelector('#tm-apply-group') && overlay.querySelector('#tm-apply-group').value || '';
     var priorityOverride = overlay.querySelector('#tm-apply-priority') && overlay.querySelector('#tm-apply-priority').value || '';
     var appliedPriority = priorityOverride || tpl.priority || 'Medium';
+    var applyStartDate = overlay.querySelector('#tm-apply-start') && overlay.querySelector('#tm-apply-start').value || '';
     overlay.remove();
     tmCloseLibrary();
     setTimeout(function() {
       if (typeof window.ntmResetAndOpenWith === 'function') {
-        window.ntmResetAndOpenWith({ groupId: group });
+        window.ntmResetAndOpenWith({ groupId: group, subtasks: tpl.subtasks || [], startDate: applyStartDate || null });
       } else {
         var m = document.getElementById('taskModal'); if (m) m.style.display = 'flex';
       }
