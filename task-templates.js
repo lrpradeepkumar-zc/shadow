@@ -424,18 +424,18 @@ function tmRenderLibrary() {
       '<span>' + p.emoji + '</span>' + tmEsc(p.name.length > 18 ? p.name.slice(0, 18) + '\u2026' : p.name) + '</div>';
   }).join('');
   var gridContent = myFiltered.length === 0 ? tmRenderEmptyState() : '<div class="tm-grid">' + myFiltered.map(tmRenderCard).join('') + '</div>';
-  var groupSelector = '';
+  var lhsGroupSelector = '';
   if (TM.activeFilter === 'group') {
     var userGroups = tmGetGroups().filter(function(g) { return !g.isPersonal && String(g.id).indexOf('pg_') !== 0; });
     var gOpts = '<option value="">Select a group...</option>' + userGroups.map(function(g) { return '<option value="' + g.id + '"' + (TM.selectedGroupId === g.id ? ' selected' : '') + '>' + tmEsc(g.name) + '</option>'; }).join('');
-    groupSelector = '<div class="tm-group-selector" style="padding:12px 16px;border-bottom:1px solid var(--border-color);background:var(--bg-secondary);"><label style="font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px;"><i class="fa-solid fa-users"></i> Select Group</label><select id="tm-group-select" class="tm-select" style="width:100%;padding:6px 10px;">' + gOpts + '</select></div>';
-    gridContent = groupSelector + (TM.selectedGroupId ? gridContent : '<div class="tm-empty" style="padding:40px;text-align:center;color:var(--text-muted);"><i class="fa-solid fa-users" style="font-size:32px;margin-bottom:12px;display:block;"></i><div>Select a group above to view its templates</div></div>');
+    lhsGroupSelector = '<div class="tm-lib-section" style="margin-top:8px;"><i class="fa-solid fa-users" style="margin-right:4px;"></i>SELECT GROUP</div>' + '<div style="padding:4px 12px 12px 12px;"><select id="tm-group-select" class="tm-select" style="width:100%;padding:6px 8px;font-size:13px;">' + gOpts + '</select></div>';
+    if (!TM.selectedGroupId) gridContent = '<div class="tm-empty" style="padding:40px;text-align:center;color:var(--text-muted);"><i class="fa-solid fa-users" style="font-size:32px;margin-bottom:12px;display:block;"></i><div>Select a group from the sidebar to view its templates</div></div>';
   }
   var previewTpl = TM.previewId ? TM.find(TM.previewId) : null;
   var previewContent = previewTpl ? tmRenderPreviewContent(previewTpl) : '<div class="tm-preview-empty"><i class="fa-regular fa-eye" style="font-size:32px;color:var(--text-muted);"></i><div class="tm-preview-empty-text">Click a template to preview its structure</div></div>';
   return '<div class="tm-lib-sidebar">' +
     '<div class="tm-lib-sidebar-logo"><i class="fa-solid fa-layer-group"></i> Templates</div>' +
-    libNav + '<hr class="tm-lib-divider"><div class="tm-lib-section">PRESET TEMPLATES</div>' + presetNav + '</div>' +
+    libNav + lhsGroupSelector + '<hr class="tm-lib-divider"><div class="tm-lib-section">PRESET TEMPLATES</div>' + presetNav + '</div>' +
     '<div class="tm-library-main">' +
     '<div class="tm-library-header">' +
     '<div class="tm-library-title" style="display:none;"></div>' +
