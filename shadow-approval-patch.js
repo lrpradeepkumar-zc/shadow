@@ -208,12 +208,23 @@ if (typeof ApprovalWorkflow !== 'undefined') {
 
   // Patch Settings to use localStorage
   ApprovalWorkflow.Settings.get = function(groupId) {
-    var arr = LS.getAll('settings');
-    var r = arr.find(function(x){return x.groupId===groupId;});
-    return Promise.resolve(r || {
+    var defaults = {
       groupId: groupId, enabled: false, mandateApproval: false,
       defaultApprover: null, defaultApproverType: 'member'
-    });
+    };
+    function lookup() {
+      var arr = LS.getAll('settings');
+      var r = arr.find(function(x){return x.groupId===groupId;});
+      return r || defaults;
+    }
+    // If cache is empty and Supabase client is now available, preload once before returning.
+    var arr0 = LS.getAll('settings');
+    if ((!arr0 || arr0.length === 0) && LS._sb && LS._sb()) {
+      return new Promise(function(resolve) {
+        LS.preload('settings', function(){ resolve(lookup()); });
+      });
+    }
+    return Promise.resolve(lookup());
   };
   ApprovalWorkflow.Settings.save = function(settings) {
     LS.put('settings', settings);
@@ -1017,13 +1028,18 @@ function bridgeApprovalNotifications() {
    MAIN BOOT
    âââââââââââââââââââââââââââââââââââââââââââââââ */
 function boot() {
-    /* === Preload Supabase data into SB cache === */
+  /* Wait for ShadowDB Supabase client AND ApprovalWorkflow/UI before preloading & wiring. */
+  var sbReady = !!(window.ShadowDB && window.ShadowDB._sb);
+  if (!sbReady || typeof ApprovalWorkflow === 'undefined' || typeof ApprovalUI === 'undefined') {
+    setTimeout(boot, 300);
+    return;
+  }
+  /* === Preload Supabase data into SB cache (only now that _sb is ready) === */
+  if (!window._approvalSbPreloaded) {
+    window._approvalSbPreloaded = true;
     SB.preload('settings', function() {});
     SB.preload('requests', function() {});
     SB.preload('audit', function() {});
-  if (typeof ApprovalWorkflow === 'undefined' || typeof ApprovalUI === 'undefined') {
-    setTimeout(boot, 300);
-    return;
   }
   try {
     setupTaskDetailObserver();
