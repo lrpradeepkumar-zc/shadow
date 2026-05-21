@@ -15,6 +15,10 @@
  *        - assignee param becomes a <select> of valid users from DB
  *        - priority param becomes a <select> of valid enum values
  *        - group dropdown only shows groups mapped to the current user
+ *   5. ShadowDB.Settings.get for owner-scoped keys (workflow_rules,
+ *      workflow_logs): the original .maybeSingle() throws once >1 user
+ *      has a row. We add the missing owner_id filter so each user reads
+ *      only their own row.
  *
  * CRITICAL: This patch only touches Workflow logic and the Group settings
  * Assigned-Workflows surface. It does not alter any other flow or layout.
@@ -60,13 +64,10 @@
   async function loadGroupsMappedToUser(uid){
     var c = sb(); if(!c) return [];
     try{
-      // 1) Owner of group
       var ownedRes = await c.from('groups').select('id,name').eq('owner_id', uid);
       var owned = (ownedRes && ownedRes.data) || [];
-      // 2) Member rows authored by user (owner_id == uid)
       var m1Res = await c.from('members').select('group_id').eq('owner_id', uid);
       var m1 = (m1Res && m1Res.data) || [];
-      // 3) Member rows pointing to this user via data.userId / data.uid
       var m2Res = await c.from('members').select('group_id, data');
       var m2 = (m2Res && m2Res.data) || [];
       var ids = {};
@@ -78,15 +79,12 @@
       });
       var groupIds = Object.keys(ids);
       if(!groupIds.length) return [];
-      // Resolve missing names
       var gRes = await c.from('groups').select('id,name').in('id', groupIds);
       var gArr = (gRes && gRes.data) || [];
-      // Only return groups that exist in the groups table (DB parity)
       var byId = {};
       gArr.forEach(function(g){ byId[g.id] = g; });
       var out = [];
       groupIds.forEach(function(id){ if(byId[id]) out.push(byId[id]); });
-      // Sort alphabetically
       out.sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); });
       return out;
     }catch(e){ log('loadGroupsMappedToUser error', e); return []; }
@@ -118,7 +116,7 @@
   function paintGroupSelect(sel, groups, currentValue){
     if(!sel) return;
     var prev = currentValue != null ? currentValue : sel.value;
-    var html = '<option value="">Select group…</option>';
+    var html = '<option value="">Select group\u2026</option>';
     for(var i=0;i<groups.length;i++){
       var g = groups[i];
       var safe = String(g.name == null ? g.id : g.name).replace(/&/g,'&amp;').replace(/</g,'&lt;');
@@ -140,14 +138,12 @@
   }
 
   // ---------------------------------------------- Action params patcher --
-  // Replace input fields for 'assignee' and 'priority' inside the
-  // currently-rendered actions list with select dropdowns sourced from DB.
   var PRIORITY_VALUES = ['Low','Medium','High','Urgent'];
 
   function htmlEscape(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
   function buildUserSelect(currentValue, users){
-    var opts = '<option value="">Select user…</option>';
+    var opts = '<option value="">Select user\u2026</option>';
     var found = false;
     users.forEach(function(u){
       var v = u.name || u.email || u.id;
@@ -155,7 +151,6 @@
       if(s) found = true;
       opts += '<option value="'+htmlEscape(v)+'"'+s+'>'+htmlEscape(u.name || u.email || u.id)+'</option>';
     });
-    // Preserve unknown legacy values so existing rules aren't silently re-mapped.
     if(currentValue && !found){
       opts += '<option value="'+htmlEscape(currentValue)+'" selected>'+htmlEscape(currentValue)+' (legacy)</option>';
     }
@@ -163,7 +158,7 @@
   }
 
   function buildPrioritySelect(currentValue){
-    var opts = '<option value="">Select priority…</option>';
+    var opts = '<option value="">Select priority\u2026</option>';
     var found = false;
     PRIORITY_VALUES.forEach(function(p){
       var s = (currentValue === p) ? ' selected' : '';
@@ -184,42 +179,29 @@
     Array.prototype.forEach.call(inputs, function(inp){
       var key = inp.getAttribute('data-param');
       if(key !== 'assignee' && key !== 'recipients' && key !== 'priority') return;
-      // Already upgraded?
       if(inp.getAttribute('data-wf-upgraded') === '1') return;
       var currentVal = inp.value;
       var sel = document.createElement('select');
-      sel.className = inp.className.replace(/\binput\b/,'').trim();
-      // Copy data attributes
+      sel.className = inp.className;
       Array.prototype.forEach.call(inp.attributes, function(a){
-        if(a.name.indexOf('data-') === 0 || a.name === 'style' || a.name === 'class'){
-          if(a.name !== 'class') sel.setAttribute(a.name, a.value);
+        if(a.name.indexOf('data-') === 0 || a.name === 'style'){
+          sel.setAttribute(a.name, a.value);
         }
       });
       sel.setAttribute('data-wf-upgraded','1');
       if(key === 'priority'){
         sel.innerHTML = buildPrioritySelect(currentVal);
       } else {
-        // assignee or recipients (single user)
         sel.innerHTML = buildUserSelect(currentVal, users);
       }
       inp.parentNode.replaceChild(sel, inp);
-      // The original code listens via event delegation on input.action-param[data-param].
-      // Replicate the same dispatch path on change.
-      sel.addEventListener('change', function(ev){
-        try{
-          var idx = parseInt(sel.getAttribute('data-idx'), 10);
-          // Trigger an 'input' event so any delegated listener sees the new value.
-          var inputEvt = new Event('input', {bubbles:true});
-          sel.dispatchEvent(inputEvt);
-        }catch(e){}
+      sel.addEventListener('change', function(){
+        try{ sel.dispatchEvent(new Event('input', {bubbles:true})); }catch(e){}
       });
     });
   }
 
   // -------------------------- Scope/groupId enforcement on rule save --
-  // workflow-ui.js builds currentRule with scope='personal'/groupId=null
-  // by default. When the user picks a group in the builder, the rule
-  // should be saved with scope='group' + groupId=<picked>.
   function patchRuleScope(){
     var eng = window.WorkflowEngine;
     if(!eng || eng.__wfPatched) return;
@@ -247,10 +229,35 @@
     if(pickedGroup){
       data.groupId = pickedGroup;
       data.scope = 'group';
-    } else if(data.groupId === undefined && data.scope === undefined){
-      // leave defaults alone
     }
     return data;
+  }
+
+  // -------- Patch ShadowDB.Settings.get for owner-scoped keys ----------
+  // workflow_rules / workflow_logs are saved per-user but Settings.get does
+  // not filter by owner_id, which throws "multiple rows" once >1 user has
+  // a row. Add the missing filter only for these known per-user keys so
+  // each user reads only their own row (and engine.loadRules can hydrate).
+  var OWNER_SCOPED_KEYS = {'workflow_rules':1, 'workflow_logs':1};
+  function patchSettingsGet(){
+    var S = window.ShadowDB && window.ShadowDB.Settings;
+    if(!S || S.__wfPatched) return;
+    var origGet = S.get;
+    S.get = async function(key){
+      if(OWNER_SCOPED_KEYS[key]){
+        var c = sb(); if(!c) return null;
+        try{
+          var s = await c.auth.getSession();
+          var uid = s && s.data && s.data.session && s.data.session.user ? s.data.session.user.id : null;
+          if(!uid) return null;
+          var r = await c.from('settings').select('value').eq('key', key).eq('owner_id', uid).maybeSingle();
+          if(r && r.error){ log('Settings.get scoped error', r.error.message); return null; }
+          return r && r.data ? r.data.value : null;
+        }catch(e){ log('Settings.get scoped exception', e); return null; }
+      }
+      return origGet.call(S, key);
+    };
+    S.__wfPatched = true;
   }
 
   // ------------------------------------------------ Boot / observers ----
@@ -264,21 +271,15 @@
           for(var j=0;j<m.addedNodes.length;j++){
             var n = m.addedNodes[j];
             if(n.nodeType !== 1) continue;
-            // Re-populate group select if it (re)appeared
             if(n.id === 'wfGroupSelect' || (n.querySelector && n.querySelector('#wfGroupSelect'))){
               repopulateGroupSelect(false);
             }
-            // Upgrade action params on actions list re-render
             if(n.id === 'actionsList' || (n.querySelector && n.querySelector('#actionsList'))){
               upgradeParamInputs(document.getElementById('actionsList') || n);
-            }
-            if(n.classList && n.classList.contains('action-param-row')){
-              upgradeParamInputs(n.parentNode || n);
             }
           }
         }
       }
-      // Also upgrade any param inputs that appeared from in-place innerHTML updates.
       var al = document.getElementById('actionsList');
       if(al) upgradeParamInputs(al);
     });
@@ -292,7 +293,6 @@
     if(typeof origOpen !== 'function') return;
     B.openBuilder = function(opts){
       var ret = origOpen.apply(B, arguments);
-      // After the builder DOM is mounted, refresh data and paint.
       setTimeout(function(){
         repopulateGroupSelect(true);
         var al = document.getElementById('actionsList');
@@ -312,10 +312,12 @@
         if(tries < 60) setTimeout(tryInit, 250);
         return;
       }
+      patchSettingsGet();
+      // Re-init engine so its rules array hydrates via the now-scoped Settings.get.
+      try{ if(window.WorkflowEngine.init) window.WorkflowEngine.init(); }catch(e){ log('engine re-init failed', e); }
       hookOpenBuilder();
       patchRuleScope();
       installObservers();
-      // Prime cache; if the builder is already open on this page, paint it.
       refreshData(true).then(function(){
         repopulateGroupSelect(true);
         var al = document.getElementById('actionsList');
@@ -325,13 +327,11 @@
     tryInit();
   }
 
-  // Listen for storage changes (cross-tab) and re-prime cache.
   window.addEventListener('storage', function(e){
     if(!e.key) return;
     if(/^(shadow|sb-)/.test(e.key)) refreshData(true).then(function(){ repopulateGroupSelect(true); });
   });
 
-  // Listen for app-level data events emitted by the main app and re-fetch.
   ['shadow:groups-changed','shadow:members-changed','shadow:db-changed'].forEach(function(evt){
     window.addEventListener(evt, function(){ refreshData(true).then(function(){ repopulateGroupSelect(true); }); });
   });
@@ -342,7 +342,6 @@
     boot();
   }
 
-  // Public hooks
   window.ShadowWorkflowPatch = {
     refresh: function(){ return refreshData(true).then(function(){ repopulateGroupSelect(true); }); },
     _cache: cache
