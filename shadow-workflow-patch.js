@@ -364,8 +364,9 @@
             || null;
           // Try cache first
           var cache = window.ShadowWorkflowPatch && window.ShadowWorkflowPatch._cache;
-          if (cache && Array.isArray(cache.groups)){
-            var g = cache.groups.find(function(x){ return x && x.id === groupId; });
+          var grpList = cache && (cache.userGroups || cache.groups);
+          if (Array.isArray(grpList)){
+            var g = grpList.find(function(x){ return x && x.id === groupId; });
             if (g){
               // If we found this group via the user's mapped groups, the user can manage it.
               // (populateGroupSelect already filters to owned/member groups for the active user.)
