@@ -11,7 +11,7 @@
     sortBy: 'dueDate',
     sortDir: 'desc',
     groupBy: 'dueDate',
-    filterGroup: null,
+    filterGroup: null,h
     filterTag: null,
     filterAssignee: null,
     filterCreatedBy: null,
@@ -2158,6 +2158,20 @@ function renderListView() {
       if (opts && opts.status) {
         selStatus = opts.status;
         updateStatusBtn();
+      }
+      // Apply subtasks from opts if provided (e.g. from template apply)
+      if (opts && opts.subtasks && opts.subtasks.length) {
+        mtSubtasks = opts.subtasks.map(function(s, i) { return {id: Date.now()+i, title: s.title||''  , completed: false, assignee: selAssignee}; });
+      }
+      // Apply start date from opts if provided
+      if (opts && opts.startDate) {
+        selStartDate = opts.startDate;
+        if ($el('ntmStartVal')) $el('ntmStartVal').textContent = opts.startDate;
+      }
+      // Apply due date from opts if provided
+      if (opts && opts.dueDate) {
+        selDueDate = opts.dueDate;
+        if ($el('ntmDueVal')) $el('ntmDueVal').textContent = opts.dueDate;
       }
       updateAssigneeChip(); updatePriorityBtn(); renderSubtasksList(); renderTagsBar();
       var m=$el('taskModal'); if(m) m.style.display='flex';
