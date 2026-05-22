@@ -9,8 +9,14 @@ import { TaskDetail } from '@/components/task/TaskDetail'
 import { Modal } from '@/components/ui/Modal'
 import { TaskForm } from '@/components/task/TaskForm'
 import { AgendaView } from '@/views/AgendaView'
+import { MyDayView } from '@/views/MyDayView'
 import { BoardView } from '@/views/BoardView'
 import { ListView } from '@/views/ListView'
+import { CreatedByMeView } from '@/views/CreatedByMeView'
+import { AssignedToMeView } from '@/views/AssignedToMeView'
+import { SharedWithMeView } from '@/views/SharedWithMeView'
+import { UnifiedView } from '@/views/UnifiedView'
+import { GroupView } from '@/views/GroupView'
 import { useAuthInit } from '@/hooks/useAuth'
 import { useAppStore } from '@/store/appStore'
 import { cn } from '@/utils/cn'
@@ -27,8 +33,15 @@ function AppShell() {
   }, [theme])
 
   function renderMainView() {
+    if (currentView === 'agenda') return <AgendaView />
+    if (currentView === 'myday') return <MyDayView />
+    if (currentView === 'createdbyme') return <CreatedByMeView />
+    if (currentView === 'assignedtome') return <AssignedToMeView />
+    if (currentView === 'sharedwithme') return <SharedWithMeView />
+    if (currentView === 'unified') return <UnifiedView />
+    if (currentView === 'group') return <GroupView />
+    // personal view uses board/list display
     if (currentDisplay === 'list') return <ListView />
-    if (currentView === 'agenda' || currentView === 'myday') return <AgendaView />
     return <BoardView />
   }
 
