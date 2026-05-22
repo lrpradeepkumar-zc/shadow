@@ -686,8 +686,8 @@ function renderListView() {
       tasks = tasks.filter(function(t){ return t.createdBy === state.currentUserId || !t.createdBy; });
     } else if (v === 'assignedtome') {
       const me = state.members.find(function(m){ return m.id === state.currentUserId; });
-      const myName = me ? me.name : 'Pradeep Kumar';
-      tasks = tasks.filter(function(t){ return t.assignee === myName || (t.assignee && myName.includes(t.assignee)) || (t.assignee && t.assignee.includes(myName.split(' ')[0])); });
+      const myName = me ? me.name : (state.currentUserName || state.currentUserId || '');
+      tasks = tasks.filter(function(t){ return t.assignee === myName || t.assigneeId === state.currentUserId || (myName && t.assignee && myName.includes(t.assignee)) || (myName && t.assignee && t.assignee.includes(myName.split(' ')[0])); });
     } else if (v === 'sharedwithme') {
       tasks = tasks.filter(function(t){ return t.sharedWith && t.sharedWith.length; });
     } else if (v === 'personal') {
@@ -2115,8 +2115,10 @@ function renderListView() {
     function resetAndOpen(opts) {
       selGroupId=''; selStatus='Open'; selPriority='Medium'; selTags=[]; mtSubtasks=[]; selAssignee='';
       if (window.state && window.state.members && window.state.members.length) {
-        var owner = window.state.members.find(function(m){ return m.role==='Owner'||m.role==='admin'||m.role==='owner'; });
-        selAssignee = owner ? owner.name : (window.state.members[0]||{}).name||'';
+        var cuid = window.state.currentUserId;
+        var cuname = window.state.currentUserName;
+        var me = cuid && window.state.members.find(function(m){ return m.id === cuid; });
+        selAssignee = me ? me.name : (cuname || (window.state.members[0]||{}).name||'');
       }
       if (!selAssignee && window.state && window.state.tasks) {
         var t = window.state.tasks.find(function(t){ return t.assignee; });
@@ -2192,8 +2194,10 @@ function renderListView() {
     // Init
     updateStatusBtn(); updatePriorityBtn(); loadCategoriesForGroup('');
     if (window.state && window.state.members && window.state.members.length) {
-      var owner = window.state.members.find(function(m){ return m.role==='Owner'||m.role==='admin'||m.role==='owner'; });
-      selAssignee = owner ? owner.name : (window.state.members[0]||{}).name||'';
+      var cuid0 = window.state.currentUserId;
+      var cuname0 = window.state.currentUserName;
+      var me0 = cuid0 && window.state.members.find(function(m){ return m.id === cuid0; });
+      selAssignee = me0 ? me0.name : (cuname0 || (window.state.members[0]||{}).name||'');
     }
     if (!selAssignee && window.state && window.state.tasks) {
       var t0 = window.state.tasks.find(function(t){ return t.assignee; });
@@ -2453,9 +2457,10 @@ function renderListView() {
     state.members  = (typeof ShadowAuth !== 'undefined' && ShadowAuth.getOrgMembers) ? ShadowAuth.getOrgMembers() : [];
     state.categories = await ShadowDB.Categories.getAll();
 
-    // Set currentUserId to first member (owner)
-    const owner = state.members.find(function(m){return m.role==='Owner';});
-    state.currentUserId = owner ? owner.id : (state.members[0]||{}).id;
+    // currentUserId is set by RBAC/_syncFromAuth; fall back to first loaded member
+    if (!state.currentUserId) {
+      state.currentUserId = (state.members[0]||{}).id || null;
+    }
 
     updateGroupSelects();
     renderSidebar();

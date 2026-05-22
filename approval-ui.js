@@ -6,7 +6,37 @@
 const ApprovalUI = (function() {
   'use strict';
 
-  const CURRENT_USER = 'Pradeep';
+  /* ── Current user identity ──────────────────────────────────────────────── */
+  function getCurrentUserId() {
+    if (window.RBAC && typeof RBAC.getCurrentUser === 'function') {
+      var u = RBAC.getCurrentUser();
+      if (u && u.id) return u.id;
+      if (u && u.name) return u.name;
+    }
+    if (window.state && window.state.currentUserId) return window.state.currentUserId;
+    if (window.ShadowAuth && typeof ShadowAuth.getCurrentUser === 'function') {
+      var su = ShadowAuth.getCurrentUser();
+      if (su && su.id) return su.id;
+      if (su && su.name) return su.name;
+    }
+    return null;
+  }
+
+  function getCurrentUserName() {
+    if (window.RBAC && typeof RBAC.getCurrentUser === 'function') {
+      var u = RBAC.getCurrentUser();
+      if (u && u.name) return u.name;
+    }
+    if (window.state && window.state.currentUserName) return window.state.currentUserName;
+    return null;
+  }
+
+  /* Returns true if uid matches the current user by ID or name */
+  function isCurrentUser(uid) {
+    var id = getCurrentUserId();
+    var name = getCurrentUserName();
+    return (id && uid === id) || (name && uid === name);
+  }
 
   /* ════════════════════════════════
      ADMIN SETTINGS PANEL (Group Settings)
@@ -137,14 +167,14 @@ const ApprovalUI = (function() {
     ApprovalWorkflow.Settings.isEnabled(groupId).then(async enabled => {
       if (!enabled) return;
 
-      const canRequest = ApprovalWorkflow.canRequestApproval(task, CURRENT_USER);
+      const canRequest = ApprovalWorkflow.canRequestApproval(task, getCurrentUserId());
       const activeRequest = await ApprovalWorkflow.Requests.getActiveForTask(task.id);
       const allRequests = await ApprovalWorkflow.Requests.getAllForTask(task.id);
       const latestRequest = allRequests.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
-      const isAdmin = await ApprovalWorkflow.isGroupAdmin(groupId, CURRENT_USER);
+      const isAdmin = await ApprovalWorkflow.isGroupAdmin(groupId, getCurrentUserId());
 
       if (activeRequest) {
-        const isApprover = activeRequest.approverId === CURRENT_USER;
+        const isApprover = isCurrentUser(activeRequest.approverId);
 
         /* Status banner below header - matching reference image 3 (Approval Pending) */
         container.innerHTML =
@@ -305,7 +335,7 @@ const ApprovalUI = (function() {
 
       if (!lockInfo.locked) return;
 
-      const isApprover = lockInfo.approverId === CURRENT_USER;
+      const isApprover = isCurrentUser(lockInfo.approverId);
 
       // Lock banner
       const banner = document.createElement('div');
@@ -421,10 +451,10 @@ const ApprovalUI = (function() {
     ApprovalWorkflow.getAvailableApprovers(groupId).then(async members => {
       const select = modal.querySelector('#modalApprover');
       const settings = await ApprovalWorkflow.Settings.get(groupId);
-      members.filter(m => m.name !== CURRENT_USER).forEach(m => {
+      members.filter(m => !isCurrentUser(m.id || m.name)).forEach(m => {
         const opt = document.createElement('option');
-        opt.value = m.name;
-        const isDefault = settings.defaultApprover === m.name;
+        opt.value = m.id || m.name;
+        const isDefault = settings.defaultApprover === (m.id || m.name) || settings.defaultApprover === m.name;
         opt.textContent = m.name + (isDefault ? ' (Default)' : '');
         if (isDefault) opt.selected = true;
         select.appendChild(opt);
@@ -447,7 +477,7 @@ const ApprovalUI = (function() {
       try {
         await ApprovalWorkflow.Requests.submit({
           taskId: task.id,
-          requesterId: CURRENT_USER,
+          requesterId: getCurrentUserId(),
           approverId,
           note,
           groupId
@@ -492,7 +522,7 @@ const ApprovalUI = (function() {
       try {
         await ApprovalWorkflow.Requests.approve({
           requestId: request.id,
-          approverId: CURRENT_USER,
+          approverId: getCurrentUserId(),
           note
         });
         closeModal(overlay);
@@ -549,7 +579,7 @@ const ApprovalUI = (function() {
       try {
         await ApprovalWorkflow.Requests.reject({
           requestId: request.id,
-          approverId: CURRENT_USER,
+          approverId: getCurrentUserId(),
           category,
           reason
         });
@@ -594,7 +624,7 @@ const ApprovalUI = (function() {
       try {
         await ApprovalWorkflow.Requests.requestChanges({
           requestId: request.id,
-          approverId: CURRENT_USER,
+          approverId: getCurrentUserId(),
           feedback
         });
         closeModal(overlay);
@@ -637,7 +667,7 @@ const ApprovalUI = (function() {
       try {
         await ApprovalWorkflow.Requests.resubmit({
           requestId: request.id,
-          requesterId: CURRENT_USER,
+          requesterId: getCurrentUserId(),
           note
         });
         closeModal(overlay);
@@ -681,7 +711,7 @@ const ApprovalUI = (function() {
       try {
         await ApprovalWorkflow.Requests.abort({
           requestId: request.id,
-          adminId: CURRENT_USER,
+          adminId: getCurrentUserId(),
           reason
         });
         closeModal(overlay);
@@ -718,13 +748,13 @@ const ApprovalUI = (function() {
     const list = container.querySelector('.notif-list');
 
     function updateBadge() {
-      const unread = ApprovalWorkflow.Notifications.getUnread(CURRENT_USER);
+      const unread = ApprovalWorkflow.Notifications.getUnread(getCurrentUserId());
       badge.textContent = unread.length;
       badge.style.display = unread.length > 0 ? '' : 'none';
     }
 
     function renderNotifs() {
-      const notifs = ApprovalWorkflow.Notifications.getAll(CURRENT_USER);
+      const notifs = ApprovalWorkflow.Notifications.getAll(getCurrentUserId());
       if (notifs.length === 0) {
         list.innerHTML = '<div class="notif-empty">No notifications</div>';
       } else {
@@ -744,7 +774,7 @@ const ApprovalUI = (function() {
       e.stopPropagation();
       dropdown.style.display = dropdown.style.display === 'none' ? '' : 'none';
       renderNotifs();
-      ApprovalWorkflow.Notifications.getUnread(CURRENT_USER).forEach(n => {
+      ApprovalWorkflow.Notifications.getUnread(getCurrentUserId()).forEach(n => {
         ApprovalWorkflow.Notifications.markRead(n.id);
       });
       updateBadge();
@@ -953,6 +983,6 @@ const ApprovalUI = (function() {
     applyFieldLocks,
     addApprovalBadgeToCard,
     showToast,
-    CURRENT_USER
+    getCurrentUserId
   };
 })();

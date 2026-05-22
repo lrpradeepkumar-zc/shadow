@@ -95,7 +95,7 @@
    }
 
    function createInlineTask(title, colElement) {
-         var assignee = 'Pradeep';
+         var assignee = (window.state && (window.state.currentUserName || window.state.currentUserId)) || '';
          var atIdx = title.indexOf('@');
          if (atIdx > -1) {
                  assignee = title.substring(atIdx + 1).trim();

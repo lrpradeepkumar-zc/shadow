@@ -227,7 +227,7 @@
           var name = u.name || u.email || '';
           return '<option value="' + name + '"' + (current === name ? ' selected':'') + '>' + name + '</option>';
         }).join('');
-      if (!current || current === 'Pradeep') {
+      if (!current) {
         if (typeof state !== 'undefined' && state.currentUserId) {
           var me = users.find(function(u){ return u.id === state.currentUserId; });
           if (me) sel.value = me.name;
