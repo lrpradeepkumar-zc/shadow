@@ -174,7 +174,7 @@ const WorkflowEngine = (function() {
       groupId: data.groupId || null,
       createdAt: data.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      createdBy: data.createdBy || 'current_user',
+      createdBy: data.createdBy || (window.RBAC && RBAC.getCurrentUser() && RBAC.getCurrentUser().id) || 'unknown',
       executionCount: data.executionCount || 0,
       lastExecutedAt: data.lastExecutedAt || null,
       order: data.order || 0
@@ -309,7 +309,11 @@ const WorkflowEngine = (function() {
           result.success = true; result.details = 'Added tag: ' + action.params.tag; break;
         }
         case 'send_notification': {
-          emit('notification:sent', { type: 'workflow', message: action.params.message || 'Notification from: ' + rule.name, recipients: action.params.recipients || 'all', taskId: taskData.id, ruleId: rule.id, timestamp: new Date().toISOString() });
+          const notifPayload = { type: 'workflow', message: action.params.message || 'Notification from: ' + rule.name, recipients: action.params.recipients || 'all', taskId: taskData.id, ruleId: rule.id, timestamp: new Date().toISOString() };
+          emit('notification:sent', notifPayload);
+          if (typeof window.pushBellNotification === 'function') {
+            window.pushBellNotification('workflow', taskData.id, taskData.title || '', notifPayload.message);
+          }
           result.success = true; result.details = 'Notification sent: ' + (action.params.message || rule.name); break;
         }
         case 'set_due_date': {
@@ -512,19 +516,26 @@ const WorkflowEngine = (function() {
     // ---------------------------------------------------------------------------
     function canManage(groupId, userId) {
       if (!groupId) return false;
+      // Delegate to RBAC when available — workspace admin always passes
+      if (window.RBAC) {
+        if (RBAC.isAdmin()) return true;
+        var actor = userId || (window.RBAC.getCurrentUser() && RBAC.getCurrentUser().id);
+        // canManageGroup checks ownerId / createdBy / adminIds on the group record
+        return RBAC.canManageGroup(groupId);
+      }
+      // Fallback: manual check against window.state.groups
       try {
         var group = null;
         if (window.state && Array.isArray(window.state.groups)) {
           group = window.state.groups.find(function(g){ return g.id === groupId; });
         }
         if (!group) return false;
-        var uid = userId || (window.state && window.state.currentUserId) || "current_user";
-        if (Array.isArray(group.adminIds)    && group.adminIds.indexOf(uid)    > -1) return true;
+        var uid = userId || (window.state && window.state.currentUserId) || 'unknown';
+        if (Array.isArray(group.adminIds)     && group.adminIds.indexOf(uid)     > -1) return true;
         if (Array.isArray(group.moderatorIds) && group.moderatorIds.indexOf(uid) > -1) return true;
-        if (group.ownerId === uid)     return true;
-        if (group.createdBy === uid)   return true;
-        // Legacy fallback: single-member "personal" group — owner is implicit.
-        if (group.personal === true)   return true;
+        if (group.ownerId === uid)   return true;
+        if (group.createdBy === uid) return true;
+        if (group.personal === true) return true;
       } catch (_) { /* no-op */ }
       return false;
     }

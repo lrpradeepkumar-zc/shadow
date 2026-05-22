@@ -133,13 +133,11 @@ const ApprovalWorkflow = (function() {
       if (!s.defaultApprover) return null;
       try {
         const members = await ShadowDB.Members.getAll();
-        const exists = members.some(m => m.name === s.defaultApprover);
+        const exists = members.some(m => m.id === s.defaultApprover || m.name === s.defaultApprover);
         if (exists) return s.defaultApprover;
-        /* Fallback to admin/owner */
-        const admin = members.find(m =>
-          m.role === 'Owner' || m.role === 'Admin' || m.role === 'Moderator'
-        );
-        const fallback = admin ? admin.name : null;
+        /* Fallback to workspace admin */
+        const admin = members.find(m => m.role === 'admin');
+        const fallback = admin ? (admin.id || admin.name) : null;
         s.defaultApprover = fallback;
         s._approverDeleted = true;
         await this.save(s);
@@ -398,6 +396,7 @@ const ApprovalWorkflow = (function() {
 
     /* ── Admin Abort ── */
     async abort({ requestId, adminId, reason }) {
+      if (!window.RBAC || !RBAC.isAdmin()) throw new Error('Only workspace admins can abort approval requests');
       const req = await this.getById(requestId);
       if (!req) throw new Error('Request not found');
       if (req.status !== ApprovalState.PENDING_APPROVAL) throw new Error('Request is not pending');
@@ -561,7 +560,13 @@ const ApprovalWorkflow = (function() {
     }
   };
 
-  on('approval:notification', data => Notifications.send(data));
+  on('approval:notification', data => {
+    Notifications.send(data);
+    // Also surface in the bell so users see a badge count
+    if (typeof window.pushBellNotification === 'function') {
+      window.pushBellNotification(data.type || 'approval_requested', data.taskId || '', '', data.message || 'Approval notification');
+    }
+  });
 
   /* ══════════════════════════════════════════
      PUBLIC API
@@ -587,6 +592,7 @@ const ApprovalWorkflow = (function() {
 
     /* Access-control helpers */
     canRequestApproval(task, currentUserId) {
+      if (window.RBAC && !RBAC.can(RBAC.Perms.TASK_UPDATE, { task })) return false;
       return task.assignee === currentUserId || task.createdBy === currentUserId;
     },
 
@@ -597,26 +603,31 @@ const ApprovalWorkflow = (function() {
 
     async getAvailableApprovers(groupId) {
       try {
+        // Prefer ShadowAuth org members (includes role info)
+        if (window.ShadowAuth && typeof ShadowAuth.getOrgMembers === 'function') {
+          const members = await ShadowAuth.getOrgMembers();
+          return members.filter(m => m.role === 'admin' || m.role === 'user');
+        }
         const m = await ShadowDB.Members.getAll();
-        return m.filter(x => x.name !== 'System');
+        return m.filter(x => x.role !== 'guest' && x.name !== 'System');
       } catch (e) {
-        return [
-          { id: 1, name: 'Pradeep Kumar', role: 'Owner' },
-          { id: 2, name: 'Sarah Chen', role: 'Member' },
-          { id: 3, name: 'Alex Johnson', role: 'Moderator' },
-          { id: 4, name: 'Rachel Kim', role: 'Moderator' }
-        ];
+        return [];
       }
     },
 
-    /* Check if user is group admin */
+    /* Check if user can administer a group (delegates to RBAC) */
     async isGroupAdmin(groupId, userId) {
+      if (window.RBAC) {
+        if (RBAC.isAdmin()) return true;
+        return RBAC.canManageGroup(groupId);
+      }
+      // Fallback: check members table
       try {
         const members = await ShadowDB.Members.getAll();
-        const member = members.find(m => m.name === userId);
-        return member && (member.role === 'Owner' || member.role === 'Admin' || member.role === 'Moderator');
+        const member = members.find(m => m.id === userId || m.name === userId);
+        return member && member.role === 'admin';
       } catch (e) {
-        return userId === 'Pradeep Kumar' || userId === 'Pradeep';
+        return false;
       }
     }
   };

@@ -10,19 +10,31 @@
   if (window._nbInitDone) return;
   window._nbInitDone = true;
 
-  var STORAGE_KEY = 'shadow_bell_notifications';
+  var STORAGE_KEY_PREFIX = 'shadow_bell_notifs';
   var MAX_NOTIFS  = 80;
 
+  function currentUser() {
+    if (window.RBAC && typeof RBAC.getCurrentUser === 'function') return RBAC.getCurrentUser();
+    return null;
+  }
   function actor() {
+    var u = currentUser();
+    if (u && u.name) return u.name;
     return (window.state && (state.currentUserName || (state.currentUser && state.currentUser.name))) || 'You';
   }
+  function currentUserId() {
+    var u = currentUser();
+    if (u && u.id) return u.id;
+    return (window.state && state.currentUserId) || 'anon';
+  }
+  function storageKey() { return STORAGE_KEY_PREFIX + '_' + currentUserId(); }
 
   function loadFromStorage() {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch(e) { return []; }
+    try { return JSON.parse(localStorage.getItem(storageKey()) || '[]'); } catch(e) { return []; }
   }
 
   function saveToStorage(items) {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(items.slice(0, MAX_NOTIFS))); } catch(e) {}
+    try { localStorage.setItem(storageKey(), JSON.stringify(items.slice(0, MAX_NOTIFS))); } catch(e) {}
   }
 
   /* push a notification */
@@ -32,6 +44,7 @@
       id:      'nb_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
       type:    type,
       taskId:  taskId || '',
+      userId:  currentUserId(),
       actor:   actor(),
       message: message,
       time:    new Date().toISOString(),
@@ -269,6 +282,33 @@
     },300);
   }
 
+  /* bridge: approval workflow notifications → bell */
+  function bridgeApprovalNotifs() {
+    var tries = 0, iv = setInterval(function() {
+      if (typeof ApprovalWorkflow !== 'undefined') {
+        clearInterval(iv);
+        ApprovalWorkflow.on('approval:notification', function(n) {
+          var uid = currentUserId();
+          if (!n.recipientId || n.recipientId === uid) {
+            push(n.type || 'approval_requested', n.taskId || '', '', n.message || 'Approval notification');
+          }
+        });
+      } else if (++tries > 60) clearInterval(iv);
+    }, 200);
+  }
+
+  /* bridge: workflow engine send_notification action → bell */
+  function bridgeWorkflowNotifs() {
+    var tries = 0, iv = setInterval(function() {
+      if (typeof WorkflowEngine !== 'undefined') {
+        clearInterval(iv);
+        WorkflowEngine.on('notification:sent', function(n) {
+          push('workflow', n.taskId || '', '', n.message || 'Workflow notification');
+        });
+      } else if (++tries > 60) clearInterval(iv);
+    }, 200);
+  }
+
   /* expose globally */
   window.pushBellNotification = push;
 
@@ -280,6 +320,8 @@
     patchUpdate();
     hookCommentBtn();
     waitForTasksAndSeed();
+    bridgeApprovalNotifs();
+    bridgeWorkflowNotifs();
   }
 
   if (document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot);

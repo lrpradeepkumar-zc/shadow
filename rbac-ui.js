@@ -94,30 +94,34 @@
   }
 
   function injectRoleSwitcher(anchor){
+    // MockUsers is empty in the 3-tier system — dev switcher is no-op in production.
+    // Only inject if at least one mock user is present (e.g. in a local QA build).
     if (!window.RBAC) return;
-    if (document.getElementById("rbacRoleSwitcher")) return; // idempotent
+    if (!Array.isArray(window.RBAC.MockUsers) || window.RBAC.MockUsers.length === 0) return;
+    if (document.getElementById("rbacRoleSwitcher")) return;
+    var current = window.RBAC.getCurrentUser();
+    if (!current) return;
     var wrap = document.createElement("div");
     wrap.id = "rbacRoleSwitcher";
     wrap.className = "rbac-switcher";
-    wrap.title = "DEV: switch your logged-in role to preview UI gating";
-    var current = window.RBAC.getCurrentUser();
+    wrap.title = "DEV: switch role to preview UI gating";
     var opts = window.RBAC.MockUsers.map(function(u){
-      var meta = window.RBAC.RoleMeta[u.globalRole];
+      var r = u.role || u.globalRole || "user";
+      var meta = window.RBAC.RoleMeta[r] || { label: r };
       var sel = u.id === current.id ? " selected" : "";
-      return '<option value="' + u.id + '"' + sel + '>' + u.name + ' — ' + meta.label + '</option>';
+      return '<option value="' + u.id + '"' + sel + '>' + (u.name || u.id) + ' — ' + meta.label + '</option>';
     }).join("");
     wrap.innerHTML =
       '<span class="rbac-switcher-label"><i class="fa-solid fa-user-shield"></i> Role</span>' +
       '<select id="rbacRoleSelect">' + opts + '</select>' +
-      '<span id="rbacCurrentBadge">' + badge(current.globalRole) + '</span>';
+      '<span id="rbacCurrentBadge">' + badge(current.role) + '</span>';
 
     (anchor || document.body).appendChild(wrap);
     document.getElementById("rbacRoleSelect").addEventListener("change", function(e){
-      window.RBAC.setCurrentUser(e.target.value);
-      // Soft refresh of gated UI across the page
+      window.RBAC.setCurrentUser(e.target.value); // logs warning in prod
       applyAll();
       var u = window.RBAC.getCurrentUser();
-      document.getElementById("rbacCurrentBadge").innerHTML = badge(u.globalRole);
+      if (u) document.getElementById("rbacCurrentBadge").innerHTML = badge(u.role);
     });
   }
 
