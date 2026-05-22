@@ -17,13 +17,15 @@ const ApprovalWorkflow = (function() {
   const ApprovalState = {
     PENDING_APPROVAL: 'pending_approval',
     APPROVED: 'approved',
-    CHANGES_REQUESTED: 'changes_requested'
+    CHANGES_REQUESTED: 'changes_requested',
+    ABORTED: 'aborted'          // terminal — set by admin abort; cannot be resubmitted
   };
 
   const VALID_TRANSITIONS = {
-    [ApprovalState.PENDING_APPROVAL]: [ApprovalState.APPROVED, ApprovalState.CHANGES_REQUESTED],
+    [ApprovalState.PENDING_APPROVAL]: [ApprovalState.APPROVED, ApprovalState.CHANGES_REQUESTED, ApprovalState.ABORTED],
     [ApprovalState.CHANGES_REQUESTED]: [ApprovalState.PENDING_APPROVAL],
-    [ApprovalState.APPROVED]: []
+    [ApprovalState.APPROVED]: [],
+    [ApprovalState.ABORTED]: []  // terminal
   };
 
   const REJECTION_CATEGORIES = [
@@ -135,8 +137,9 @@ const ApprovalWorkflow = (function() {
         const members = await ShadowDB.Members.getAll();
         const exists = members.some(m => m.id === s.defaultApprover || m.name === s.defaultApprover);
         if (exists) return s.defaultApprover;
-        /* Fallback to workspace admin */
-        const admin = members.find(m => m.role === 'admin');
+        /* Fallback to workspace admin (also accept legacy role names from old data) */
+        const ADMIN_ROLES = ['admin', 'Admin', 'Owner', 'owner', 'Moderator', 'moderator'];
+        const admin = members.find(m => ADMIN_ROLES.includes(m.role));
         const fallback = admin ? (admin.id || admin.name) : null;
         s.defaultApprover = fallback;
         s._approverDeleted = true;
@@ -396,12 +399,15 @@ const ApprovalWorkflow = (function() {
 
     /* ── Admin Abort ── */
     async abort({ requestId, adminId, reason }) {
-      if (!window.RBAC || !RBAC.isAdmin()) throw new Error('Only workspace admins can abort approval requests');
       const req = await this.getById(requestId);
       if (!req) throw new Error('Request not found');
       if (req.status !== ApprovalState.PENDING_APPROVAL) throw new Error('Request is not pending');
+      // Group admins and workspace admins can abort — mirrors the UI's isGroupAdmin() check
+      if (window.RBAC && RBAC.getCurrentUser() && !RBAC.isAdmin() && !RBAC.canManageGroup(req.groupId)) {
+        throw new Error('Only group admins and workspace admins can abort approval requests');
+      }
 
-      req.status       = ApprovalState.CHANGES_REQUESTED;
+      req.status       = ApprovalState.ABORTED;
       req.updatedAt    = new Date().toISOString();
       req.resolvedAt   = new Date().toISOString();
       req.decisionNote = 'Aborted by admin: ' + (reason || 'No reason provided');
@@ -592,7 +598,11 @@ const ApprovalWorkflow = (function() {
 
     /* Access-control helpers */
     canRequestApproval(task, currentUserId) {
-      if (window.RBAC && !RBAC.can(RBAC.Perms.TASK_UPDATE, { task })) return false;
+      // Only check RBAC when the user context is already resolved; if not yet
+      // initialised (before shadow_app_ready) fall through to the ownership check.
+      if (window.RBAC && RBAC.getCurrentUser()) {
+        if (!RBAC.can(RBAC.Perms.TASK_UPDATE, { task, userId: currentUserId })) return false;
+      }
       return task.assignee === currentUserId || task.createdBy === currentUserId;
     },
 
@@ -611,6 +621,7 @@ const ApprovalWorkflow = (function() {
         const m = await ShadowDB.Members.getAll();
         return m.filter(x => x.role !== 'guest' && x.name !== 'System');
       } catch (e) {
+        emit('approval:error', { type: 'approvers_unavailable', message: 'Could not load approvers. Please try again.' });
         return [];
       }
     },

@@ -2941,19 +2941,21 @@ function renderListView() {
   }
 
   // ── Deep-link handler (ShadowLinks.resolve() emits 'link:navigate') ────────
+  // ShadowLinks.resolve() always dispatches { type:'task', taskId, subtaskId? }
+  // or { type:'group', groupId }. There is no type:'subtask' variant.
   window.addEventListener('link:navigate', function(e) {
     var nav = e.detail;
     if (!nav) return;
-    if (nav.type === 'task' && nav.id) {
-      if (typeof showTaskDetail === 'function') showTaskDetail(nav.id, 'deeplink');
-    } else if (nav.type === 'subtask' && nav.taskId) {
+    if (nav.type === 'task' && nav.taskId) {
       if (typeof showTaskDetail === 'function') {
         showTaskDetail(nav.taskId, 'deeplink');
-        // Scroll to the subtask row once the panel has rendered
-        setTimeout(function() {
-          var el = document.querySelector('[data-subtask-id="' + nav.subtaskId + '"]');
-          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 400);
+        // If the URL also targets a subtask, scroll to it once the panel renders
+        if (nav.subtaskId) {
+          setTimeout(function() {
+            var el = document.querySelector('[data-subtask-id="' + nav.subtaskId + '"]');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 400);
+        }
       }
     } else if (nav.type === 'group' && nav.groupId) {
       if (window.state) {
@@ -2975,10 +2977,9 @@ function renderListView() {
       window.state.currentUserRole = user.role;
     }
     init();
-    // Resolve deep link after app data has loaded
-    setTimeout(function() {
-      if (window.ShadowLinks && typeof ShadowLinks.resolve === 'function') ShadowLinks.resolve();
-    }, 800);
+    // Deep-link resolution is handled by backend.js (fires at 300 ms via its own
+    // shadow_app_ready listener). Do NOT add a second call here — double-fire
+    // would cause showTaskDetail to open the panel twice.
   });
   // Fallback: if gate already fired before this script loaded
   if (window._sagGateReady && window._sagAppStarted) {
@@ -2987,8 +2988,5 @@ function renderListView() {
   } else if (document.readyState !== 'loading' && !window._sagGateReady) {
     // No gate installed - run normally (dev/direct access)
     init();
-    setTimeout(function() {
-      if (window.ShadowLinks && typeof ShadowLinks.resolve === 'function') ShadowLinks.resolve();
-    }, 800);
   }
 })();

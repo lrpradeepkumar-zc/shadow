@@ -283,16 +283,22 @@
       // ── getAll ────────────────────────────────────────────────────────────
       async getAll() {
         const cached = await idbGetAll(table);
-        // Background Supabase refresh to keep IDB warm
-        _sbFetchAll(table).then(async rows => {
-          if (!rows || !rows.length) return;
+        if (cached.length) {
+          // Hot cache: return immediately, refresh IDB in background
+          _sbFetchAll(table).then(async rows => {
+            if (!rows || !rows.length) return;
+            await Promise.all(rows.map(r => idbPut(table, r)));
+            emit('db:sync_complete', { entity: table, action: 'getAll' });
+          }).catch(()=>{});
+          return cached;
+        }
+        // Cold cache: single fetch — no duplicate concurrent request
+        const rows = await _sbFetchAll(table).catch(() => []);
+        if (rows && rows.length) {
           await Promise.all(rows.map(r => idbPut(table, r)));
           emit('db:sync_complete', { entity: table, action: 'getAll' });
-        }).catch(()=>{});
-        return cached.length ? cached : (_sbFetchAll(table).then(async rows => {
-          await Promise.all((rows||[]).map(r => idbPut(table, r)));
-          return rows || [];
-        }));
+        }
+        return rows || [];
       },
 
       // ── update ────────────────────────────────────────────────────────────

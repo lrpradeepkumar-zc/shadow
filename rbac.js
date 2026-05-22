@@ -87,6 +87,7 @@
 
     user: [
       Perms.GROUP_CREATE,
+      Perms.GROUP_DELETE,          // only for groups they own — enforced by canManageGroup
       Perms.GROUP_EDIT_SETTINGS,   // only for groups they own — enforced by canManageGroup
       Perms.GROUP_ADD_MEMBER,      // only for groups they own
       Perms.GROUP_REMOVE_MEMBER,   // only for groups they own

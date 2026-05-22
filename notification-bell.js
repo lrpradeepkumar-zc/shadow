@@ -13,6 +13,12 @@
   var STORAGE_KEY_PREFIX = 'shadow_bell_notifs';
   var MAX_NOTIFS  = 80;
 
+  /* Notifications queued before the real userId is known are held here and
+     flushed once shadow_app_ready / rbac:ready fires. This prevents them
+     from being written to the 'anon' key and becoming invisible after login. */
+  var _preAuthQueue = [];
+  var _authResolved = false;
+
   function currentUser() {
     if (window.RBAC && typeof RBAC.getCurrentUser === 'function') return RBAC.getCurrentUser();
     return null;
@@ -25,9 +31,9 @@
   function currentUserId() {
     var u = currentUser();
     if (u && u.id) return u.id;
-    return (window.state && state.currentUserId) || 'anon';
+    return (window.state && state.currentUserId) || null;
   }
-  function storageKey() { return STORAGE_KEY_PREFIX + '_' + currentUserId(); }
+  function storageKey() { return STORAGE_KEY_PREFIX + '_' + (currentUserId() || 'anon'); }
 
   function loadFromStorage() {
     try { return JSON.parse(localStorage.getItem(storageKey()) || '[]'); } catch(e) { return []; }
@@ -37,19 +43,43 @@
     try { localStorage.setItem(storageKey(), JSON.stringify(items.slice(0, MAX_NOTIFS))); } catch(e) {}
   }
 
+  /* Flush any notifications that arrived before auth resolved */
+  function flushPreAuthQueue() {
+    if (!_preAuthQueue.length) return;
+    var items = loadFromStorage();
+    _preAuthQueue.forEach(function(entry) {
+      entry.userId = currentUserId();
+      entry.actor  = actor();
+      items.unshift(entry);
+    });
+    _preAuthQueue = [];
+    if (items.length > MAX_NOTIFS) items = items.slice(0, MAX_NOTIFS);
+    saveToStorage(items);
+    if (window.state) state.notifications = items;
+    updateBadge();
+    document.dispatchEvent(new CustomEvent('notifications:updated'));
+  }
+
   /* push a notification */
   function push(type, taskId, taskTitle, message) {
-    var items = loadFromStorage();
     var entry = {
       id:      'nb_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
       type:    type,
       taskId:  taskId || '',
-      userId:  currentUserId(),
+      userId:  currentUserId() || 'pending',
       actor:   actor(),
       message: message,
       time:    new Date().toISOString(),
       read:    false
     };
+
+    // Hold pre-auth notifications in memory rather than writing to 'anon' key
+    if (!_authResolved || !currentUserId()) {
+      _preAuthQueue.push(entry);
+      return;
+    }
+
+    var items = loadFromStorage();
     items.unshift(entry);
     if (items.length > MAX_NOTIFS) items = items.slice(0, MAX_NOTIFS);
     saveToStorage(items);
@@ -63,17 +93,28 @@
     document.dispatchEvent(new CustomEvent('notifications:updated'));
   }
 
-  /* restore persisted notifications into state */
+  /* restore persisted notifications into state — deferred until auth resolves
+     so we read from the correct per-user key, not the 'anon' key */
   function restoreFromStorage() {
-    var tries = 0;
-    var iv = setInterval(function() {
+    function doRestore() {
       if (window.state) {
-        clearInterval(iv);
         var items = loadFromStorage();
         state.notifications = items;
         updateBadge();
-      } else if (++tries > 50) { clearInterval(iv); }
-    }, 100);
+      }
+    }
+    if (_authResolved) { doRestore(); return; }
+    // Wait for auth before reading — onAuthReady will call doRestore via flushPreAuthQueue
+    window.addEventListener('shadow_app_ready', function() { doRestore(); }, { once: true });
+    document.addEventListener('rbac:ready',       function() { doRestore(); }, { once: true });
+  }
+
+  /* called once real userId is known — marks auth resolved, flushes queue */
+  function onAuthReady() {
+    if (_authResolved) return;
+    _authResolved = true;
+    flushPreAuthQueue();
+    restoreFromStorage();
   }
 
   /* badge */
@@ -314,6 +355,11 @@
 
   /* boot */
   function boot() {
+    // Wire auth-ready listeners before restoreFromStorage so the deferred
+    // restore fires at the right time
+    window.addEventListener('shadow_app_ready', onAuthReady, { once: true });
+    document.addEventListener('rbac:ready',       onAuthReady, { once: true });
+
     restoreFromStorage();
     wireBellClick();
     patchCreate();
