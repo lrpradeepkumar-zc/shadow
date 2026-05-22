@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ToDo</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="settings.css">
+  <link rel="stylesheet" href="approval.css">
+    <link rel="stylesheet" href="auth.css">
+  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="rbac.css">
+</head>
+<body>
+  <script>
+    (function() {
+      var t = localStorage.getItem('shadow-theme');
+      if (t === 'dark') document.body.classList.add('dark-theme');
+      else if (!t) localStorage.setItem('shadow-theme', 'light');
+    })();
+  </script>
+  <header class="top-header">
+    <div class="header-left">
+      <i class="fa-solid fa-check-double logo-icon"></i>
+      <span class="app-title">ToDo</span>
+    </div>
+    <div class="header-center">
+      <div class="tab-bar">
+        <span class="tab-item active"><i class="fa-solid fa-check"></i> ToDo</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="search-box">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <span>ToDo</span>
+        <input type="text" placeholder="Search ( / )" id="searchInput">
+      </div>
+      <div class="notif-wrap">
+              <button class="icon-btn" id="notifBellBtn" title="Notifications" aria-haspopup="true" aria-expanded="false"><i class="fa-solid fa-bell"></i><span class="badge" id="notifBadge" hidden>0</span></button>
+              <div class="notif-panel" id="notifPanel" hidden role="menu" aria-label="Notifications">
+                <div class="notif-header">
+                  <span>Notifications</span>
+                  <div class="notif-header-actions">
+                    <button class="link-btn" id="notifMarkAllRead">Mark all read</button>
+                    <button class="link-btn" id="notifClearAll">Clear</button>
+                  </div>
+                </div>
+                <ul class="notif-list" id="notifList"></ul>
+                <div class="notif-empty" id="notifEmpty">You're all caught up</div>
+              </div>
+            </div>
+      <div class="avatar" title="Profile">P</div>
+      <button class="icon-btn" title="Apps"><i class="fa-solid fa-grip"></i></button>
+    </div>
+  </header>
+  <div class="app-container">
+    <nav class="sidebar" id="sidebar">
+      <button class="new-task-btn" id="newTaskBtn"><i class="fa-solid fa-plus"></i> New Task</button>
+      <div class="sidebar-section">
+        <div class="section-title">VIEWS</div>
+        <div class="nav-item active" data-view="agenda"><i class="fa-regular fa-calendar"></i> Agenda view</div>
+        <div class="nav-item" data-view="myday"><i class="fa-solid fa-bolt"></i> My Day</div>
+        <div class="nav-item" data-view="createdbyme"><i class="fa-regular fa-user"></i> Created by Me</div>
+        <div class="nav-item" data-view="assignedtome"><i class="fa-regular fa-user"></i> Assigned to me</div>
+        <div class="nav-item has-count" data-view="sharedwithme"><i class="fa-solid fa-share-nodes"></i> Shared with me <span class="count" id="sharedWithMeCount">0</span></div>
+        <div class="nav-item has-count" data-view="personal"><i class="fa-regular fa-user"></i> Personal tasks <span class="count" id="personalCount">0</span></div>
+        <div class="nav-item" data-view="unified"><i class="fa-solid fa-layer-group"></i> Unified view</div>
+      </div>
+      <div class="sidebar-section">
+        <div class="section-title">GROUPS <span class="section-actions"><i class="fa-solid fa-sliders"></i> <i class="fa-solid fa-plus" id="addGroupBtn"></i></span></div>
+        <div id="groupsList"></div>
+      </div>
+      <div class="sidebar-section">
+        <div class="section-title">TAGS <span class="section-actions"><i class="fa-solid fa-plus" id="addTagBtn"></i></span></div>
+        <div id="tagsList"></div>
+      </div>
+    </nav>
+    <main class="main-content" id="mainContent">
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <i class="fa-regular fa-calendar"></i>
+          <span class="view-title" id="viewTitle">Agenda</span>
+          <span class="sort-info" id="sortInfo">
+            <span class="sort-badge" id="sortLabel">DUE DATE</span>
+            <span class="sort-direction">Newest on top</span>
+          </span>
+        </div>
+        <div class="toolbar-right">
+          <button class="toolbar-btn" id="filterBtn"><i class="fa-solid fa-filter"></i> Filter</button>
+          <button class="toolbar-btn" id="sortBtn"><i class="fa-solid fa-arrow-down-short-wide"></i> Sort</button>
+          <button class="toolbar-btn" id="manageFieldsBtn"><i class="fa-solid fa-table-columns"></i></button>
+          <button class="toolbar-btn" id="groupByBtn" title="Group by" style="display:none"><i class="fa-solid fa-layer-group"></i> Group by</button><span class="sort-chip" id="groupByChip" style="display:none"></span><button class="toolbar-btn" id="moreActionsBtn"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+        </div>
+      </div>
+      <div class="view-tabs">
+        <button class="view-tab active" data-viewtype="board"><i class="fa-solid fa-columns"></i> Board</button>
+        <button class="view-tab" data-viewtype="list"><i class="fa-solid fa-list"></i> List</button>
+      </div>
+      <div class="board-view" id="boardView">
+        <div class="board-columns" id="boardArea"></div>
+      </div>
+      <div class="list-view" id="listView" style="display:none;">
+        <div class="list-header" id="listHeader">
+          <div class="list-col task-title-col">TASK TITLE</div>
+          <div class="list-col assignee-col">ASSIGNEE</div>
+          <div class="list-col status-col">STATUS</div>
+          <div class="list-col due-date-col">DUE DATE</div>
+          <div class="list-col created-date-col">CREATED DATE</div>
+          <div class="list-col category-col">CATEGORY</div>
+        </div>
+        <div id="listArea"><div class="list-body"></div></div>
+      </div>
+    </main>
+    <!-- Task Detail Modal Overlay -->
+    <!-- Task Detail Side Panel -->
+<div class="task-detail-modal-overlay" id="taskDetailModalOverlay" style="display:none;"><div class="task-detail-panel" id="taskDetailPanel"><div class="tdp-header"><div class="tdp-header-actions"><button class="icon-btn" title="Repeat"><i class="fa-solid fa-repeat"></i></button><button class="icon-btn" id="detailAttachBtn" title="Attachments"><i class="fa-solid fa-paperclip"></i></button><button class="icon-btn" id="detailTagsBtn" title="Tags"><i class="fa-solid fa-tag"></i></button><button class="icon-btn" id="detailMoreBtn" title="More options"><i class="fa-solid fa-ellipsis-vertical"></i></button><button class="icon-btn" id="detailCloseBtn" title="Close"><i class="fa-solid fa-xmark"></i></button></div></div><div class="tdp-body"><h2 class="tdp-title" id="detailTitle" contenteditable="true" spellcheck="false">Task Title</h2><div class="tdp-meta-row"><span class="tdp-meta-label">Status</span><select class="tdp-select tdp-status-select" id="detailStatus"><option value="Open">Open</option><option value="In Progress">In Progress</option><option value="Fixed">Fixed</option><option value="Completed">Completed</option><option value="Closed">Closed</option></select></div><div class="tdp-meta-row"><span class="tdp-meta-label">Assignee</span><div class="tdp-assignee"><div class="avatar-sm" id="detailAssigneeAvatar"><div></div></div><span id="detailAssignee" class="tdp-assignee-name">Unassigned</span></div></div><div class="tdp-meta-row"><span class="tdp-meta-label">Start Date</span><div class="tdp-date-value clickable" id="detailStartDate">Not set</div></div><div class="tdp-meta-row"><span class="tdp-meta-label">Due Date</span><div class="tdp-date-value clickable" id="detailDueDate">Not set</div></div><div class="tdp-meta-row"><span class="tdp-meta-label">Group</span><button class="tdp-meta-chip" id="detailGroup">No group</button></div><div class="tdp-meta-row"><span class="tdp-meta-label">Category</span><button class="tdp-meta-chip" id="detailCategory">General</button></div><div class="tdp-meta-row"><span class="tdp-meta-label">Priority</span><button class="tdp-meta-chip tdp-priority-chip" id="detailPriority">None</button></div><div class="tdp-meta-row"><span class="tdp-meta-label">Tags</span><div id="detailTagsContainer"><span id="detailTagsDisplay"></span></div></div><div class="tdp-meta-row"><span class="tdp-meta-label">Reminder</span><button class="tdp-meta-chip" id="detailReminderBtn"><i class="fa-regular fa-calendar-check"></i> Set reminder</button></div><div class="tdp-meta-row" id="detailRecurrenceDisplay" style="display:none;"><span class="tdp-meta-label">Repeat</span><span class="tdp-meta-value"></span></div><div class="tdp-meta-row" id="detailReminderDisplay" style="display:none;"><span class="tdp-meta-label">Remind</span><span class="tdp-meta-value"></span></div><hr class="tdp-divider"/><div class="tdp-section"><div class="tdp-section-label"><i class="fa-solid fa-align-left"></i> Description</div><textarea id="detailDesc" class="tdp-textarea" placeholder="Add a description..." rows="3"></textarea></div><div class="tdp-section"><div class="tdp-section-label"><i class="fa-regular fa-note-sticky"></i> Notes</div><textarea id="detailNotes" class="tdp-textarea" placeholder="Add notes..." rows="3"></textarea></div><div class="tdp-section"><div class="tdp-section-label"><i class="fa-solid fa-paperclip"></i> Attachments</div><div id="detailAttachments" class="tdp-attachments-list"></div></div><div class="tdp-section"><div class="tdp-section-label"><i class="fa-solid fa-list-check"></i> Subtasks</div><ul id="subtasksList" class="tdp-subtasks-list"></ul><div class="tdp-add-subtask"><i class="fa-solid fa-plus"></i><input type="text" id="newSubtaskInput" class="tdp-subtask-input" placeholder="Add a subtask..."/></div></div><div class="tdp-section"><div class="tdp-section-label"><i class="fa-solid fa-clock-rotate-left"></i> Timeline</div><div id="timelineList" class="tdp-timeline-list"></div></div><div class="tdp-section tdp-invitee-section" id="invitees-bar"><button class="tdp-meta-chip" id="inviteeRefuseBtn" style="display:none;">Decline</button><button class="tdp-meta-chip tdp-invite-btn" id="inviteeAddBtn"><i class="fa-solid fa-user-plus"></i> Invite</button></div></div><div class="tdp-comment-bar"><div class="avatar-sm"><div></div></div><input type="text" id="commentInput" class="tdp-comment-input" placeholder="Write a comment..."/><button class="icon-btn tdp-emoji-btn" title="Emoji">&#128512;</button></div></div></div>
+<aside class="right-sidebar">
+      <button class="icon-btn" title="Ask Zia"><i class="fa-solid fa-robot"></i></button>
+      <button class="icon-btn" id="settingsBtn" title="Settings" onclick="document.getElementById('settingsOverlay').style.display='flex'"><i class="fa-solid fa-gear"></i></button>
+      <button class="icon-btn" title="Calendar"><i class="fa-regular fa-calendar"></i></button>
+      <button class="icon-btn" title="Workflow" id="workflowBtn"><i class="fa-solid fa-diagram-project"></i></button>
+      <button class="icon-btn" title="Playground" id="playgroundBtn"><i class="fa-solid fa-flask"></i></button>
+      <div class="sidebar-spacer"></div>
+      <button class="icon-btn theme-toggle" id="themeToggle" id="themeToggleBtn" title="Toggle theme"><i class="fa-solid fa-moon"></i></button>
+      <button class="icon-btn" title="Feedback"><i class="fa-regular fa-comment-dots"></i></button>
+    </aside>
+  </div>
+  <!-- New Task Modal -->
+  <!-- Create / Edit Task Modal -->
+
+<div class="modal-overlay" id="groupModal" style="display:none;">
+    <div class="modal-content small-modal">
+      <h3>Create Group</h3>
+      <input type="text" id="groupNameInput" placeholder="Group name" class="modal-input">
+      <div class="modal-footer"><button class="save-btn" id="saveGroupBtn">Create</button><button class="cancel-btn" id="cancelGroupBtn">Cancel</button></div>
+    </div>
+  </div>
+  <div class="modal-overlay" id="tagModal" style="display:none;">
+    <div class="modal-content small-modal">
+      <h3>Create Tag</h3>
+      <input type="text" id="tagNameInput" placeholder="Tag name" class="modal-input">
+      <div class="color-picker">
+        <span class="color-dot" data-color="#e67e22" style="background:#e67e22"></span>
+        <span class="color-dot" data-color="#e74c3c" style="background:#e74c3c"></span>
+        <span class="color-dot" data-color="#9b59b6" style="background:#9b59b6"></span>
+        <span class="color-dot" data-color="#2ecc71" style="background:#2ecc71"></span>
+        <span class="color-dot" data-color="#3498db" style="background:#3498db"></span>
+        <span class="color-dot selected" data-color="#e67e22" style="background:#e67e22"></span>
+      </div>
+      <div class="modal-footer"><button class="save-btn" id="saveTagBtn">Create</button><button class="cancel-btn" id="cancelTagBtn">Cancel</button></div>
+    </div>
+  </div>
+  <div class="dropdown-menu" id="sortDropdown" style="display:none;">
+    <div class="dropdown-title">Sort by</div>
+    <div class="dropdown-item" data-sort="dueDate">Due Date</div>
+    <div class="dropdown-item" data-sort="createdTime">Created Time</div>
+    <div class="dropdown-item" data-sort="priority">Priority</div>
+    <div class="dropdown-item" data-sort="title">Title</div>
+    <div class="dropdown-divider"></div>
+    <div class="dropdown-item" data-direction="desc"><i class="fa-solid fa-arrow-down"></i> Newest on top</div>
+    <div class="dropdown-item" data-direction="asc"><i class="fa-solid fa-arrow-up"></i> Oldest on top</div>
+  </div>
+  <div class="dropdown-menu" id="statusDropdown" style="display:none;">
+    <div class="dropdown-item status-option" data-status="Open">Open</div>
+    <div class="dropdown-item status-option" data-status="In Progress">In Progress</div>
+    <div class="dropdown-item status-option" data-status="Fixed">Fixed</div>
+    <div class="dropdown-item status-option" data-status="Closed">Closed</div>
+  </div>
+  <div class="dropdown-menu" id="priorityDropdown" style="display:none;">
+    <div class="dropdown-item priority-option" data-priority="None">None</div>
+    <div class="dropdown-item priority-option" data-priority="Low"><i class="fa-solid fa-exclamation" style="color:#3498db"></i> Low</div>
+    <div class="dropdown-item priority-option" data-priority="Medium"><i class="fa-solid fa-exclamation" style="color:#e67e22"></i> Medium</div>
+    <div class="dropdown-item priority-option" data-priority="High"><i class="fa-solid fa-exclamation" style="color:#e74c3c"></i> High</div>
+  </div>
+  <!-- New Task Modal -->
+<div id="taskModal">
+  <div class="ntm-box">
+    <div class="ntm-topbar">
+      <div class="ntm-status-wrap" id="ntmStatusWrap">
+        <button class="ntm-status-btn" id="ntmStatusBtn">Open <i class="fa-solid fa-chevron-down" style="font-size:9px"></i></button>
+        <div class="ntm-status-menu" id="ntmStatusMenu">
+          <input class="ntm-status-search" id="ntmStatusSearch" placeholder="Search status..." type="text">
+          <div id="ntmStatusList"></div>
+        </div>
+      </div>
+      <div class="ntm-assignee-chip" id="ntmAssigneeChip">
+        <div id="ntmAssigneeAvatar" style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;color:#fff;background:#4285f4;flex-shrink:0">P</div>
+        <div class="ntm-assignee-label"><span>Assigned to</span><strong id="ntmAssigneeName">Pradeep</strong></div>
+      </div>
+      <div class="ntm-date-chip">
+        <span>Start Date</span>
+        <span class="ntm-date-val" id="ntmStartVal">Yet to set</span>
+      </div>
+      <div class="ntm-divider"></div>
+      <div class="ntm-date-chip">
+        <span>Due Date</span>
+        <span class="ntm-date-val" id="ntmDueVal">Yet to set</span>
+      </div>
+      <div class="ntm-topbar-spacer"></div>
+      <div class="ntm-topbar-actions">
+        <div class="ntm-tag-btn-wrap">
+          <button class="ntm-icon-btn" id="ntmTagBtn" title="Tags"><i class="fa-solid fa-tag"></i></button>
+          <div class="ntm-tags-dropdown" id="ntmTagsDropdown">
+            <input class="ntm-tags-search" id="ntmTagsSearch" placeholder="Search tags..." type="text">
+            <div id="ntmTagsList"></div>
+          </div>
+        </div>
+        <button class="ntm-icon-btn" id="modalRecurBtn" title="Recurrence"><i class="fa-solid fa-repeat"></i></button>
+        <button class="ntm-icon-btn" id="modalAttachBtn" title="Attach file"><i class="fa-solid fa-paperclip"></i></button>
+        <button class="ntm-icon-btn" id="ntmMoreBtn" title="More options"><i class="fa-solid fa-chevron-down"></i></button>
+        <button class="ntm-icon-btn" id="ntmFavBtn" title="Favourite"><i class="fa-regular fa-heart"></i></button>
+      </div>
+      <button class="ntm-close-btn" id="closeModalBtn" title="Close"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="ntm-body">
+      <div class="ntm-title-row">
+        <i class="fa-regular fa-envelope ntm-title-icon"></i>
+        <input type="text" class="ntm-title-input" id="modalTaskTitle" placeholder="Task Title, @mention assignee">
+      </div>
+      <div class="ntm-tags-bar" id="ntmTagsBar" style="padding-left:25px;margin-bottom:6px;"></div>
+      <div class="ntm-chips-row">
+        <span class="ntm-chip-label">in</span>
+        <div style="position:relative">
+          <button class="ntm-group-chip" id="ntmGroupBtn">
+            <i class="fa-solid fa-users" style="font-size:10px"></i>
+            <span id="ntmGroupLabel">Personal tasks</span>
+            <i class="fa-solid fa-chevron-down ntm-chip-caret"></i>
+          </button>
+          <div class="ntm-dropdown" id="ntmGroupDropdown">
+            <input class="ntm-dropdown-search" id="ntmGroupSearch" placeholder="Search groups..." type="text">
+            <div id="ntmGroupList"></div>
+          </div>
+        </div>
+        <span class="ntm-chip-sep">|</span>
+        <span class="ntm-chip-label">under</span>
+        <div style="position:relative">
+          <button class="ntm-cat-chip" id="ntmCatBtn">
+            <span id="ntmCatLabel">General</span>
+            <i class="fa-solid fa-chevron-down ntm-chip-caret"></i>
+          </button>
+          <div class="ntm-dropdown" id="ntmCatDropdown">
+            <input class="ntm-dropdown-search" id="ntmCatSearch" placeholder="Search categories..." type="text">
+            <div id="ntmCatList"></div>
+          </div>
+        </div>
+        <span class="ntm-chip-dot">*</span>
+        <div style="position:relative">
+          <button class="ntm-priority-chip" id="ntmPriorityBtn">
+            <i class="fa-solid fa-circle-exclamation ntm-priority-icon medium" id="ntmPriorityIcon"></i>
+            <span id="ntmPriorityLabel">Medium</span>
+            <i class="fa-solid fa-chevron-down ntm-chip-caret"></i>
+          </button>
+          <div class="ntm-dropdown" id="ntmPriorityDropdown" style="min-width:130px">
+            <div class="ntm-dropdown-item" data-val="High"><i class="fa-solid fa-circle-exclamation" style="color:#e53e3e"></i> High</div>
+            <div class="ntm-dropdown-item" data-val="Medium"><i class="fa-solid fa-circle-exclamation" style="color:#e67e22"></i> Medium</div>
+            <div class="ntm-dropdown-item" data-val="Low"><i class="fa-solid fa-circle-exclamation" style="color:#999"></i> Low</div>
+            <div class="ntm-dropdown-item" data-val="None"><i class="fa-regular fa-circle" style="color:#999"></i> None</div>
+          </div>
+        </div>
+        <span class="ntm-chip-sep">|</span>
+        <button class="ntm-reminder-chip" id="modalReminderBtn">
+          <i class="fa-regular fa-clock"></i>
+          <span id="ntmReminderLabel">Set reminder</span>
+        </button>
+      </div>
+      <div class="ntm-section">
+        <div class="ntm-section-header"><i class="fa-solid fa-align-left"></i><span>Description</span></div>
+        <textarea class="ntm-desc-textarea" id="modalDesc" placeholder="Description"></textarea>
+      </div>
+      <div class="ntm-section">
+        <div class="ntm-subtasks-header">
+          <i class="fa-solid fa-list-check" style="color:var(--text-muted);font-size:13px"></i>
+          <span>Subtasks</span>
+          <button class="ntm-subtask-add-btn" id="ntmSubtaskAddBtn" title="Add subtask">+</button>
+        </div>
+        <div id="ntmSubtasksList"></div>
+        <div class="ntm-subtask-row-input">
+          <span class="ntm-subtask-plus">+</span>
+          <input type="text" class="ntm-subtask-input" id="modalSubtaskInput" placeholder="Subtask Title, @mention assignee">
+          <div class="ntm-subtask-assignee-chip" id="ntmSubtaskAssignee">
+            <div id="ntmSubtaskAvatar" style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#fff;background:#4285f4;flex-shrink:0">P</div>
+            <span id="ntmSubtaskAssigneeName">Pradeep</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="ntm-footer">
+      <button class="ntm-save-btn" id="modalSaveBtn">Save</button>
+      <button class="ntm-cancel-btn" id="modalCancelBtn">Cancel</button>
+    </div>
+  </div>
+  <select id="modalGroup" class="ntm-hidden"><option value="">Personal tasks</option></select>
+  <select id="modalCategory" class="ntm-hidden"></select>
+  <select id="modalAssignee" class="ntm-hidden"></select>
+  <select id="modalPriority" class="ntm-hidden">
+    <option value="High">High</option>
+    <option value="Medium" selected>Medium</option>
+    <option value="Low">Low</option>
+    <option value="None">None</option>
+  </select>
+  <input type="hidden" id="modalStatus" value="Open">
+  <button id="modalStatusBtn" class="ntm-hidden"></button>
+  <button id="modalTagBtn" class="ntm-hidden"></button>
+  <button id="modalAddSubtaskBtn" class="ntm-hidden"></button>
+  <div id="modalSubtasksList" class="ntm-hidden"></div>
+  <div id="modalTagsContainer" class="ntm-hidden"></div>
+  <div class="ntm-assignee-modal" id="ntmAssigneeModal">
+    <div class="ntm-assignee-modal-title">Assignees</div>
+    <input class="ntm-assignee-search" id="ntmAssigneeSearch" placeholder="Select up to 5 assignees" type="text">
+    <div id="ntmAssigneeList"></div>
+  </div>
+</div>
+    <script src="shadow-auth-gate.js"></script>
+<script src="backend.js"></script>
+  <script src="approval-backend.js"></script>
+  <script src="approval-ui.js"></script>
+  <script src="agenda-view.js"></script>
+  <script src="myday-view.js"></script>
+  <script src="createdbyme-view.js"></script>
+  <script src="app.js"></script>
+  <script src="group-ui.js"></script>
+    <script src="auth.js"></script>
+    <script src="auth-supabase.js"></script>
+    <script src="onboarding.js"></script>
+      <script src="task-enhancements.js"></script>
+  <script src="workflow-engine.js"></script>
+  <script src="workflow-builder.js"></script>
+  <script src="shadow-workflow-patch.js"></script>
+  <script src="shadow-workflow-backend.js"></script>
+ <script src="rbac.js"></script>
+<script src="shadow-db-patch.js"></script>
+  <script src="theme.js"></script>
+  <script src="admin.js"></script>
+
+  </script>
+
+  <div class="settings-overlay" id="settingsOverlay" style="display:none;">
+        <div class="settings-dialog">
+            <!-- Close button -->
+            <button class="settings-close-btn" id="closeSettings" title="Close">&times;</button>
+            
+            <!-- Settings Left Sidebar -->
+            <div class="settings-sidebar">
+                <div class="settings-sidebar-header">
+                    <h2>ToDo</h2>
+                </div>
+                <div class="settings-search">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"/>
+                        <path d="M21 21l-4.35-4.35"/>
+                    </svg>
+                    <input type="text" placeholder="Search" id="settingsSearch">
+                </div>
+                
+                <div class="settings-nav-section">
+                    <div class="settings-nav-label">GENERAL</div>
+                    <div class="settings-nav-tree">
+                        <div class="settings-nav-item active" data-section="system">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                                <line x1="8" y1="21" x2="16" y2="21"/>
+                                <line x1="12" y1="17" x2="12" y2="21"/>
+                            </svg>
+                            <span>System</span>
+                        </div>
+                        <div class="settings-nav-item" data-section="keyboard">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="2" y="4" width="20" height="16" rx="2" ry="2"/>
+                                <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10"/>
+                            </svg>
+                            <span>Keyboard Shortcuts</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="settings-nav-divider"></div>
+                
+                <div class="settings-nav-section">
+                    <div class="settings-nav-label">GROUPS</div>
+                    <div class="settings-nav-tree">
+                        <div class="settings-nav-item" data-section="groups">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                            </svg>
+                            <span>Groups</span>
+                        </div>
+                        <div class="settings-nav-item" data-section="notification">
+                            <i class="fa-solid fa-bell" style="width:16px;font-size:13px"></i>
+                            <span>Notification</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Settings Content Area -->
+            <div class="settings-content">
+                <!-- System Section -->
+                <div class="settings-section active" id="section-system">
+                    <div class="settings-section-header">
+                        <h1>System</h1>
+                    </div>
+                    <div class="settings-section-body">
+                        <!-- While starting up -->
+                        <div class="settings-block">
+                            <div class="settings-block-title">While starting up</div>
+                            <div class="settings-radio-group">
+                                <label class="settings-radio">
+                                    <input type="radio" name="startup" value="landme" checked>
+                                    <span class="radio-custom"></span>
+                                    <span>Land me in</span>
+                                </label>
+                                <select class="settings-select inline-select" id="startupView">
+                                    <option value="agenda" selected>Agenda view</option>
+                                    <option value="myday">My Day</option>
+                                    <option value="created">Created by Me</option>
+                                    <option value="assigned">Assigned to me</option>
+                                    <option value="shared">Shared with me</option>
+                                    <option value="personal">Personal tasks</option>
+                                </select>
+                            </div>
+                            <div class="settings-radio-group">
+                                <label class="settings-radio">
+                                    <input type="radio" name="startup" value="continue">
+                                    <span class="radio-custom"></span>
+                                    <span>Continue from where I left off</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Display Language -->
+                        <div class="settings-block">
+                            <div class="settings-block-title">Display language</div>
+                            <select class="settings-select" id="displayLanguage">
+                                <option value="en" selected>English</option>
+                                <option value="es">Spanish</option>
+                                <option value="fr">French</option>
+                                <option value="de">German</option>
+                                <option value="ja">Japanese</option>
+                                <option value="zh">Chinese</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Font Options -->
+                        <div class="settings-block">
+                            <h3 class="settings-block-heading">Font options</h3>
+                            <div class="font-preview" id="fontPreview">Hi, User</div>
+                            <div class="font-options-row">
+                                <div class="font-option">
+                                    <div class="font-option-label">Font family</div>
+                                    <select class="settings-select" id="fontFamily">
+                                        <option value="Lato" selected>Lato</option>
+                                        <option value="Roboto">Roboto</option>
+                                        <option value="Open Sans">Open Sans</option>
+                                        <option value="Inter">Inter</option>
+                                        <option value="Arial">Arial</option>
+                                    </select>
+                                </div>
+                                <div class="font-option">
+                                    <div class="font-option-label">Font size</div>
+                                    <select class="settings-select" id="fontSize">
+                                        <option value="browser" selected>Browser</option>
+                                        <option value="small">Small</option>
+                                        <option value="medium">Medium</option>
+                                        <option value="large">Large</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Theme -->
+                        <div class="settings-block">
+                            <h3 class="settings-block-heading">Theme</h3>
+                            <div class="settings-block-subtitle">Left panel</div>
+                            <div class="theme-panels">
+                                <label class="theme-panel-option selected">
+                                    <div class="theme-panel-preview dark-preview">
+                                        <div class="panel-line accent"></div>
+                                        <div class="panel-line"></div>
+                                        <div class="panel-line short"></div>
+                                        <div class="panel-line"></div>
+                                    </div>
+                                    <input type="radio" name="leftPanel" value="dark" checked>
+                                    <span>Dark</span>
+                                </label>
+                                <label class="theme-panel-option">
+                                    <div class="theme-panel-preview light-preview">
+                                        <div class="panel-line accent"></div>
+                                        <div class="panel-line"></div>
+                                        <div class="panel-line short"></div>
+                                        <div class="panel-line"></div>
+                                    </div>
+                                    <input type="radio" name="leftPanel" value="light">
+                                    <span>Light</span>
+                                </label>
+                                <label class="theme-panel-option">
+                                    <div class="theme-panel-preview white-preview">
+                                        <div class="panel-line accent"></div>
+                                        <div class="panel-line"></div>
+                                        <div class="panel-line short"></div>
+                                        <div class="panel-line"></div>
+                                    </div>
+                                    <input type="radio" name="leftPanel" value="white">
+                                    <span>White</span>
+                                </label>
+                            </div>
+                            
+                            <div class="settings-block-subtitle">Theme color</div>
+                            <div class="theme-colors">
+                                <label class="theme-color-option">
+                                    <input type="radio" name="themeColor" value="cobalt" checked>
+                                    <span class="color-circle" style="background: #4285f4;">
+                                        <svg class="check-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="white"/></svg>
+                                    </span>
+                                </label>
+                                <label class="theme-color-option">
+                                    <input type="radio" name="themeColor" value="fern">
+                                    <span class="color-circle" style="background: #0f9d58;">
+                                        <svg class="check-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="white"/></svg>
+                                    </span>
+                                </label>
+                                <label class="theme-color-option">
+                                    <input type="radio" name="themeColor" value="tangerine">
+                                    <span class="color-circle" style="background: #f4b400;">
+                                        <svg class="check-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="white"/></svg>
+                                    </span>
+                                </label>
+                                <label class="theme-color-option">
+                                    <input type="radio" name="themeColor" value="cardinal">
+                                    <span class="color-circle" style="background: #db4437;">
+                                        <svg class="check-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="white"/></svg>
+                                    </span>
+                                </label>
+                                <label class="theme-color-option">
+                                    <input type="radio" name="themeColor" value="storm">
+                                    <span class="color-circle" style="background: #9e9e9e;">
+                                        <svg class="check-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="white"/></svg>
+                                    </span>
+                                </label>
+                                <label class="theme-color-option">
+                                    <input type="radio" name="themeColor" value="vintage">
+                                    <span class="color-circle" style="background: #e8a735;">
+                                        <svg class="check-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="white"/></svg>
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Appearance -->
+                        <div class="settings-block">
+                            <div class="settings-block-title">Appearance</div>
+                            <div class="settings-radio-group">
+                                <label class="settings-radio">
+                                    <input type="radio" name="appearance" value="system">
+                                    <span class="radio-custom"></span>
+                                    <span>Use system settings</span>
+                                </label>
+                            </div>
+                            <div class="settings-radio-group">
+                                <label class="settings-radio">
+                                    <input type="radio" name="appearance" value="light">
+                                    <span class="radio-custom"></span>
+                                    <span>Light mode</span>
+                                </label>
+                            </div>
+                            <div class="settings-radio-group">
+                                <label class="settings-radio">
+                                    <input type="radio" name="appearance" value="night" checked>
+                                    <span class="radio-custom"></span>
+                                    <span>Night mode</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Banner message -->
+                        <div class="settings-block">
+                            <h3 class="settings-block-heading">Banner message</h3>
+                            <label class="settings-checkbox">
+                                <input type="checkbox" id="bannerMessages" checked>
+                                <span class="checkbox-custom"></span>
+                                <span>Show banner messages</span>
+                            </label>
+                            <div class="settings-info-note">
+                                If you disable this, you might miss important service updates or messages from Zoho.
+                            </div>
+                        </div>
+                        
+                        <!-- Secure downloads -->
+                        <div class="settings-block">
+                            <h3 class="settings-block-heading">Secure your downloads</h3>
+                            <label class="settings-checkbox">
+                                <input type="checkbox" id="secureDownloads">
+                                <span class="checkbox-custom"></span>
+                                <span>Secure all attachment downloads or file exports with passwords</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Keyboard Shortcuts Section -->
+                <div class="settings-section" id="section-keyboard">
+                    <div class="settings-section-header">
+                        <h1>Keyboard Shortcuts</h1>
+                        <div class="shortcuts-header-actions">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="shortcutsToggle" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <span class="toggle-label">On</span>
+                            <button class="settings-text-btn" id="printShortcuts">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 6 2 18 2 18 9"/>
+                                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+                                    <rect x="6" y="14" width="12" height="8"/>
+                                </svg>
+                                Print Shortcuts
+                            </button>
+                            <span class="header-divider">ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ·</span>
+                            <button class="settings-text-btn" id="resetShortcuts">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="1 4 1 10 7 10"/>
+                                    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+                                </svg>
+                                Reset Shortcuts
+                            </button>
+                            <select class="settings-select small-select" id="shortcutPreset">
+                                <option value="zoho">Zoho</option>
+                                <option value="gmail">Gmail</option>
+                                <option value="outlook">Outlook</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="shortcuts-info">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="12" y1="16" x2="12" y2="12"/>
+                            <line x1="12" y1="8" x2="12.01" y2="8"/>
+                        </svg>
+                        <span>To <strong>customize</strong> shortcuts, just <strong>click on any keyboard shortcut</strong> and edit it to your convenience.</span>
+                    </div>
+                    <div class="shortcuts-container">
+                        <div class="shortcuts-group">
+                            <h2 class="shortcuts-group-title">Global Shortcuts</h2>
+                            <h3 class="shortcuts-category">New Creation</h3>
+                            <div class="shortcut-item">
+                                <div class="shortcut-keys">
+                                    <kbd>c</kbd><kbd>t</kbd>
+                                </div>
+                                <span class="shortcut-desc">Create Task</span>
+                            </div>
+                        </div>
+                        <div class="shortcuts-group">
+                            <h3 class="shortcuts-category">Search Shortcuts</h3>
+                            <div class="shortcut-item">
+                                <div class="shortcut-keys">
+                                    <kbd>/</kbd>
+                                </div>
+                                <span class="shortcut-desc">Contextual Search</span>
+                            </div>
+                            <div class="shortcut-item">
+                                <div class="shortcut-keys">
+                                    <kbd>/</kbd><kbd>t</kbd>
+                                </div>
+                                <span class="shortcut-desc">Task Search</span>
+                            </div>
+                            <div class="shortcut-item">
+                                <div class="shortcut-keys">
+                                    <kbd>/</kbd><kbd>q</kbd>
+                                </div>
+                                <span class="shortcut-desc">Quick Access</span>
+                            </div>
+                        </div>
+                        <div class="shortcuts-group">
+                            <h3 class="shortcuts-category">Notification Shortcuts</h3>
+                            <div class="shortcut-item">
+                                <div class="shortcut-keys">
+                                    <kbd>Opt</kbd><kbd>n</kbd>
+                                </div>
+                                <span class="shortcut-desc">Notification</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Groups Section -->
+                <div class="settings-section" id="section-groups">
+                    <!-- Groups List View -->
+                    <div id="groupsListView">
+                        <div class="settings-section-header groups-header">
+                            <div class="groups-header-left">
+                                <h1>Groups</h1>
+                                <span class="groups-count" id="groupsCount">6 Groups</span>
+                            </div>
+                            <div class="groups-header-right">
+                                <button class="settings-text-btn create-group-btn" id="createGroupBtn">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <line x1="12" y1="5" x2="12" y2="19"/>
+                                        <line x1="5" y1="12" x2="19" y2="12"/>
+                                    </svg>
+                                    Create new group
+                                </button>
+                                <div class="groups-search">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="11" cy="11" r="8"/>
+                                        <path d="M21 21l-4.35-4.35"/>
+                                    </svg>
+                                    <input type="text" placeholder="Search" id="groupsSearch">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Groups Filters -->
+                        <div class="groups-layout">
+                            <div class="groups-filters">
+                                <div class="filter-section">
+                                    <div class="filter-title">
+                                        <span>Type</span>
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>
+                                    </div>
+                                    <div class="filter-options">
+                                        <label class="settings-radio"><input type="radio" name="groupType" value="all" checked><span class="radio-custom"></span><span>All</span></label>
+                                        <label class="settings-radio"><input type="radio" name="groupType" value="personal"><span class="radio-custom"></span><span>Personal groups</span></label>
+                                        <label class="settings-radio"><input type="radio" name="groupType" value="org-email"><span class="radio-custom"></span><span>Organization email groups</span></label>
+                                        <label class="settings-radio"><input type="radio" name="groupType" value="org-no-email"><span class="radio-custom"></span><span>Organization groups (without email)</span></label>
+                                    </div>
+                                </div>
+                                <div class="filter-section">
+                                    <div class="filter-title">
+                                        <span>Role</span>
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>
+                                    </div>
+                                    <div class="filter-options">
+                                        <label class="settings-radio"><input type="radio" name="groupRole" value="all" checked><span class="radio-custom"></span><span>All</span></label>
+                                        <label class="settings-radio"><input type="radio" name="groupRole" value="owner"><span class="radio-custom"></span><span>Owner</span></label>
+                                        <label class="settings-radio"><input type="radio" name="groupRole" value="moderator"><span class="radio-custom"></span><span>Moderator</span></label>
+                                        <label class="settings-radio"><input type="radio" name="groupRole" value="member"><span class="radio-custom"></span><span>Member</span></label>
+                                    </div>
+                                </div>
+                                <div class="filter-section">
+                                    <div class="filter-title">
+                                        <span>Streams status</span>
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>
+                                    </div>
+                                    <div class="filter-options">
+                                        <label class="settings-checkbox"><input type="checkbox" name="streamsEnabled"><span class="checkbox-custom"></span><span>Enabled groups</span></label>
+                                        <label class="settings-checkbox"><input type="checkbox" name="streamsDisabled"><span class="checkbox-custom"></span><span>Disabled groups</span></label>
+                                        <label class="settings-checkbox"><input type="checkbox" name="streamsHidden"><span class="checkbox-custom"></span><span>Hidden groups</span></label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Groups Grid -->
+                            <div class="groups-grid" id="groupsGrid">
+                                <!-- Groups will be populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Group Detail View (hidden by default) -->
+                    <div id="groupDetailView" class="hidden">
+                        <div class="group-detail-header">
+                            <button class="back-btn" id="backToGroups">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+                            </button>
+                            <h1 id="groupDetailName">Group Name</h1>
+                        </div>
+                        <div class="group-detail-tabs">
+                            <button class="group-tab active" data-tab="general">General</button>
+                            <button class="group-tab" data-tab="members">Members</button>
+                            <button class="group-tab" data-tab="taskSettings">Task Settings</button>
+                        </div>
+                        
+                        <!-- General Tab -->
+                        <div class="group-tab-content active" id="tab-general">
+                            <div class="settings-block">
+                                <div class="settings-block-title">Group Image</div>
+                                <div class="group-image-placeholder">
+                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                        <circle cx="9" cy="7" r="4"/>
+                                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="settings-block">
+                                <div class="settings-block-title">Group Name</div>
+                                <div class="group-detail-value" id="groupNameValue">--</div>
+                            </div>
+                            <div class="settings-block">
+                                <div class="settings-block-title">Streams Enabled</div>
+                                <div class="group-detail-value" id="groupStreamsValue">Yes</div>
+                            </div>
+                            <div class="settings-block">
+                                <label class="settings-checkbox">
+                                    <input type="checkbox" id="hideGroup">
+                                    <span class="checkbox-custom"></span>
+                                    <span>Hide group</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Members Tab -->
+                        <div class="group-tab-content" id="tab-members">
+                            <div class="members-search">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="11" cy="11" r="8"/>
+                                    <path d="M21 21l-4.35-4.35"/>
+                                </svg>
+                                <input type="text" placeholder="Search for members by name or email" id="membersSearch">
+                            </div>
+                            <div class="members-count" id="membersCount">0 Members</div>
+                            <div class="members-list" id="membersList">
+                                <!-- Members populated by JS -->
+                            </div>
+                        </div>
+                        
+                        <!-- Task Settings Tab -->
+                        <div class="group-tab-content" id="tab-taskSettings">
+                            <div class="task-settings-layout">
+                                <div class="task-settings-nav">
+                                    <div class="task-settings-nav-item active" data-tsection="category">Category</div>
+                                    <div class="task-settings-nav-item" data-tsection="status">Status</div>
+                                    <div class="task-settings-nav-item" data-tsection="assignee">Assignee</div>
+                                    <div class="task-settings-nav-item" data-tsection="tags">Tags</div>
+                                    <div class="task-settings-nav-item" data-tsection="customFields">Custom fields</div>
+                                    <div class="task-settings-nav-item" data-tsection="otherSettings">Other settings</div>
+                <div class="task-settings-nav-item" data-tsection="approvals">Rules & Approvals</div>
+                                </div>
+                                <div class="task-settings-content">
+                                    <!-- Category -->
+                                    <div class="task-settings-section active" id="tsection-category">
+                                        <h2>Category</h2>
+                                        <p class="settings-description">Create, manage, and rearrange task categories. This order will be reflected in the Board/List view when grouped by category.</p>
+                                        <div class="settings-list-search">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                                            <input type="text" placeholder="Search or Create a new category">
+                                        </div>
+                                        <div class="settings-item-list" id="categoryList">
+                                            <!-- Categories populated by JS -->
+                                        </div>
+                                    </div>
+                                    <!-- Status -->
+                                    <div class="task-settings-section" id="tsection-status">
+                                        <h2>Status</h2>
+                                        <p class="settings-description">Manage and rearrange task status. This order will be reflected in the Board/List view when grouped by status.</p>
+                                        <div class="settings-list-search">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                                            <input type="text" placeholder="Search status">
+                                        </div>
+                                        <div class="settings-item-list" id="statusList"></div>
+                                    </div>
+                                    <!-- Assignee -->
+                                    <div class="task-settings-section" id="tsection-assignee">
+                                        <h2>Assignee</h2>
+                                        <p class="settings-description">Manage and rearrange assignees. This order will be reflected in the Board/List view when grouped by assignee.</p>
+                                        <div class="settings-list-search">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                                            <input type="text" placeholder="Search assignee">
+                                        </div>
+                                        <div class="settings-item-list" id="assigneeList"></div>
+                                    </div>
+                                    <!-- Tags -->
+                                    <div class="task-settings-section" id="tsection-tags">
+                                        <h2>Tags</h2>
+                                        <p class="settings-description">Manage and rearrange tags. This order will be reflected in the Board/List view when grouped by tags.</p>
+                                        <div class="settings-list-search">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                                            <input type="text" placeholder="Search tag">
+                                        </div>
+                                        <div class="settings-item-list" id="tagsList"></div>
+                                    </div>
+                                    <!-- Custom Fields -->
+                                    <div class="task-settings-section" id="tsection-customFields">
+                                        <h2>Custom fields</h2>
+                                        <p class="settings-description">Create and manage new custom fields, and associate them with any task within the group.</p>
+                                        <div class="settings-list-search">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                                            <input type="text" placeholder="Search">
+                                        </div>
+                                        <div class="settings-item-list" id="customFieldsList"></div>
+                                    </div>
+                                    <!-- Other Settings -->
+                                    <div class="task-settings-section" id="tsection-approvals">
+                <h2>Rules & Approvals</h2>
+                <p class="settings-description">Configure the approval workflow for tasks in this group. Only group admins can manage these settings.</p>
+                <div id="approvalSettingsMount"></div>
+              </div>
+              <!-- Other Settings -->
+              <div class="task-settings-section" id="tsection-otherSettings">
+                                        <h2>Other settings</h2>
+                                        <p class="settings-description">You can automate task management with deadlines and notifications, and view each subtask as an individual item.</p>
+                                        <div class="settings-block">
+                                            <div class="settings-block-title">Task SLA <span class="info-icon" title="Service Level Agreement for task completion">&#9432;</span></div>
+                                            <select class="settings-select" id="taskSLA">
+                                                <option value="none" selected>No Due Date</option>
+                                                <option value="1day">1 Day</option>
+                                                <option value="3days">3 Days</option>
+                                                <option value="1week">1 Week</option>
+                                                <option value="2weeks">2 Weeks</option>
+                                            </select>
+                                        </div>
+                                        <div class="settings-block">
+                                            <div class="toggle-setting">
+                                                <span>Send overdue notification</span>
+                                                <label class="toggle-switch">
+                                                    <input type="checkbox" id="overdueNotification" checked>
+                                                    <span class="toggle-slider"></span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="settings-block">
+                                            <div class="toggle-setting">
+                                                <span>Show all Subtasks <span class="info-icon" title="Show subtasks as individual items">&#9432;</span></span>
+                                                <label class="toggle-switch">
+                                                    <input type="checkbox" id="showSubtasks">
+                                                    <span class="toggle-slider"></span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div></div>
+            
+                <!-- Notification Section -->
+                <div class="settings-section" id="section-notification">
+                    <!-- Rendered dynamically by notification-settings.js -->
+                </div></div>
+        </div>
+    </div>
+  <script src="settings.js"></script>
+<script src="task-form-fixes.js"></script>
+  <script>
+    (function() {
+      function patchSettingsClose() {
+        var closeBtn = document.getElementById('closeSettings');
+        var overlay = document.getElementById('settingsOverlay');
+        if (closeBtn && overlay) {
+          var newBtn = closeBtn.cloneNode(true);
+          closeBtn.parentNode.replaceChild(newBtn, closeBtn);
+          newBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            overlay.style.display = 'none';
+          });
+          overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) overlay.style.display = 'none';
+          });
+          document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && overlay.style.display !== 'none') overlay.style.display = 'none';
+          });
+        } else {
+          setTimeout(patchSettingsClose, 100);
+        }
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', patchSettingsClose);
+      } else {
+        patchSettingsClose();
+      }
+    })();
+  </script>
+<script src="shadow-view-kit.js"></script>
+  <script src="shadow-user-access.js"></script>  <script src="shadow-agenda-fix.js"></script><script src="shadow-approval-patch.js"></script>
+  <script src="task-likes.js"></script>
+  <script src="notification-settings.js"></script>
+  <script src="notification-bell.js"></script>
+  <script src="task-templates.js"></script>
+</body>
+</html>
